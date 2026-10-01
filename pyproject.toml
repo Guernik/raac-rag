@@ -1,0 +1,33 @@
+# Commands (uv):
+#   install:  uv sync
+#   test:     uv run pytest
+#   run:      uv run raac ask "¿Puedo volar VFR de noche con mi licencia de piloto privado?"
+#             (needs ANTHROPIC_API_KEY; models per stage in src/raac/models.toml)
+
+[project]
+name = "raac-rag"
+version = "0.1.0"
+description = "Grounded, cited answers over the RAAC vigente"
+requires-python = ">=3.11"
+dependencies = [
+    "anthropic>=1.11",
+    "httpx>=0.27",
+    "pageindex>=0.2.21",
+    "pymupdf>=1.26",
+]
+
+[project.scripts]
+raac = "raac.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/raac"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

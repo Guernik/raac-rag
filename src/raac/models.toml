@@ -1,0 +1,6 @@
+# Model per pipeline stage (ADR 0002). Changing a model is an eval-gated change.
+# Override one stage at runtime with RAAC_MODEL_<STAGE>, e.g. RAAC_MODEL_SEARCH=claude-sonnet-5-5.
+
+indexing = "claude-haiku-4-5"  # PageIndex node summaries and tree refinement
+search = "claude-opus-5-5"     # PageIndex tree search
+answer = "claude-opus-5-5"     # Answer with the Citations API
