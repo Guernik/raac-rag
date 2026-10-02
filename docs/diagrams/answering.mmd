@@ -1,0 +1,23 @@
+sequenceDiagram
+    autonumber
+    actor U as User
+    participant C as CLI / API
+    participant R as Retriever
+    participant P as PageIndex<br/>Opus 5.5
+    participant A as Answerer
+    participant L as Citations API<br/>Opus 5.5
+
+    U->>C: question (Spanish)
+    Note over C: planned: rewrite into a Standalone question<br/>and route to likely Partes (Haiku 4.5)
+    C->>R: Standalone question
+    loop each loaded Parte
+        R->>P: chat(question, tree of the Parte)
+        P-->>R: tool calls get_page_content(pages)
+    end
+    R->>R: PDF pages read → Secciones
+    R->>A: Retrieval (Secciones + visited nodes)
+    A->>L: one document per Sección<br/>(one content block per PDF page), citations on
+    L-->>A: text blocks with cited_text + block ranges
+    A->>A: split into sentences, map Citations,<br/>drop uncited sentences
+    A-->>C: Answer (sentences + Citations)
+    C-->>U: Answer with numbered Citations

@@ -1,0 +1,54 @@
+classDiagram
+    direction LR
+    class ParsedParte {
+        code
+        edicion
+        enmienda
+        content_hash
+    }
+    class Seccion {
+        id
+        title
+    }
+    class SeccionPage {
+        pdf_page
+        printed_page
+        text
+        rects
+    }
+    class ParteIndex {
+        parte
+        content_hash
+        doc_id
+        tree
+    }
+    class Answer {
+        refused
+        incomplete
+        dropped_uncited
+        model
+    }
+    class Sentence {
+        text
+    }
+    class Citation {
+        parte
+        seccion
+        pdf_page_start / end
+        printed_page_start / end
+        edicion
+        enmienda
+        source_url
+        cited_text
+    }
+    class LikelyParte {
+        parte
+    }
+    ParsedParte "1" *-- "many" Seccion
+    Seccion "1" *-- "many" SeccionPage
+    ParteIndex ..> ParsedParte : indexes (same content hash)
+    Answer "1" *-- "many" Sentence
+    Sentence "1" *-- "1..*" Citation
+    Answer "1" *-- "0..*" LikelyParte
+    LikelyParte --> Citation : cited Remisión
+    Citation ..> Seccion : points to

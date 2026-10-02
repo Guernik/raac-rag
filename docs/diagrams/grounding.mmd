@@ -1,0 +1,17 @@
+flowchart TD
+    S["Retrieval"] --> E{"any Secciones?"}
+    E -- no --> R1["Refusal<br/>(cites nothing)"]
+    E -- yes --> M["Citations API answer"]
+    M --> SP["split text into sentences<br/>(never inside a cited span)"]
+    SP --> Q{"sentence has a Citation?"}
+    Q -- no --> D["dropped<br/>(logged, never shown)"]
+    Q -- yes --> K["kept"]
+    K --> N{"any kept sentences?"}
+    N -- no --> R2["Refusal"]
+    N -- yes --> G{"model wrote a<br/>'SIN RESPALDO:' line?"}
+    G -- no --> OK["Answer"]
+    G -- yes --> INC["Answer marked incomplete"]
+    R2 --> LP{"gap names a Parte that a retrieved<br/>Sección has a Remisión to?"}
+    INC --> LP
+    LP -- yes --> LPY["also show the likely Parte,<br/>cited from the Remisión's text"]
+    LP -- no --> END["show as is"]
