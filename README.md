@@ -18,50 +18,51 @@ Today the pipeline runs end to end from the command line (`raac fetch`, `raac as
 ```mermaid
 flowchart TB
     subgraph ANAC["ANAC public sources"]
-        direction LR
-        page["RAAC web page<br/>(Poncho table config)"] -- idSpread --> sheet["Google Sheet<br/>'RAAC Vigentes' (CSV)"]
-        nc["Nextcloud share links<br/>(one PDF per Parte)"]
+        page["RAAC web page"]
+        sheet["Google Sheet<br/>RAAC Vigentes"]
+        nc["Nextcloud share links<br/>one PDF per Parte"]
     end
 
     subgraph ingest["Ingestion"]
-        direction LR
-        corpus["corpus.py<br/>discover + download"] --> parser["parser.py<br/>PDF → Secciones,<br/>pages, footer"] --> indexer["indexer.py<br/>PageIndex tree<br/>per Parte"]
+        corpus["corpus.py<br/>discover + download"]
+        parser["parser.py<br/>Secciones, pages, footer"]
+        indexer["indexer.py<br/>PageIndex tree<br/><i>Haiku 4.5</i>"]
     end
 
-    subgraph storage["Storage"]
-        direction LR
-        cache[(".raac/ local cache<br/>PDFs + trees")]
+    subgraph store["Storage"]
+        cache[(".raac/ cache<br/>PDFs + trees")]
         pdfs[("Object storage<br/>source PDFs")]
-        pg[("Postgres<br/>index registry,<br/>trees, logs")]
+        pg[("Postgres<br/>registry, trees, logs")]
     end
 
-    subgraph serve["Answering"]
-        direction LR
-        retriever["retriever.py<br/>tree search"] --> answerer["answerer.py<br/>Citations API"]
+    subgraph answer["Answering"]
+        retriever["retriever.py<br/>tree search<br/><i>Opus 5.5</i>"]
+        answerer["answerer.py<br/>Citations API<br/><i>Opus 5.5</i>"]
     end
 
-    subgraph clients["Clients"]
-        direction LR
-        cli["cli.py<br/>raac ask / fetch"]
-        api["FastAPI<br/>streaming answers"] --> web["React + PDF.js<br/>phone-first web app"]
-    end
+    cli["cli.py<br/>raac ask / fetch"]
+    api["FastAPI<br/>streaming"]
+    web["React + PDF.js<br/>web app"]
 
-    claude{{"Claude API<br/>Haiku 4.5 · Opus 5.5"}}
-
+    page -- idSpread --> sheet
     sheet -- share links --> corpus
-    nc -- PDF bytes --> corpus
-    ingest --> storage
-    storage --> serve
+    nc -- PDFs --> corpus
+    corpus --> parser --> indexer
+    corpus --> cache
+    indexer --> cache
+    corpus -.-> pdfs
+    indexer -.-> pg
+    cache --> retriever
+    pg -.-> retriever
+    retriever --> answerer
     answerer --> cli
-    answerer --> api
-    ingest <-. node summaries .-> claude
-    serve <-. search + cited answer .-> claude
+    answerer -.-> api -.-> web
 
     classDef planned stroke-dasharray: 5 5
     class api,web,pg,pdfs planned
 ```
 
-Retrieval uses PageIndex in local mode (an LLM reads a tree of each Parte, no vector store, [ADR 0001](docs/adr/0001-pageindex-local-for-retrieval.md)). Answers are written with the Claude Citations API so every Citation is data returned by the API, never text parsed out of the model's prose ([ADR 0002](docs/adr/0002-answers-via-claude-citations.md)). The model for each stage is set in [`src/raac/models.toml`](src/raac/models.toml).
+Retrieval uses PageIndex in local mode (an LLM reads a tree of each Parte, no vector store, [ADR 0001](docs/adr/0001-pageindex-local-for-retrieval.md)). Answers are written with the Claude Citations API so every Citation is data returned by the API, never text parsed out of the model's prose ([ADR 0002](docs/adr/0002-answers-via-claude-citations.md)). Models per stage (in italics above) are set in [`src/raac/models.toml`](src/raac/models.toml).
 
 ## Corpus discovery and download
 
