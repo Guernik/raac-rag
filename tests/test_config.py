@@ -1,9 +1,6 @@
-import pytest
-
 import os
 
 from raac.config import load_env, load_models
-from raac.corpus import CorpusError, find_listing, sheet_id_from_page
 
 
 def test_models_per_stage(monkeypatch):
@@ -32,33 +29,3 @@ def test_env_file_does_not_override_and_accepts_raac_key_name(tmp_path, monkeypa
 
 def test_missing_env_file_is_fine(tmp_path):
     load_env(tmp_path / "missing.env")
-
-
-def test_sheet_id_read_from_poncho_config():
-    html = '<script>var ponchoTableOpciones = {"idSpread": "abc_DEF-123", "hojaNombre": "x"};</script>'
-    assert sheet_id_from_page(html) == "abc_DEF-123"
-
-
-def test_missing_poncho_config_fails_loudly():
-    with pytest.raises(CorpusError, match="idSpread"):
-        sheet_id_from_page("<html></html>")
-
-
-SHEET = (
-    "parte,titulo,btn-Ver,orden\n"
-    "Parte,Título,Ver,Orden\n"
-    'Parte 61,"**Licencias, Certificado de Competencia y Habilitaciones para piloto** ",'
-    '"https://docs.anac.gob.ar/index.php/s/PtMG8j8sFeRyren\n",1\n'
-    "Parte HL,**Helicópteros Livianos**,https://example.com/x.pdf,1\n"
-)
-
-
-def test_find_listing_normalizes_row():
-    listing = find_listing(SHEET, "61")
-    assert listing.titulo == "Licencias, Certificado de Competencia y Habilitaciones para piloto"
-    assert listing.download_url == "https://docs.anac.gob.ar/index.php/s/PtMG8j8sFeRyren/download"
-
-
-def test_unknown_link_host_raises():
-    with pytest.raises(CorpusError, match="unexpected link"):
-        find_listing(SHEET, "HL")

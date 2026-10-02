@@ -1,4 +1,4 @@
-"""CLI: `raac ask "<pregunta>"` answers from Parte 61 with Citations."""
+"""CLI: `raac ask "<pregunta>"` answers from Parte 61 with Citations; `raac fetch` downloads the RAAC vigente."""
 
 import argparse
 import json
@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 import anthropic
+import httpx
 
 from . import corpus, indexer, strings
 from .answerer import Answer, Citation, answer
@@ -23,8 +24,13 @@ def main(argv: list[str] | None = None) -> int:
     ask.add_argument("--cache-dir", type=Path, default=Path(".raac"))
     ask.add_argument("--record", type=Path, help="Write the question, document Secciones and raw Citations API response to this file")
     ask.add_argument("--json", action="store_true", help="Print the Answer as JSON")
+    fetch = sub.add_parser("fetch", help="Discover all Partes on the ANAC page and download their PDFs")
+    fetch.add_argument("--dir", type=Path, default=Path(".raac/corpus"))
+    fetch.add_argument("--parte", action="append", help="Only this Parte (repeatable)")
     args = ap.parse_args(argv)
     load_env()
+    if args.command == "fetch":
+        return fetch_corpus(args.dir, args.parte)
 
     def progress(msg: str) -> None:
         print(msg, file=sys.stderr)
@@ -59,6 +65,27 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
     else:
         print(render(result))
+    return 0
+
+
+def fetch_corpus(root: Path, only: list[str] | None = None) -> int:
+    client = httpx.Client(follow_redirects=True, timeout=120)
+    listings = corpus.list_partes(client)
+    if only:
+        listings = [corpus.find_listing(listings, p) for p in only]
+    store = corpus.CorpusStore(root)
+    counts = {corpus.CorpusStore.NEW: 0, corpus.CorpusStore.CHANGED: 0, corpus.CorpusStore.UNCHANGED: 0}
+    for listing in listings:
+        pdf = corpus.download(listing, client)
+        status = store.put(listing, pdf)
+        counts[status] += 1
+        print(
+            strings.FETCH_LINE.format(
+                parte=listing.parte, estado=strings.FETCH_STATUS[status], sha256=pdf.sha256[:12], titulo=listing.titulo
+            ),
+            flush=True,
+        )
+    print(strings.FETCH_SUMMARY.format(total=len(listings), **counts))
     return 0
 
 
