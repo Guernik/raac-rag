@@ -3,6 +3,7 @@
 #   test:     uv run pytest
 #   run:      uv run raac ask "¿Puedo volar VFR de noche con mi licencia de piloto privado?"
 #             (needs ANTHROPIC_API_KEY; models per stage in src/raac/models.toml)
+#   eval:     uv run raac eval   (cases in evals/cases.jsonl; report in evals/reports/)
 
 [project]
 name = "raac-rag"
