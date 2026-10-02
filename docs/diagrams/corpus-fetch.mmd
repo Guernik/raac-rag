@@ -1,0 +1,17 @@
+flowchart TD
+    A["GET ANAC RAAC page"] --> B{"ponchoTableOpciones<br/>has idSpread?"}
+    B -- no --> X["fail loudly"]
+    B -- yes --> C["GET sheet export?format=csv"]
+    C --> D["normalize rows<br/>(skip Spanish header row, strip **, whitespace,<br/>trailing newlines; codes like HL allowed)"]
+    D --> E{"row valid?"}
+    E -- no --> X
+    E -- yes --> F{"share link type"}
+    F -- "file share" --> G["GET &lt;share&gt;/download"]
+    F -- "folder share<br/>(?path=…&openfile=…)" --> H["public WebDAV:<br/>resolve fileid → PDF"]
+    G --> I["check %PDF, sha256"]
+    H --> I
+    I --> J{"hash vs manifest"}
+    J -- "no entry" --> K["new"]
+    J -- different --> L["changed"]
+    J -- same --> M["unchanged"]
+    K & L & M --> N["&lt;root&gt;/&lt;parte&gt;/&lt;sha256&gt;.pdf<br/>+ manifest.json"]

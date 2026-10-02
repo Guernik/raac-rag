@@ -1,0 +1,44 @@
+flowchart TB
+    subgraph ANAC["ANAC public sources"]
+        page["RAAC web page"]
+        sheet["Google Sheet<br/>RAAC Vigentes"]
+        nc["Nextcloud share links<br/>one PDF per Parte"]
+    end
+
+    subgraph ingest["Ingestion"]
+        corpus["corpus.py<br/>discover + download"]
+        parser["parser.py<br/>Secciones, pages, footer"]
+        indexer["indexer.py<br/>PageIndex tree<br/><i>Haiku 4.5</i>"]
+    end
+
+    subgraph store["Storage"]
+        cache[(".raac/ cache<br/>PDFs + trees")]
+        pdfs[("Object storage<br/>source PDFs")]
+        pg[("Postgres<br/>registry, trees, logs")]
+    end
+
+    subgraph answer["Answering"]
+        retriever["retriever.py<br/>tree search<br/><i>Opus 5.5</i>"]
+        answerer["answerer.py<br/>Citations API<br/><i>Opus 5.5</i>"]
+    end
+
+    cli["cli.py<br/>raac ask / fetch"]
+    api["FastAPI<br/>streaming"]
+    web["React + PDF.js<br/>web app"]
+
+    page -- idSpread --> sheet
+    sheet -- share links --> corpus
+    nc -- PDFs --> corpus
+    corpus --> parser --> indexer
+    corpus --> cache
+    indexer --> cache
+    corpus -.-> pdfs
+    indexer -.-> pg
+    cache --> retriever
+    pg -.-> retriever
+    retriever --> answerer
+    answerer --> cli
+    answerer -.-> api -.-> web
+
+    classDef planned stroke-dasharray: 5 5
+    class api,web,pg,pdfs planned
