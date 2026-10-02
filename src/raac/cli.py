@@ -21,7 +21,7 @@ def main(argv: list[str] | None = None) -> int:
     ask.add_argument("question")
     ask.add_argument("--parte", default="61")
     ask.add_argument("--cache-dir", type=Path, default=Path(".raac"))
-    ask.add_argument("--record", type=Path, help="Write the raw Citations API response to this file")
+    ask.add_argument("--record", type=Path, help="Write the question, document Secciones and raw Citations API response to this file")
     ask.add_argument("--json", action="store_true", help="Print the Answer as JSON")
     args = ap.parse_args(argv)
 
