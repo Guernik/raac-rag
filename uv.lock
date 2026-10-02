@@ -2071,6 +2071,7 @@ dependencies = [
     { name = "httpx" },
     { name = "pageindex" },
     { name = "pymupdf" },
+    { name = "python-dotenv" },
 ]
 
 [package.dev-dependencies]
@@ -2084,6 +2085,7 @@ requires-dist = [
     { name = "httpx", specifier = ">=0.27" },
     { name = "pageindex", specifier = ">=0.2.21" },
     { name = "pymupdf", specifier = ">=1.26" },
+    { name = "python-dotenv", specifier = ">=1.2.4" },
 ]
 
 [package.metadata.requires-dev]

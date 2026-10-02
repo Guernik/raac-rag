@@ -9,7 +9,7 @@ import anthropic
 
 from . import corpus, indexer, strings
 from .answerer import Answer, Citation, answer
-from .config import load_models
+from .config import load_env, load_models
 from .parser import parse
 from .retriever import Retriever
 
@@ -24,6 +24,7 @@ def main(argv: list[str] | None = None) -> int:
     ask.add_argument("--record", type=Path, help="Write the question, document Secciones and raw Citations API response to this file")
     ask.add_argument("--json", action="store_true", help="Print the Answer as JSON")
     args = ap.parse_args(argv)
+    load_env()
 
     def progress(msg: str) -> None:
         print(msg, file=sys.stderr)
