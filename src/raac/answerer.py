@@ -3,8 +3,13 @@
 Each retrieved Sección is one custom-content document whose content blocks are
 its text per PDF page, so a `content_block_location` citation maps straight to
 Sección + PDF pages. Citation fields are joined from the API output and the
-ParsedParte; nothing is parsed from model prose. Sentences without a Citation
-are dropped; an Answer with none left is a refusal.
+ParsedParte; nothing is parsed from model prose.
+
+The API returns each cited span as its own text block and puts the surrounding
+prose, sentence ends included, in uncited blocks. So sentences are split by
+character position over the whole text (never inside a cited span), and each
+sentence takes the Citations of the spans it contains. Sentences without a
+Citation are dropped; an Answer with none left is a refusal.
 """
 
 import json
@@ -20,12 +25,18 @@ from .retriever import Retrieval, RetrievedSeccion
 SYSTEM = (
     "Respondés preguntas sobre las Regulaciones Argentinas de Aviación Civil (RAAC) "
     "usando únicamente las Secciones provistas como documentos. Escribí en español "
-    "rioplatense claro, en pocas oraciones. Cada afirmación debe apoyarse en el texto "
-    "de los documentos; si dependen de plazos o regímenes transitorios, mencionalos. "
+    "rioplatense claro, en pocas oraciones de prosa simple, sin markdown (sin negritas, "
+    "títulos ni listas). Cada oración debe apoyarse en el texto de los documentos; si "
+    "dependen de plazos o regímenes transitorios, mencionalos. "
     "Si los documentos no alcanzan para responder, decilo en una oración sin agregar "
     "nada de conocimiento propio."
 )
-_SENTENCE_END = re.compile(r"([.!?:;]\s*|\n\s*)$")
+# A sentence ends at terminal punctuation (optionally closing an emphasis) followed by
+# whitespace, so "61.520" does not split, or at a line break.
+_SENTENCE_END = re.compile(r"[.!?:;](?:\*\*|__)?(?=\s|$)|\n")
+# Markdown the model may still emit: emphasis markers and list bullets/numbers.
+_MARKUP = re.compile(r"\*\*|__|^\s*(?:[-*•]|\d+[.)])\s+")
+_LETTER = re.compile(r"[^\W\d_]")
 
 
 @dataclass
@@ -104,35 +115,45 @@ def answer(
         message = stream.get_final_message()
     response = message.model_dump(mode="json")
     if record_path is not None:
-        record_path.write_text(json.dumps(response, ensure_ascii=False, indent=2))
+        record = {
+            "question": standalone_question,
+            # Document order, so a replay can rebuild the documents the citation indices point into.
+            "secciones": [{"parte": r.parte.code, "seccion": r.seccion.id} for r in retrieval.secciones],
+            "response": response,
+        }
+        record_path.write_text(json.dumps(record, ensure_ascii=False, indent=2))
     return map_response(response, retrieval, source_urls)
 
 
 def map_response(response: dict[str, Any], retrieval: Retrieval, source_urls: dict[str, str]) -> Answer:
     """Turn a Messages API response (as JSON) into an Answer with Citations as data."""
-    sentences: list[Sentence] = []
-    dropped: list[str] = []
-    text, cites = "", []
-
-    def flush() -> None:
-        nonlocal text, cites
-        if text.strip():
-            if cites:
-                sentences.append(Sentence(text=text.strip(), citations=cites))
-            else:
-                dropped.append(text.strip())
-        text, cites = "", []
-
     if response.get("stop_reason") == "refusal":
         return Answer(sentences=[], refused=True, model=response.get("model"))
+    full = ""
+    spans: list[tuple[int, int, list[Citation]]] = []  # cited [start, end) offsets into full
     for block in response.get("content", []):
         if block.get("type") != "text":
             continue
-        text += block["text"]
-        cites += [_map_citation(c, retrieval, source_urls) for c in block.get("citations") or []]
-        if _SENTENCE_END.search(block["text"]):
-            flush()
-    flush()
+        if block.get("citations"):
+            cites = [_map_citation(c, retrieval, source_urls) for c in block["citations"]]
+            spans.append((len(full), len(full) + len(block["text"]), cites))
+        full += block["text"]
+
+    def splits_a_span(cut: int) -> bool:
+        return any(start < cut < end for start, end, _ in spans)
+
+    cuts = [m.end() for m in _SENTENCE_END.finditer(full) if not splits_a_span(m.end())]
+    sentences: list[Sentence] = []
+    dropped: list[str] = []
+    for start, end in zip([0, *cuts], [*cuts, len(full)]):
+        text = _MARKUP.sub("", full[start:end]).strip()
+        if not _LETTER.search(text):
+            continue  # list numbers, stray markup, blank lines
+        cites = [c for s_start, s_end, span_cites in spans if start <= s_start and s_end <= end for c in span_cites]
+        if cites:
+            sentences.append(Sentence(text=text, citations=cites))
+        else:
+            dropped.append(text)
     return Answer(sentences=sentences, refused=not sentences, dropped_uncited=dropped, model=response.get("model"))
 
 
