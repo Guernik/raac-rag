@@ -1,5 +1,5 @@
-"""CLI: `raac ask "<pregunta>"` answers from Parte 61 with Citations; `raac fetch` downloads the RAAC vigente;
-`raac eval` runs the eval set."""
+"""CLI: `raac ask "<pregunta>"` answers from Partes 1, 61, 67 and 91 with Citations; `raac route` shows or
+scores Parte routing; `raac fetch` downloads the RAAC vigente; `raac eval` runs the eval set."""
 
 import argparse
 import json
@@ -12,7 +12,8 @@ import httpx
 from . import corpus, evals, strings
 from .answerer import Answer, Citation
 from .config import load_env
-from .pipeline import build_local_pipeline
+from .pipeline import DEFAULT_PARTES, build_local_pipeline
+from .router import routing_report
 
 DEFAULT_CASES = Path("evals/cases.jsonl")
 
@@ -22,19 +23,24 @@ def main(argv: list[str] | None = None) -> int:
     sub = ap.add_subparsers(dest="command", required=True)
     ask = sub.add_parser("ask", help="Answer a question with Citations")
     ask.add_argument("question")
-    ask.add_argument("--parte", default="61")
-    ask.add_argument("--cache-dir", type=Path, default=Path(".raac"))
+    _add_corpus_args(ask)
     ask.add_argument("--record", type=Path, help="Write the question, document Secciones and raw Citations API response to this file")
-    ask.add_argument("--json", action="store_true", help="Print the Answer as JSON")
+    ask.add_argument("--record-routing", type=Path, help="Write the question and raw Parte routing response to this file")
+    ask.add_argument("--json", action="store_true", help="Print the Retrieval and the Answer as JSON")
+    route = sub.add_parser("route", help="Show which Partes a question is routed to, or score routing on eval cases")
+    route.add_argument("question", nargs="?")
+    route.add_argument("--cases", type=Path, help="JSONL eval cases; expected Partes come from expected_secciones")
+    _add_corpus_args(route)
     ev = sub.add_parser("eval", help="Run the eval set against the local pipeline and write a report")
     ev.add_argument("--cases", type=Path, default=DEFAULT_CASES)
-    ev.add_argument("--parte", action="append", help="Parte to load (repeatable); default 61")
-    ev.add_argument("--cache-dir", type=Path, default=Path(".raac"))
+    _add_corpus_args(ev)
     ev.add_argument("--out", type=Path, help="Report path; default evals/reports/<UTC timestamp>-local.json")
     fetch = sub.add_parser("fetch", help="Discover all Partes on the ANAC page and download their PDFs")
     fetch.add_argument("--dir", type=Path, default=Path(".raac/corpus"))
     fetch.add_argument("--parte", action="append", help="Only this Parte (repeatable)")
     args = ap.parse_args(argv)
+    if args.command == "route" and not (args.question or args.cases):
+        ap.error("route needs a question or --cases")
     load_env()
     if args.command == "fetch":
         return fetch_corpus(args.dir, args.parte)
@@ -44,7 +50,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "eval":
         cases = evals.load_cases(args.cases)  # fail on a malformed case before spending on indexing
-        pipeline = build_local_pipeline(args.parte or ["61"], args.cache_dir, progress)
+        pipeline = build_local_pipeline(args.parte or DEFAULT_PARTES, args.cache_dir, progress)
         report = evals.run_eval(pipeline, cases, args.cases)
         out = args.out or Path("evals/reports") / f"{datetime.now(UTC):%Y%m%dT%H%M%SZ}-{pipeline.name}.json"
         evals.write_report(report, out)
@@ -52,12 +58,31 @@ def main(argv: list[str] | None = None) -> int:
         print(f"report: {out}")
         return 0
 
-    pipeline = build_local_pipeline([args.parte], args.cache_dir, progress)
-    result = pipeline.run(args.question, record_path=args.record).answer
+    pipeline = build_local_pipeline(
+        args.parte or DEFAULT_PARTES,
+        args.cache_dir,
+        progress,
+        routing_record_path=getattr(args, "record_routing", None),
+    )
+    if args.command == "route":
+        if args.cases:
+            report = routing_report(pipeline.router, load_cases(args.cases))
+            print(json.dumps(report, ensure_ascii=False, indent=2))
+        else:
+            print(" ".join(pipeline.router.route(args.question)))
+        return 0
+
+    run = pipeline.run(args.question, record_path=args.record)
     if args.json:
-        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+        out = {
+            "routed_partes": run.routed_partes,
+            "visited_nodes": run.visited_nodes,
+            "secciones": [f"{r.parte}:{r.seccion}" for r in run.retrieved_secciones],
+            "answer": run.answer.to_dict(),
+        }
+        print(json.dumps(out, ensure_ascii=False, indent=2))
     else:
-        print(render(result))
+        print(render(run.answer))
     return 0
 
 
@@ -80,6 +105,16 @@ def fetch_corpus(root: Path, only: list[str] | None = None) -> int:
         )
     print(strings.FETCH_SUMMARY.format(total=len(listings), **counts))
     return 0
+
+
+def _add_corpus_args(p: argparse.ArgumentParser) -> None:
+    p.add_argument("--parte", action="append", help=f"Parte to load (repeatable; default {' '.join(DEFAULT_PARTES)})")
+    p.add_argument("--cache-dir", type=Path, default=Path(".raac"))
+    p.set_defaults(parte=None)
+
+
+def load_cases(path: Path) -> list[dict]:
+    return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
 
 
 def render(result: Answer) -> str:
@@ -130,8 +165,7 @@ def render(result: Answer) -> str:
                 seccion=c.seccion,
                 titulo=c.seccion_title,
                 paginas=paginas,
-                edicion=c.edicion,
-                enmienda=c.enmienda,
+                version=strings.version(c.edicion, c.enmienda),
                 url=c.source_url,
             )
         )

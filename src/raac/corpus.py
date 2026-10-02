@@ -127,8 +127,10 @@ def list_partes(client: httpx.Client | None = None) -> list[ParteListing]:
     return parse_sheet(sheet.content.decode("utf-8"))
 
 
-def fetch_listing(parte: str, client: httpx.Client | None = None) -> ParteListing:
-    return find_listing(list_partes(client), parte)
+def fetch_listings(partes: list[str], client: httpx.Client | None = None) -> list[ParteListing]:
+    """Read the sheet once and find each requested Parte in it."""
+    listings = list_partes(client)
+    return [find_listing(listings, parte) for parte in partes]
 
 
 def download(listing: ParteListing, client: httpx.Client | None = None) -> Pdf:

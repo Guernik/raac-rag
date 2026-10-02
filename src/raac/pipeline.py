@@ -5,7 +5,7 @@ implementation (e.g. a PageIndex Cloud adapter) only has to satisfy `Pipeline`.
 """
 
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Protocol
 
@@ -16,6 +16,9 @@ from .answerer import Answer, answer
 from .config import Models, load_models
 from .parser import ParsedParte, parse
 from .retriever import Retriever
+from .router import ParteRouter, parte_card
+
+DEFAULT_PARTES = ["1", "61", "67", "91"]
 
 
 @dataclass(frozen=True)
@@ -37,6 +40,7 @@ class PipelineResult:
     routed_partes: list[str]
     retrieved_secciones: list[SeccionRef]
     answer: Answer
+    visited_nodes: list[str] = field(default_factory=list)  # "<parte>:<node_id>"
 
 
 class Pipeline(Protocol):
@@ -62,16 +66,23 @@ class LocalPipeline:
         partes: list[ParsedParte],
         source_urls: dict[str, str],
         on_progress: Callable[[str], None] = lambda _msg: None,
+        router: ParteRouter | None = None,
     ):
         self._progress = on_progress
         self._retriever = retriever
+        self.router = router
         self._client = client
         self._models = models
         self._partes = partes
         self._source_urls = source_urls
 
     def models(self) -> dict[str, str]:
-        return {"indexing": self._models.indexing, "search": self._models.search, "answer": self._models.answer}
+        return {
+            "indexing": self._models.indexing,
+            "routing": self._models.routing,
+            "search": self._models.search,
+            "answer": self._models.answer,
+        }
 
     def index_versions(self) -> list[IndexVersion]:
         return [IndexVersion(p.code, p.content_hash, p.edicion, p.enmienda) for p in self._partes]
@@ -89,6 +100,7 @@ class LocalPipeline:
         )
         return PipelineResult(
             routed_partes=retrieval.routed_partes,
+            visited_nodes=retrieval.visited_nodes,
             retrieved_secciones=[SeccionRef(r.parte.code, r.seccion.id) for r in retrieval.secciones],
             answer=result,
         )
@@ -98,6 +110,7 @@ def build_local_pipeline(
     partes: list[str],
     cache_dir: Path,
     on_progress: Callable[[str], None] = lambda _msg: None,
+    routing_record_path: Path | None = None,
 ) -> LocalPipeline:
     """Download, parse and index each Parte (cached by content hash), then wire the pipeline."""
     models = load_models()
@@ -106,22 +119,27 @@ def build_local_pipeline(
     storage.mkdir(exist_ok=True)
     client = indexer.pageindex_client(models, storage)
     loaded = []
+    cards = []
     source_urls = {}
-    for code in partes:
-        on_progress(strings.PROGRESS_DOWNLOADING.format(parte=code))
-        listing = corpus.fetch_listing(code)
+    for listing in corpus.fetch_listings(partes):
+        on_progress(strings.PROGRESS_DOWNLOADING.format(parte=listing.parte))
         pdf = corpus.download(listing)
         pdf_path = cache_dir / f"raac-{listing.parte}-{pdf.sha256[:16]}.pdf"
         pdf_path.write_bytes(pdf.data)
         parsed = parse(pdf.data)
         on_progress(strings.PROGRESS_INDEXING.format(parte=parsed.code))
-        loaded.append((parsed, indexer.index(parsed, pdf_path, client, storage)))
+        index = indexer.index(parsed, pdf_path, client, storage)
+        loaded.append((parsed, index))
+        cards.append(parte_card(listing.parte, listing.titulo, index))
         source_urls[parsed.code] = listing.share_url
+    claude = anthropic.Anthropic()
+    router = ParteRouter(claude, models.routing, cards, record_path=routing_record_path)
     return LocalPipeline(
-        Retriever(client, loaded, on_progress=on_progress),
-        anthropic.Anthropic(),
+        Retriever(client, loaded, router=router, on_progress=on_progress),
+        claude,
         models,
         [p for p, _ in loaded],
         source_urls,
         on_progress,
+        router=router,
     )

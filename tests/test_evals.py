@@ -199,13 +199,18 @@ def test_local_pipeline_runs_through_the_harness(parte61, tmp_path):
         routed_partes=["61"],
         secciones=[RetrievedSeccion(parte61, parte61.seccion(s["seccion"])) for s in record["secciones"]],
     )
-    models = Models(indexing="claude-haiku-4-5", search="claude-opus-5-5", answer="claude-opus-5-5")
+    models = Models(indexing="claude-haiku-4-5", routing="claude-haiku-4-5", search="claude-opus-5-5", answer="claude-opus-5-5")
     pipeline = LocalPipeline(_StubRetriever(retrieval), _StubAnthropic(record["response"]), models, [parte61], {"61": URL})
     cases = [c for c in load_cases(SEED) if c.id == "61-vfr-nocturno-ppl"]
     report = run_eval(pipeline, cases)
 
     assert report["pipeline"]["name"] == "local"
-    assert report["pipeline"]["models"] == {"indexing": "claude-haiku-4-5", "search": "claude-opus-5-5", "answer": "claude-opus-5-5"}
+    assert report["pipeline"]["models"] == {
+        "indexing": "claude-haiku-4-5",
+        "routing": "claude-haiku-4-5",
+        "search": "claude-opus-5-5",
+        "answer": "claude-opus-5-5",
+    }
     assert report["pipeline"]["served_answer_models"] == [record["response"]["model"]]
     assert report["pipeline"]["index_versions"] == [
         {"parte": "61", "content_hash": parte61.content_hash, "edicion": "VI", "enmienda": "I"}

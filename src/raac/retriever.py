@@ -1,14 +1,14 @@
 """Retriever: Standalone question -> Retrieval (ADR 0001 seam).
 
-Tree search is PageIndex's own local agent over the ParteIndex; we observe its
-tool calls to learn which PDF pages it read, then map those pages to Secciones.
-Parte routing is not in this slice: every loaded Parte is searched.
+Parte routing first picks which Partes to search (router.py). Tree search is
+PageIndex's own local agent over each routed ParteIndex; we observe its tool
+calls to learn which PDF pages it read, then map those pages to Secciones.
 """
 
 import json
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Protocol
 
 from pageindex import PageIndexClient
 
@@ -40,20 +40,33 @@ class Retrieval:
 Progress = Callable[[str], None]
 
 
+class Router(Protocol):
+    def route(self, standalone_question: str) -> list[str]: ...
+
+
 class Retriever:
     def __init__(
         self,
         client: PageIndexClient,
         partes: list[tuple[ParsedParte, ParteIndex]],
+        router: Router | None = None,
         on_progress: Progress = lambda _msg: None,
     ):
         self._client = client
-        self._partes = partes
+        self._partes = {parsed.code: (parsed, index) for parsed, index in partes}
+        self._router = router
         self._progress = on_progress
 
     def retrieve(self, standalone_question: str) -> Retrieval:
-        retrieval = Retrieval(routed_partes=[p.code for p, _ in self._partes])
-        for parsed, index in self._partes:
+        if self._router is None:
+            routed = list(self._partes)
+        else:
+            self._progress(strings.PROGRESS_ROUTING)
+            routed = [code for code in self._router.route(standalone_question) if code in self._partes]
+            self._progress(strings.PROGRESS_ROUTED.format(partes=", ".join(routed) or "-"))
+        retrieval = Retrieval(routed_partes=routed)
+        for code in routed:
+            parsed, index = self._partes[code]
             self._progress(strings.PROGRESS_SEARCHING.format(parte=parsed.code))
             stream = self._client.chat(
                 standalone_question,
