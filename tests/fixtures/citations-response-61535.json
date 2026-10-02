@@ -1,0 +1,64 @@
+{
+  "id": "msg_recorded_tracer_61535",
+  "type": "message",
+  "role": "assistant",
+  "model": "claude-opus-5-5",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+    "input_tokens": 9100,
+    "output_tokens": 310
+  },
+  "content": [
+    {
+      "type": "thinking",
+      "thinking": "",
+      "signature": "sig"
+    },
+    {
+      "type": "text",
+      "text": "Depende de tu instrucción. ",
+      "citations": null
+    },
+    {
+      "type": "text",
+      "text": "Si tu licencia de Piloto Privado de Avión no incluye instrucción en vuelo VFR nocturno, no podés actuar como piloto al mando en operaciones VFR nocturnas salvo que acredites la experiencia de la Sección 61.520 y un instructor deje constancia en tu libro de vuelo.",
+      "citations": [
+        {
+          "type": "content_block_location",
+          "cited_text": "61.535\nOperaciones VFR nocturnas - Régimen transitorio\n(a)\nEl titular de una licencia de Piloto Privado de Avión que no haya recibido instrucción en vuelo\nVFR nocturno, o carezca de habilitación de vuelo nocturno (o vuelo nocturno local), no podrá\nejercer las atribuciones como piloto al mando en operaciones en operaciones VFR nocturno sal-\nvo que:\n(1)\nacredite la experiencia prevista en la Sección 61.520 (a)(1)(v) o 61.520 (b)(1) (v) según co-\nrresponda; y\n(2)\nun instructor de vuelo habilitado deje constancia en el libro de vuelo del cumplimiento de lo\nanterior y de la aptitud para operar VFR nocturno.\n(b)\nHasta tanto no se cumpla lo dispuesto en (a), se consignará en la licencia la limitación: “Carece\nde atribuciones para operaciones VFR nocturnas”.\n(c)\nHasta el 31 de diciembre de 2027, los postulantes a la Licencia de Piloto Privado que no deseen\nobtener las atribuciones para operaciones VFR nocturnas, podrán reemplazar las tres (3) horas\ncorrespondientes a dicha atribución por tres (3) horas de instrucción doble comando. En este ca-\nso, la licencia poseerá la leyenda dispuesta en el inciso (b) de la presente sección, pudiendo el ti-\ntular cumplir con lo dispuesto en el inciso (a) de la presente sección.",
+          "document_index": 1,
+          "document_title": "RAAC Parte 61 - Sección 61.535 Operaciones VFR nocturnas - Régimen transitorio",
+          "start_block_index": 0,
+          "end_block_index": 1,
+          "file_id": null
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "text": "\n\n",
+      "citations": null
+    },
+    {
+      "type": "text",
+      "text": "Hasta el 31 de diciembre de 2027, los postulantes que no deseen esa atribución pueden reemplazar esas tres horas por instrucción doble comando.",
+      "citations": [
+        {
+          "type": "content_block_location",
+          "cited_text": "61.535\nOperaciones VFR nocturnas - Régimen transitorio\n(a)\nEl titular de una licencia de Piloto Privado de Avión que no haya recibido instrucción en vuelo\nVFR nocturno, o carezca de habilitación de vuelo nocturno (o vuelo nocturno local), no podrá\nejercer las atribuciones como piloto al mando en operaciones en operaciones VFR nocturno sal-\nvo que:\n(1)\nacredite la experiencia prevista en la Sección 61.520 (a)(1)(v) o 61.520 (b)(1) (v) según co-\nrresponda; y\n(2)\nun instructor de vuelo habilitado deje constancia en el libro de vuelo del cumplimiento de lo\nanterior y de la aptitud para operar VFR nocturno.\n(b)\nHasta tanto no se cumpla lo dispuesto en (a), se consignará en la licencia la limitación: “Carece\nde atribuciones para operaciones VFR nocturnas”.\n(c)\nHasta el 31 de diciembre de 2027, los postulantes a la Licencia de Piloto Privado que no deseen\nobtener las atribuciones para operaciones VFR nocturnas, podrán reemplazar las tres (3) horas\ncorrespondientes a dicha atribución por tres (3) horas de instrucción doble comando. En este ca-\nso, la licencia poseerá la leyenda dispuesta en el inciso (b) de la presente sección, pudiendo el ti-\ntular cumplir con lo dispuesto en el inciso (a) de la presente sección.",
+          "document_index": 1,
+          "document_title": "RAAC Parte 61 - Sección 61.535 Operaciones VFR nocturnas - Régimen transitorio",
+          "start_block_index": 0,
+          "end_block_index": 1,
+          "file_id": null
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "text": " Esto vale para cualquier aeródromo del mundo.",
+      "citations": null
+    }
+  ]
+}
