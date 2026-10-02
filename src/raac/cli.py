@@ -10,7 +10,7 @@ import httpx
 
 from . import corpus, indexer, strings
 from .answerer import Answer, Citation, answer
-from .config import load_models
+from .config import load_env, load_models
 from .parser import parse
 from .retriever import Retriever
 
@@ -28,6 +28,7 @@ def main(argv: list[str] | None = None) -> int:
     fetch.add_argument("--dir", type=Path, default=Path(".raac/corpus"))
     fetch.add_argument("--parte", action="append", help="Only this Parte (repeatable)")
     args = ap.parse_args(argv)
+    load_env()
     if args.command == "fetch":
         return fetch_corpus(args.dir, args.parte)
 
@@ -89,24 +90,36 @@ def fetch_corpus(root: Path, only: list[str] | None = None) -> int:
 
 
 def render(result: Answer) -> str:
-    lines = [strings.NOTICE, ""]
-    if result.refused:
-        lines.append(strings.REFUSAL)
-        return "\n".join(lines)
     numbered: list[Citation] = []
     keys: dict[tuple, int] = {}
-    body = []
-    for sentence in result.sentences:
+
+    def marked(text: str, citations: list[Citation]) -> str:
+        if not citations:
+            raise ValueError(f"Uncited sentence must not reach the output: {text!r}")
         marks = []
-        for c in sentence.citations:
+        for c in citations:
             key = (c.parte, c.seccion, c.pdf_page_start, c.pdf_page_end)
             if key not in keys:
                 numbered.append(c)
                 keys[key] = len(numbered)
             if keys[key] not in marks:
                 marks.append(keys[key])
-        body.append(sentence.text + " " + "".join(f"[{n}]" for n in marks))
-    lines += [" ".join(body), "", strings.CITATIONS_HEADER]
+        return text + " " + "".join(f"[{n}]" for n in marks)
+
+    body = []
+    if result.refused:
+        body.append(strings.REFUSAL)
+    elif result.incomplete:
+        body.append(strings.INCOMPLETE)
+    body += [marked(s.text, s.citations) for s in result.sentences]
+    body += [
+        marked(strings.LIKELY_PARTE.format(parte=lp.parte, seccion=lp.citation.seccion), [lp.citation])
+        for lp in result.likely_partes
+    ]
+    lines = [strings.NOTICE, "", " ".join(body)]
+    if not numbered:
+        return "\n".join(lines)
+    lines += ["", strings.CITATIONS_HEADER]
     for n, c in enumerate(numbered, 1):
         if c.pdf_page_start == c.pdf_page_end:
             paginas = strings.PAGES_SINGLE.format(pdf=c.pdf_page_start, impresa=c.printed_page_start)

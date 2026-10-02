@@ -5,6 +5,8 @@ NOTICE = (
     "los NOTAM ni a la ANAC."
 )
 REFUSAL = "No encontré respaldo en la RAAC vigente cargada para responder esta pregunta."
+INCOMPLETE = "La RAAC vigente cargada no cubre todo lo que preguntaste. Esto es lo que encontré:"
+LIKELY_PARTE = "Lo que falta probablemente lo regula la Parte {parte}: la Sección {seccion} remite a ella."
 CITATIONS_HEADER = "Citas:"
 CITATION = (
     "[{n}] Parte {parte}, Sección {seccion} ({titulo}), {paginas}, "
