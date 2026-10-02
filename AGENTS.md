@@ -30,7 +30,7 @@ Python backend (FastAPI, streaming answers; ingestion and retrieval in Python be
 
 - Human-facing index: https://www.argentina.gob.ar/anac/raac-dnar-regulaciones-argentinas-de-aviacion-civil/raac. Its table is rendered client-side from a public Google Sheet ("RAAC Vigentes").
 - Machine index: the page HTML embeds a Poncho `ponchoTableOpciones` config whose `idSpread` is that sheet's ID (as of 2026-09: `1Xu4sfqfp29hLAHOC2i-FjfwFkKnxQj0uDoXFuT-ILOg`). Read `idSpread` from the page on every run and fetch `https://docs.google.com/spreadsheets/d/<idSpread>/export?format=csv`; never hardcode the ID, and fail loudly if the config is missing. Columns are `parte,titulo,btn-Ver,orden`. It is hand-maintained: row 2 repeats the headers in Spanish, titles are wrapped in `**` with stray whitespace, links can carry trailing newlines, `orden` is meaningless, and Parte codes are not always numeric (`HL`). Normalize every row and reject anything unexpected loudly.
-- Each `btn-Ver` is a Nextcloud share link (`https://docs.anac.gob.ar/index.php/s/<token>`). Appending `/download` returns the PDF.
+- Each `btn-Ver` is a Nextcloud share link (`https://docs.anac.gob.ar/index.php/s/<token>`). Appending `/download` returns the PDF. A few (Parte 77 as of 2026-10) share a whole folder and point at the PDF with `?path=<folder>&openfile=<fileid>`; there `/download` returns a ZIP of the folder, so the PDF is resolved by fileid over public WebDAV (`public.php/webdav`, token as user).
 - Share links are the stable citation URL. The PDF has no version in its URL, so detect changes by content hash.
 - Related sections, currently out of scope unless an ADR adds them: DNAR, RAAC históricas, exenciones, RAIAAC.
 

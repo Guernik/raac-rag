@@ -12,6 +12,7 @@ _Avoid_: the regulations, the rules
 
 **Parte**:
 One RAAC regulation, published as a single PDF, identified by a code that is usually a number but not always (Parte 61, Licencias; Parte 91, Reglas de vuelo; Parte HL, Helicópteros Livianos). Contains **Capítulos** or **Subpartes**, which contain **Secciones**.
+Pilots and the RAAC text itself name a Parte as "RAAC <code>" (RAAC 67, RAAC 91). User-facing text says "RAAC 67", not "Parte 67"; in code and docs the term stays **Parte**.
 _Avoid_: part, document, file
 
 **Sección**:

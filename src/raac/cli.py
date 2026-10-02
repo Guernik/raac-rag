@@ -1,4 +1,5 @@
-"""CLI: `raac ask "<pregunta>"` answers from Parte 61 with Citations; `raac eval` runs the eval set."""
+"""CLI: `raac ask "<pregunta>"` answers from Parte 61 with Citations; `raac fetch` downloads the RAAC vigente;
+`raac eval` runs the eval set."""
 
 import argparse
 import json
@@ -6,8 +7,11 @@ import sys
 from datetime import UTC, datetime
 from pathlib import Path
 
-from . import evals, strings
+import httpx
+
+from . import corpus, evals, strings
 from .answerer import Answer, Citation
+from .config import load_env
 from .pipeline import build_local_pipeline
 
 DEFAULT_CASES = Path("evals/cases.jsonl")
@@ -27,7 +31,13 @@ def main(argv: list[str] | None = None) -> int:
     ev.add_argument("--parte", action="append", help="Parte to load (repeatable); default 61")
     ev.add_argument("--cache-dir", type=Path, default=Path(".raac"))
     ev.add_argument("--out", type=Path, help="Report path; default evals/reports/<UTC timestamp>-local.json")
+    fetch = sub.add_parser("fetch", help="Discover all Partes on the ANAC page and download their PDFs")
+    fetch.add_argument("--dir", type=Path, default=Path(".raac/corpus"))
+    fetch.add_argument("--parte", action="append", help="Only this Parte (repeatable)")
     args = ap.parse_args(argv)
+    load_env()
+    if args.command == "fetch":
+        return fetch_corpus(args.dir, args.parte)
 
     def progress(msg: str) -> None:
         print(msg, file=sys.stderr)
@@ -51,25 +61,58 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
+def fetch_corpus(root: Path, only: list[str] | None = None) -> int:
+    client = httpx.Client(follow_redirects=True, timeout=120)
+    listings = corpus.list_partes(client)
+    if only:
+        listings = [corpus.find_listing(listings, p) for p in only]
+    store = corpus.CorpusStore(root)
+    counts = {corpus.CorpusStore.NEW: 0, corpus.CorpusStore.CHANGED: 0, corpus.CorpusStore.UNCHANGED: 0}
+    for listing in listings:
+        pdf = corpus.download(listing, client)
+        status = store.put(listing, pdf)
+        counts[status] += 1
+        print(
+            strings.FETCH_LINE.format(
+                parte=listing.parte, estado=strings.FETCH_STATUS[status], sha256=pdf.sha256[:12], titulo=listing.titulo
+            ),
+            flush=True,
+        )
+    print(strings.FETCH_SUMMARY.format(total=len(listings), **counts))
+    return 0
+
+
 def render(result: Answer) -> str:
-    lines = [strings.NOTICE, ""]
-    if result.refused:
-        lines.append(strings.REFUSAL)
-        return "\n".join(lines)
     numbered: list[Citation] = []
     keys: dict[tuple, int] = {}
-    body = []
-    for sentence in result.sentences:
+
+    def marked(text: str, citations: list[Citation]) -> str:
+        if not citations:
+            raise ValueError(f"Uncited sentence must not reach the output: {text!r}")
         marks = []
-        for c in sentence.citations:
+        for c in citations:
             key = (c.parte, c.seccion, c.pdf_page_start, c.pdf_page_end)
             if key not in keys:
                 numbered.append(c)
                 keys[key] = len(numbered)
             if keys[key] not in marks:
                 marks.append(keys[key])
-        body.append(sentence.text + " " + "".join(f"[{n}]" for n in marks))
-    lines += [" ".join(body), "", strings.CITATIONS_HEADER]
+        return text + " " + "".join(f"[{n}]" for n in marks)
+
+    body = []
+    if result.refused:
+        body.append(strings.REFUSAL)
+    elif result.incomplete:
+        body.append(strings.INCOMPLETE)
+    body += [marked(s.text, s.citations) for s in result.sentences]
+    body += [
+        marked(strings.LIKELY_PARTE.format(parte=lp.parte, seccion=lp.citation.seccion), [lp.citation])
+        for lp in result.likely_partes
+    ]
+    lines = [strings.NOTICE, "", " ".join(body)]
+    if not numbered:
+        return "\n".join(lines)
+    lines += ["", strings.CITATIONS_HEADER]
     for n, c in enumerate(numbered, 1):
         if c.pdf_page_start == c.pdf_page_end:
             paginas = strings.PAGES_SINGLE.format(pdf=c.pdf_page_start, impresa=c.printed_page_start)

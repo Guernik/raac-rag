@@ -10,6 +10,11 @@ prose, sentence ends included, in uncited blocks. So sentences are split by
 character position over the whole text (never inside a cited span), and each
 sentence takes the Citations of the spans it contains. Sentences without a
 Citation are dropped; an Answer with none left is a refusal.
+
+When the Secciones do not cover (part of) the question, the model writes one
+uncited line starting with GAP_MARKER. That line is never shown: it only marks
+the Answer as incomplete, and the Partes it names are kept as likely Partes when
+a retrieved Sección has a Remisión to them, cited from that Remisión's text.
 """
 
 import json
@@ -20,7 +25,10 @@ from typing import Any
 
 import anthropic
 
+from .remisiones import Remision, find_remisiones, parte_codes
 from .retriever import Retrieval, RetrievedSeccion
+
+GAP_MARKER = "SIN RESPALDO:"
 
 SYSTEM = (
     "Respondés preguntas sobre las Regulaciones Argentinas de Aviación Civil (RAAC) "
@@ -28,8 +36,10 @@ SYSTEM = (
     "rioplatense claro, en pocas oraciones de prosa simple, sin markdown (sin negritas, "
     "títulos ni listas). Cada oración debe apoyarse en el texto de los documentos; si "
     "dependen de plazos o regímenes transitorios, mencionalos. "
-    "Si los documentos no alcanzan para responder, decilo en una oración sin agregar "
-    "nada de conocimiento propio."
+    "No agregues nada de conocimiento propio. Si los documentos no alcanzan para responder "
+    "la pregunta, o una parte de ella, terminá con una línea aparte, sin citas, que empiece "
+    f"con '{GAP_MARKER}' y diga qué falta; si los documentos remiten a otra Parte de la RAAC "
+    "que probablemente lo cubra, nombrala ahí (por ejemplo 'Parte 67')."
 )
 # A sentence ends at terminal punctuation (optionally closing an emphasis) followed by
 # whitespace, so "61.520" does not split, or at a line break.
@@ -37,6 +47,7 @@ _SENTENCE_END = re.compile(r"[.!?:;](?:\*\*|__)?(?=\s|$)|\n")
 # Markdown the model may still emit: emphasis markers and list bullets/numbers.
 _MARKUP = re.compile(r"\*\*|__|^\s*(?:[-*•]|\d+[.)])\s+")
 _LETTER = re.compile(r"[^\W\d_]")
+_GAP = re.compile(re.escape(GAP_MARKER) + r"[^\n]*", re.I)
 
 
 @dataclass
@@ -61,9 +72,20 @@ class Sentence:
 
 
 @dataclass
+class LikelyParte:
+    """A Parte that likely covers what the Answer could not, cited from a retrieved Sección's Remisión to it."""
+
+    parte: str
+    citation: Citation
+
+
+@dataclass
 class Answer:
-    sentences: list[Sentence]
-    refused: bool
+    sentences: list[Sentence]  # every one carries at least one Citation
+    refused: bool  # no grounded sentence: the Answer says so and cites only likely Partes' Remisiones
+    incomplete: bool = False  # grounded sentences, but the model flagged part of the question as uncovered
+    likely_partes: list[LikelyParte] = field(default_factory=list)
+    gap: str | None = None  # the model's GAP_MARKER line, for logs only; never shown
     dropped_uncited: list[str] = field(default_factory=list)
     model: str | None = None
 
@@ -142,10 +164,20 @@ def map_response(response: dict[str, Any], retrieval: Retrieval, source_urls: di
     def splits_a_span(cut: int) -> bool:
         return any(start < cut < end for start, end, _ in spans)
 
-    cuts = [m.end() for m in _SENTENCE_END.finditer(full) if not splits_a_span(m.end())]
+    gaps = [
+        (m.start(), m.end())
+        for m in _GAP.finditer(full)
+        if not any(m.start() < s_end and s_start < m.end() for s_start, s_end, _ in spans)
+    ]
+    cuts = sorted(
+        {m.end() for m in _SENTENCE_END.finditer(full) if not splits_a_span(m.end())}
+        | {cut for gap in gaps for cut in gap}
+    )
     sentences: list[Sentence] = []
     dropped: list[str] = []
     for start, end in zip([0, *cuts], [*cuts, len(full)]):
+        if any(g_start <= start and end <= g_end for g_start, g_end in gaps):
+            continue
         text = _MARKUP.sub("", full[start:end]).strip()
         if not _LETTER.search(text):
             continue  # list numbers, stray markup, blank lines
@@ -154,7 +186,53 @@ def map_response(response: dict[str, Any], retrieval: Retrieval, source_urls: di
             sentences.append(Sentence(text=_capitalize(text), citations=cites))
         else:
             dropped.append(text)
-    return Answer(sentences=sentences, refused=not sentences, dropped_uncited=dropped, model=response.get("model"))
+    gap = " ".join(full[start:end].strip() for start, end in gaps) or None
+    cited = {(c.parte, c.seccion) for s in sentences for c in s.citations}
+    return Answer(
+        sentences=sentences,
+        refused=not sentences,
+        incomplete=bool(sentences) and gap is not None,
+        likely_partes=_likely_partes(gap, retrieval, cited, source_urls),
+        gap=gap,
+        dropped_uncited=dropped,
+        model=response.get("model"),
+    )
+
+
+def _likely_partes(
+    gap: str | None, retrieval: Retrieval, cited: set[tuple[str, str]], source_urls: dict[str, str]
+) -> list[LikelyParte]:
+    """Partes the gap line names that a retrieved Sección has a Remisión to; cited Secciones first.
+
+    A Parte the model names without a Remisión in the text is not shown: it would be an uncited claim.
+    """
+    if gap is None:
+        return []
+    named = parte_codes(gap)
+    ordered = sorted(retrieval.secciones, key=lambda r: (r.parte.code, r.seccion.id) not in cited)
+    found: dict[str, LikelyParte] = {}
+    for r in ordered:
+        for remision in find_remisiones(r.seccion, r.parte.code):
+            if remision.to_parte in named and remision.to_parte not in found:
+                found[remision.to_parte] = LikelyParte(remision.to_parte, _remision_citation(remision, r, source_urls))
+    return [found[code] for code in named if code in found]
+
+
+def _remision_citation(remision: Remision, r: RetrievedSeccion, source_urls: dict[str, str]) -> Citation:
+    page = r.seccion.pages[remision.page_index]
+    return Citation(
+        parte=r.parte.code,
+        seccion=r.seccion.id,
+        seccion_title=r.seccion.title,
+        pdf_page_start=page.pdf_page,
+        pdf_page_end=page.pdf_page,
+        printed_page_start=page.printed_page,
+        printed_page_end=page.printed_page,
+        edicion=r.parte.edicion,
+        enmienda=r.parte.enmienda,
+        source_url=source_urls[r.parte.code],
+        cited_text=remision.text,
+    )
 
 
 def _capitalize(text: str) -> str:
