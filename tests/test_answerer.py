@@ -83,9 +83,18 @@ def test_every_sentence_has_a_citation_and_no_citation_is_shared_across_sentence
     cited_spans = [
         block["text"] for block in response["content"] if block.get("type") == "text" and block.get("citations")
     ]
-    # Each cited span lands in exactly one sentence, and nothing is invented around it.
+    # Each cited span lands in exactly one sentence (possibly as its capitalized start), and nothing
+    # is invented around it.
     for span in cited_spans:
-        assert sum(span.strip() in s.text for s in answer.sentences) == 1, span
+        span = span.strip()
+        capitalized = span[:1].upper() + span[1:]
+        assert sum(span in s.text or s.text.startswith(capitalized) for s in answer.sentences) == 1, span
+    # Every kept sentence starts with a capital letter, including the one whose lead-in
+    # ("Hay un régimen transitorio:") was dropped as uncited.
+    for sentence in answer.sentences:
+        first = next(ch for ch in sentence.text if ch.isalpha())
+        assert first.isupper(), sentence.text
+    assert any(s.text.startswith("Hasta el 31 de diciembre de 2027") for s in answer.sentences)
     all_text = " ".join(s.text for s in answer.sentences)
     for dropped in answer.dropped_uncited:
         assert dropped not in all_text
@@ -201,8 +210,22 @@ def test_markdown_headings_and_list_numbers_are_not_sentences(two_secciones):
         two_secciones,
         {"61": URL},
     )
-    assert [s.text for s in answer.sentences] == ["tener instrucción.", "tener constancia."]
+    assert [s.text for s in answer.sentences] == ["Tener instrucción.", "Tener constancia."]
     assert answer.dropped_uncited == ["Depende.", "Hay dos condiciones:"]
+
+
+def test_kept_sentences_start_with_a_capital_letter_but_dropped_text_is_untouched(two_secciones):
+    answer = map_response(
+        _response(
+            ("Hay un régimen transitorio: ", []),
+            ('"hasta 2027', [_cite(1, 0)]),
+            (' rige el reemplazo". más datos sueltos.', []),
+        ),
+        two_secciones,
+        {"61": URL},
+    )
+    assert [s.text for s in answer.sentences] == ['"Hasta 2027 rige el reemplazo".']
+    assert answer.dropped_uncited == ["Hay un régimen transitorio:", "más datos sueltos."]
 
 
 def test_no_citations_means_refusal(two_secciones):

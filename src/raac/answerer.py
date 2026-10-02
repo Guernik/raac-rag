@@ -151,10 +151,16 @@ def map_response(response: dict[str, Any], retrieval: Retrieval, source_urls: di
             continue  # list numbers, stray markup, blank lines
         cites = [c for s_start, s_end, span_cites in spans if start <= s_start and s_end <= end for c in span_cites]
         if cites:
-            sentences.append(Sentence(text=text, citations=cites))
+            sentences.append(Sentence(text=_capitalize(text), citations=cites))
         else:
             dropped.append(text)
     return Answer(sentences=sentences, refused=not sentences, dropped_uncited=dropped, model=response.get("model"))
+
+
+def _capitalize(text: str) -> str:
+    """Uppercase the first letter, e.g. when a dropped uncited lead-in ("Hay un régimen transitorio:") preceded it."""
+    m = _LETTER.search(text)
+    return text if m is None else text[: m.start()] + text[m.start()].upper() + text[m.start() + 1 :]
 
 
 def _map_citation(raw: dict[str, Any], retrieval: Retrieval, source_urls: dict[str, str]) -> Citation:
