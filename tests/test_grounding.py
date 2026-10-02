@@ -184,7 +184,14 @@ def test_parte_codes(text, codes):
 def test_remisiones_skip_the_own_parte_and_keep_the_verbatim_line(parte61):
     remisiones = find_remisiones(parte61.seccion("61.065"), "61")
     assert [(r.to_parte, r.page_index) for r in remisiones] == [("67", 0)]
-    assert remisiones[0].text in parte61.seccion("61.065").pages[0].text
+    assert remisiones[0].text == (
+        "La validez de los certificados médicos aeronáuticos se establece en la Sección 67.015 del RAAC 67."
+    )
+    # A Remisión wrapped onto its own line is widened to the clause, back to the inciso marker.
+    [to_67] = [r for r in find_remisiones(parte61.seccion("61.060"), "61") if r.to_parte == "67"][:1]
+    assert to_67.text == (
+        "Se encuentre vigente la certificación médica aeronáutica correspondiente y otorgado\nbajo la RAAC 67;"
+    )
     assert all(r.to_parte != "61" for s in parte61.secciones for r in find_remisiones(s, "61"))
 
 
@@ -196,3 +203,27 @@ def test_refusal_eval_cases_are_out_of_scope_in_the_eval_case_format():
         assert set(case) <= {"id", "question", "expected_secciones", "reference_answer", "out_of_scope", "source"}
         assert case["out_of_scope"] is True and case["expected_secciones"] == []
         assert case["question"].strip() and case["reference_answer"].strip()
+
+
+def test_live_recording_partial_answer_names_parte_67(parte61):
+    """Replays `raac ask "¿Cuánto dura el certificado médico clase 2 de un piloto privado?" --record ...`
+    against Parte 61 (recorded 2026-10-02 with the fixture PDF, byte-identical to the live one)."""
+    record = json.loads((Path(__file__).parent / "fixtures" / "citations-response-medico-67.json").read_text())
+    retrieval = Retrieval(
+        routed_partes=["61"],
+        secciones=[RetrievedSeccion(parte61, parte61.seccion(s["seccion"])) for s in record["secciones"]],
+    )
+    answer = map_response(record["response"], retrieval, {"61": URL})
+    assert not answer.refused and answer.incomplete
+    assert answer.gap.startswith("SIN RESPALDO:") and "Parte 67" in answer.gap
+    assert all(s.citations for s in answer.sentences)
+    assert {c.seccion for s in answer.sentences for c in s.citations} == {"61.065", "61.505", "61.060"}
+    [likely] = answer.likely_partes
+    assert likely.parte == "67" and likely.citation.seccion in {"61.065", "61.505", "61.060"}
+    assert "RAAC 67" in likely.citation.cited_text
+
+    out = render(answer)
+    assert _body(out).startswith(strings.INCOMPLETE)
+    assert "SIN RESPALDO" not in out
+    for dropped in answer.dropped_uncited:
+        assert dropped not in out

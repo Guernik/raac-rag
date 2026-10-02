@@ -21,6 +21,10 @@ _REMISION = re.compile(
 )
 _CODE_RE = re.compile(_CODE)
 _NOT_CODES = {"DE", "DEL", "EL", "EN", "LA", "LAS", "LOS"}
+# PDF text breaks lines mid-clause; a clause ends a line with . ; or :, and an inciso
+# marker such as "(ii)" sits on its own line.
+_CLAUSE_END = re.compile(r"[.;:]\s*$")
+_INCISO = re.compile(r"^\s*\(?[a-z0-9]{1,4}\)\s*$")
 
 
 @dataclass(frozen=True)
@@ -28,7 +32,7 @@ class Remision:
     to_parte: str
     seccion: Seccion
     page_index: int  # into seccion.pages
-    text: str  # the whole line(s) holding the Remisión, verbatim from the page text
+    text: str  # the clause holding the Remisión, verbatim from the page text
 
 
 def parte_codes(text: str) -> list[str]:
@@ -46,11 +50,28 @@ def find_remisiones(seccion: Seccion, own_parte: str) -> list[Remision]:
     found: dict[str, Remision] = {}
     for i, page in enumerate(seccion.pages):
         for m in _REMISION.finditer(page.text):
-            line_start = page.text.rfind("\n", 0, m.start()) + 1
-            line_end = page.text.find("\n", m.end())
-            line = page.text[line_start : len(page.text) if line_end == -1 else line_end]
+            line = _clause(page.text, m.start(), m.end(), heading={seccion.id, *seccion.title.split()})
             for code in _CODE_RE.findall(m.group(1)):
                 if code in _NOT_CODES or code == own_parte or code in found:
                     continue
                 found[code] = Remision(to_parte=code, seccion=seccion, page_index=i, text=line)
     return list(found.values())
+
+
+def _clause(text: str, start: int, end: int, heading: set[str]) -> str:
+    """The lines holding text[start:end], widened to the clause they belong to, never into the heading."""
+    lines = text.split("\n")
+    offsets = [0]
+    for line in lines:
+        offsets.append(offsets[-1] + len(line) + 1)
+    first = max(i for i, o in enumerate(offsets[:-1]) if o <= start)
+    last = max(i for i, o in enumerate(offsets[:-1]) if o < max(end, start + 1))
+    def is_boundary(line: str) -> bool:
+        words = line.split()
+        return bool(_CLAUSE_END.search(line) or _INCISO.match(line) or (words and set(words) <= heading))
+
+    while first > 0 and not is_boundary(lines[first - 1]):
+        first -= 1
+    while last < len(lines) - 1 and not _CLAUSE_END.search(lines[last]) and not _INCISO.match(lines[last + 1]):
+        last += 1
+    return "\n".join(lines[first : last + 1]).strip()
