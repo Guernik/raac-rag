@@ -11,7 +11,7 @@ Not an official source. It does not replace AIP, NOTAMs or ANAC.
 
 ## Status
 
-Today the pipeline runs end to end from the command line (`raac fetch`, `raac ask`) over Parte 61, caching PDFs and PageIndex trees under `.raac/`. The web API, object storage, frontend, Postgres registry and automatic promotion of new Enmiendas are planned. The diagrams below mark planned pieces with dashed borders. Their Mermaid sources are in [`docs/diagrams/`](docs/diagrams/); after editing one, re-render the images with `docs/diagrams/render.sh`.
+Today the pipeline runs end to end from the command line (`raac fetch`, `raac ask`) over Parte 61, caching PDFs and PageIndex trees under `.raac/`. The web API, object storage, frontend, Postgres registry and automatic promotion of new Enmiendas are planned. The diagrams below mark planned pieces with dashed borders. Their Mermaid sources are in [`docs/diagrams/`](docs/diagrams/); after editing one, re-render the images with `just diagrams`.
 
 ## High-level architecture
 
