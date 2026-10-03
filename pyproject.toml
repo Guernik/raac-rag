@@ -4,6 +4,7 @@
 #   run:      uv run raac ask "¿Puedo volar VFR de noche con mi licencia de piloto privado?"
 #             (needs ANTHROPIC_API_KEY, from the environment or a .env file: cp .env.example .env;
 #              models per stage in src/raac/models.toml)
+#   eval:     uv run raac eval   (cases in evals/cases.jsonl; report in evals/reports/)
 
 [project]
 name = "raac-rag"

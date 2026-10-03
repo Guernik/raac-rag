@@ -1,18 +1,20 @@
-"""CLI: `raac ask "<pregunta>"` answers from Parte 61 with Citations; `raac fetch` downloads the RAAC vigente."""
+"""CLI: `raac ask "<pregunta>"` answers from Parte 61 with Citations; `raac fetch` downloads the RAAC vigente;
+`raac eval` runs the eval set."""
 
 import argparse
 import json
 import sys
+from datetime import UTC, datetime
 from pathlib import Path
 
-import anthropic
 import httpx
 
-from . import corpus, indexer, strings
-from .answerer import Answer, Citation, answer
-from .config import load_env, load_models
-from .parser import parse
-from .retriever import Retriever
+from . import corpus, evals, strings
+from .answerer import Answer, Citation
+from .config import load_env
+from .pipeline import build_local_pipeline
+
+DEFAULT_CASES = Path("evals/cases.jsonl")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -24,6 +26,11 @@ def main(argv: list[str] | None = None) -> int:
     ask.add_argument("--cache-dir", type=Path, default=Path(".raac"))
     ask.add_argument("--record", type=Path, help="Write the question, document Secciones and raw Citations API response to this file")
     ask.add_argument("--json", action="store_true", help="Print the Answer as JSON")
+    ev = sub.add_parser("eval", help="Run the eval set against the local pipeline and write a report")
+    ev.add_argument("--cases", type=Path, default=DEFAULT_CASES)
+    ev.add_argument("--parte", action="append", help="Parte to load (repeatable); default 61")
+    ev.add_argument("--cache-dir", type=Path, default=Path(".raac"))
+    ev.add_argument("--out", type=Path, help="Report path; default evals/reports/<UTC timestamp>-local.json")
     fetch = sub.add_parser("fetch", help="Discover all Partes on the ANAC page and download their PDFs")
     fetch.add_argument("--dir", type=Path, default=Path(".raac/corpus"))
     fetch.add_argument("--parte", action="append", help="Only this Parte (repeatable)")
@@ -35,32 +42,18 @@ def main(argv: list[str] | None = None) -> int:
     def progress(msg: str) -> None:
         print(msg, file=sys.stderr)
 
-    models = load_models()
-    args.cache_dir.mkdir(parents=True, exist_ok=True)
+    if args.command == "eval":
+        cases = evals.load_cases(args.cases)  # fail on a malformed case before spending on indexing
+        pipeline = build_local_pipeline(args.parte or ["61"], args.cache_dir, progress)
+        report = evals.run_eval(pipeline, cases, args.cases)
+        out = args.out or Path("evals/reports") / f"{datetime.now(UTC):%Y%m%dT%H%M%SZ}-{pipeline.name}.json"
+        evals.write_report(report, out)
+        print(evals.summarize(report))
+        print(f"report: {out}")
+        return 0
 
-    progress(strings.PROGRESS_DOWNLOADING.format(parte=args.parte))
-    listing = corpus.fetch_listing(args.parte)
-    pdf = corpus.download(listing)
-    pdf_path = args.cache_dir / f"raac-{listing.parte}-{pdf.sha256[:16]}.pdf"
-    pdf_path.write_bytes(pdf.data)
-    parsed = parse(pdf.data)
-
-    progress(strings.PROGRESS_INDEXING.format(parte=parsed.code))
-    storage = args.cache_dir / "pageindex"
-    storage.mkdir(exist_ok=True)
-    client = indexer.pageindex_client(models, storage)
-    index = indexer.index(parsed, pdf_path, client, storage)
-
-    retrieval = Retriever(client, [(parsed, index)], on_progress=progress).retrieve(args.question)
-    progress(strings.PROGRESS_ANSWERING)
-    result = answer(
-        anthropic.Anthropic(),
-        models.answer,
-        args.question,
-        retrieval,
-        source_urls={parsed.code: listing.share_url},
-        record_path=args.record,
-    )
+    pipeline = build_local_pipeline([args.parte], args.cache_dir, progress)
+    result = pipeline.run(args.question, record_path=args.record).answer
     if args.json:
         print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
     else:
