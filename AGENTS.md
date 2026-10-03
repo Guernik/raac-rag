@@ -9,6 +9,7 @@ Python backend (FastAPI, streaming answers; ingestion and retrieval in Python be
 - `CONTEXT.md` - domain glossary (RAAC, Parte, Subparte, Enmienda, DNAR, ...). Read it before naming anything in code, prompts, or UI; use its terms verbatim.
 - `docs/adr/` - architecture decisions. Read the relevant ADR before changing retrieval, indexing, Parte routing, the LLM, or corpus scope.
 - `research/` - findings on sources, tools, and approaches. Check here before researching something again.
+- `docs/diagrams/` - Mermaid sources for the README diagrams. Any change that adds, removes, or rewires a component, pipeline stage, model, or store updates the affected `.mmd` files in the same change, and re-renders them with `just diagrams`. Commit only the PNGs whose source changed.
 
 ## Invariants
 

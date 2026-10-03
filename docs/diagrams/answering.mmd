@@ -3,14 +3,17 @@ sequenceDiagram
     actor U as User
     participant C as CLI / API
     participant R as Retriever
+    participant RT as ParteRouter<br/>Haiku 4.5
     participant P as PageIndex<br/>Opus 5.5
     participant A as Answerer
     participant L as Citations API<br/>Opus 5.5
 
     U->>C: question (Spanish)
-    Note over C: planned: rewrite into a Standalone question<br/>and route to likely Partes (Haiku 4.5)
+    Note over C: planned: rewrite into a Standalone question
     C->>R: Standalone question
-    loop each loaded Parte
+    R->>RT: question + one card per loaded Parte<br/>(code, título, root summary, top-level divisions)
+    RT-->>R: routed Partes, most relevant first<br/>(JSON enum of loaded codes, may be empty)
+    loop each routed Parte
         R->>P: chat(question, tree of the Parte)
         P-->>R: tool calls get_page_content(pages)
     end
