@@ -12,7 +12,7 @@ Python backend (FastAPI, streaming answers; ingestion and retrieval in Python be
 
 ## Invariants
 
-- **Grounded or silent.** Every sentence in an answer carries a citation to a retrieved Sección. When retrieval finds no support, the answer says so and cites nothing. A plausible uncited answer is a bug, since pilots may act on it.
+- **Grounded or silent.** Every claim in an answer carries a citation to a retrieved Sección; only Framing (lead-ins, connectives, a sí/no/depende verdict) may go uncited (ADR 0003). When retrieval finds no support, the answer says so and cites nothing. A plausible uncited claim is a bug, since pilots may act on it.
 - **Citations are data, not text.** Each Citation comes from the Claude Citations API (`cited_text` + page range, verbatim from the source) joined with Parte, Sección, edition, and source URL from the index built at ingestion. Never parse citations out of model prose (ADR 0002).
 - **Pages are PDF pages.** Store both the physical PDF page index (for `#page=N` deep links) and the printed page label if the document has one. Keep them separate.
 - **Versioned corpus.** RAAC Partes get amended (see the ANAC "registro de enmiendas" and "RAAC históricas" pages). Every indexed Parte records the edition and amendment it came from (printed in each page footer), and re-ingesting a Parte replaces its old index instead of adding to it. A changed PDF is indexed beside the live one and promoted only after automated checks pass (Edición/Enmienda parsed from the footer, sane page count, that Parte's eval cases green); otherwise the old index keeps serving and a human is alerted.

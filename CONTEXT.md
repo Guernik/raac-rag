@@ -38,8 +38,12 @@ _Avoid_: current, latest
 ### Answers
 
 **Answer**:
-A plain-Spanish synthesis responding to a user's question, in which every sentence carries at least one **Citation**. Not advice.
+A plain-Spanish synthesis responding to a user's question, in which every claim carries at least one **Citation**; only **Framing** may go uncited. Not advice.
 _Avoid_: response, reply
+
+**Framing**:
+The uncited parts of an **Answer** that state no requirement of their own: a lead-in, a connective, or a verdict (sí / no / depende) that the cited sentences support. Applying a rule to the user's own facts is a claim, not Framing.
+_Avoid_: summary, intro
 
 **Citation**:
 A pointer from an **Answer** sentence to the **Sección** that supports it: **Parte**, **Sección**, **PDF page**, and **Edición**.
