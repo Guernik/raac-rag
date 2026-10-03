@@ -37,3 +37,7 @@ Python backend (FastAPI, streaming answers; ingestion and retrieval in Python be
 ## Quality
 
 Retrieval quality is measured, not eyeballed. An eval set of question -> expected (Parte, section) pairs lives in the repo, and any change to parsing, indexing, routing, or prompts is checked against it before it is kept.
+
+## Issue tracking
+
+Issues live on the GitHub project board https://github.com/users/Guernik/projects/1 (Status: Backlog, blocked, Ready, In progress, In review, Done). Keep it in sync whenever an issue changes state: claimed -> In progress, PR opened -> In review, closed -> Done. When an issue closes, re-check every open issue whose "Blocked by" lists it and move it from blocked to Ready once all its blockers are closed. Ready covers both `ready-for-agent` and `hitl` issues. `gh project` needs the `project` token scope (`gh auth refresh -s project`).
