@@ -18,6 +18,6 @@ sequenceDiagram
     R->>A: Retrieval (Secciones + visited nodes)
     A->>L: one document per Sección<br/>(one content block per PDF page), citations on
     L-->>A: text blocks with cited_text + block ranges
-    A->>A: split into sentences, map Citations,<br/>drop uncited sentences
+    A->>A: split into sentences, map Citations,<br/>keep claims with Citations (+ Framing, planned)
     A-->>C: Answer (sentences + Citations)
     C-->>U: Answer with numbered Citations

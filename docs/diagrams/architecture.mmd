@@ -22,7 +22,9 @@ flowchart TB
         answerer["answerer.py<br/>Citations API<br/><i>Opus 5.5</i>"]
     end
 
-    cli["cli.py<br/>raac ask / fetch"]
+    evals["evals.py<br/>eval cases → report"]
+
+    cli["cli.py<br/>raac ask / eval / fetch"]
     api["FastAPI<br/>streaming"]
     web["React + PDF.js<br/>web app"]
 
@@ -38,6 +40,7 @@ flowchart TB
     pg -.-> retriever
     retriever --> answerer
     answerer --> cli
+    answerer --> evals --> cli
     answerer -.-> api -.-> web
 
     classDef planned stroke-dasharray: 5 5

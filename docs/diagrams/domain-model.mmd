@@ -25,6 +25,7 @@ classDiagram
     class Answer {
         refused
         incomplete
+        gap
         dropped_uncited
         model
     }
@@ -34,6 +35,7 @@ classDiagram
     class Citation {
         parte
         seccion
+        seccion_title
         pdf_page_start / end
         printed_page_start / end
         edicion
@@ -48,7 +50,7 @@ classDiagram
     Seccion "1" *-- "many" SeccionPage
     ParteIndex ..> ParsedParte : indexes (same content hash)
     Answer "1" *-- "many" Sentence
-    Sentence "1" *-- "1..*" Citation
+    Sentence "1" *-- "0..*" Citation : 0 only for Framing
     Answer "1" *-- "0..*" LikelyParte
     LikelyParte --> Citation : cited Remisión
     Citation ..> Seccion : points to

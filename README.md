@@ -11,7 +11,7 @@ Not an official source. It does not replace AIP, NOTAMs or ANAC.
 
 ## Status
 
-Today the pipeline runs end to end from the command line (`raac fetch`, `raac ask`) over Parte 61, caching PDFs and PageIndex trees under `.raac/`. The web API, object storage, frontend, Postgres registry and automatic promotion of new Enmiendas are planned. The diagrams below mark planned pieces with dashed borders. Their Mermaid sources are in [`docs/diagrams/`](docs/diagrams/); after editing one, re-render the images with `just diagrams`.
+Today the pipeline runs end to end from the command line (`raac fetch`, `raac ask`, `raac eval`) over Parte 61, caching PDFs and PageIndex trees under `.raac/`. The web API, object storage, frontend, Postgres registry and automatic promotion of new Enmiendas are planned. The diagrams below mark planned pieces with dashed borders. Their Mermaid sources are in [`docs/diagrams/`](docs/diagrams/); after editing one, re-render the images with `just diagrams`.
 
 ## High-level architecture
 
@@ -41,7 +41,7 @@ Each retrieved Sección is sent as its own document whose content blocks are its
 
 ## Grounded or silent
 
-Every sentence shown carries a Citation. This is how the Answerer decides what to show:
+Every claim shown carries a Citation; only Framing (a lead-in, a connective, a sí/no/depende verdict) may go uncited ([ADR 0003](docs/adr/0003-uncited-framing-in-answers.md)). This is how the Answerer decides what to show; the dashed steps are planned in #38, and until then every uncited sentence is dropped:
 
 <p align="center"><img src="docs/diagrams/grounding.png" alt="Grounded or silent: what the Answerer shows" width="480"></p>
 
