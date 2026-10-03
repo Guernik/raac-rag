@@ -15,7 +15,7 @@ Today the pipeline runs end to end from the command line (`raac fetch`, `raac as
 
 ## High-level architecture
 
-![High-level architecture](docs/diagrams/architecture.png)
+<p align="center"><img src="docs/diagrams/architecture.png" alt="High-level architecture" width="480"></p>
 
 Retrieval uses PageIndex in local mode (an LLM reads a tree of each Parte, no vector store, [ADR 0001](docs/adr/0001-pageindex-local-for-retrieval.md)). Answers are written with the Claude Citations API so every Citation is data returned by the API, never text parsed out of the model's prose ([ADR 0002](docs/adr/0002-answers-via-claude-citations.md)). Models per stage (in italics above) are set in [`src/raac/models.toml`](src/raac/models.toml).
 
@@ -23,19 +23,19 @@ Retrieval uses PageIndex in local mode (an LLM reads a tree of each Parte, no ve
 
 `raac fetch` finds every Parte in the RAAC vigente and downloads its PDF. Nothing about the sheet is hardcoded: its ID is read from the ANAC page on every run.
 
-![Corpus discovery and download](docs/diagrams/corpus-fetch.png)
+<p align="center"><img src="docs/diagrams/corpus-fetch.png" alt="Corpus discovery and download" width="440"></p>
 
 The share link is the stable citation URL. It carries no version, so a new Enmienda shows up only as a new content hash.
 
 ## Indexing a Parte
 
-![Indexing a Parte](docs/diagrams/indexing.png)
+<p align="center"><img src="docs/diagrams/indexing.png" alt="Indexing a Parte" width="780"></p>
 
 The parser reads the Parte code from the page header and the Edición, Enmienda and printed page label from each page footer. It keeps the physical PDF page (for `#page=N` links) and the printed page label apart: in Parte 61, Sección 61.535 is on PDF page 67 but printed page 10.
 
 ## Answering a question
 
-![Answering a question](docs/diagrams/answering.png)
+<p align="center"><img src="docs/diagrams/answering.png" alt="Answering a question" width="780"></p>
 
 Each retrieved Sección is sent as its own document whose content blocks are its PDF pages, so a citation's block range maps straight back to a Sección and its PDF pages.
 
@@ -43,16 +43,16 @@ Each retrieved Sección is sent as its own document whose content blocks are its
 
 Every sentence shown carries a Citation. This is how the Answerer decides what to show:
 
-![Grounded or silent: what the Answerer shows](docs/diagrams/grounding.png)
+<p align="center"><img src="docs/diagrams/grounding.png" alt="Grounded or silent: what the Answerer shows" width="480"></p>
 
 ## Domain model
 
-![Domain model](docs/diagrams/domain-model.png)
+<p align="center"><img src="docs/diagrams/domain-model.png" alt="Domain model" width="780"></p>
 
 ## Index lifecycle (planned)
 
 Re-ingesting a Parte replaces its index instead of adding to it. A changed PDF is indexed beside the live one and only promoted when automated checks pass.
 
-![Index lifecycle](docs/diagrams/index-lifecycle.png)
+<p align="center"><img src="docs/diagrams/index-lifecycle.png" alt="Index lifecycle" width="400"></p>
 
 The API keeps live trees in memory and reloads them on promotion. Every exchange is logged (question, routed Partes, visited nodes, Secciones, Answer with Citations, latency, tokens, cost, model IDs, index version) under a random conversation ID, so it can be replayed.
