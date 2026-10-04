@@ -4,7 +4,13 @@ classDiagram
         code
         edicion
         enmienda
+        page_count
         content_hash
+    }
+    class PageVersion {
+        edicion
+        enmienda
+        fecha
     }
     class Seccion {
         id
@@ -21,6 +27,7 @@ classDiagram
         content_hash
         doc_id
         tree
+        description
     }
     class Answer {
         refused
@@ -40,6 +47,7 @@ classDiagram
         printed_page_start / end
         edicion
         enmienda
+        fecha
         source_url
         cited_text
     }
@@ -47,6 +55,7 @@ classDiagram
         parte
     }
     ParsedParte "1" *-- "many" Seccion
+    ParsedParte "1" *-- "many" PageVersion : footer per PDF page
     Seccion "1" *-- "many" SeccionPage
     ParteIndex ..> ParsedParte : indexes (same content hash)
     Answer "1" *-- "many" Sentence

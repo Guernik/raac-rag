@@ -1,6 +1,6 @@
 # raac-rag
 
-Ask a free-text question about the Argentine civil aviation regulations (RAAC) and get an Answer in which every sentence cites the Parte, Sección, PDF page and Edición it comes from, with a link to the official ANAC PDF.
+Ask a free-text question about the Argentine civil aviation regulations (RAAC) and get an Answer in which every claim cites the Parte, Sección, PDF page and Edición it comes from, with a link to the official ANAC PDF.
 
 Not an official source. It does not replace AIP, NOTAMs or ANAC.
 
@@ -11,7 +11,7 @@ Not an official source. It does not replace AIP, NOTAMs or ANAC.
 
 ## Status
 
-Today the pipeline runs end to end from the command line (`raac fetch`, `raac ask`, `raac eval`) over Partes 1, 61, 67 and 91, caching PDFs and PageIndex trees under `.raac/`. The web API, object storage, frontend, Postgres registry and automatic promotion of new Enmiendas are planned. The diagrams below mark planned pieces with dashed borders. Their Mermaid sources are in [`docs/diagrams/`](docs/diagrams/); after editing one, re-render the images with `just diagrams`.
+Today the pipeline runs end to end from the command line (`raac fetch`, `raac ask`, `raac route`, `raac eval`) over Partes 1, 61, 67 and 91, caching PDFs and PageIndex trees under `.raac/`. The web API, object storage, frontend, Postgres registry and automatic promotion of new Enmiendas are planned. The diagrams below mark planned pieces with dashed borders. Their Mermaid sources are in [`docs/diagrams/`](docs/diagrams/); after editing one, re-render the images with `just diagrams`.
 
 ## High-level architecture
 
