@@ -17,9 +17,10 @@ sequenceDiagram
         R->>P: chat(question, tree of the Parte)
         P-->>R: tool calls get_page_content(pages)
     end
-    R->>R: PDF pages read → Secciones
-    R->>A: Retrieval (Secciones + visited nodes)
-    A->>L: one document per Sección<br/>(one content block per PDF page), citations on
+    R->>R: PDF pages read → Secciones<br/>(Parte 1 Sección 1.11 pages → the Definiciones on them)
+    R->>R: attach Parte 1 Definiciones whose terms<br/>the retrieved Secciones use (capped)
+    R->>A: Retrieval (Secciones + Definiciones + visited nodes)
+    A->>L: one document per Sección, then per Definición<br/>(one content block per PDF page), citations on
     L-->>A: text blocks with cited_text + block ranges
     A->>A: split into sentences, map Citations,<br/>keep claims with Citations (+ Framing, planned)
     A-->>C: Answer (sentences + Citations)

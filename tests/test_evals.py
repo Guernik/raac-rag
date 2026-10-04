@@ -8,8 +8,8 @@ import pytest
 from conftest import FIXTURES
 from raac.answerer import Answer, Citation, Sentence
 from raac.config import Models
-from raac.evals import EvalCaseError, load_cases, run_eval, summarize, write_report
-from raac.pipeline import IndexVersion, LocalPipeline, PipelineResult, SeccionRef
+from raac.evals import EvalCaseError, load_cases, run_eval, score, summarize, write_report
+from raac.pipeline import DefinicionRef, IndexVersion, LocalPipeline, PipelineResult, SeccionRef
 from raac.retriever import Retrieval, RetrievedSeccion
 
 SEED = FIXTURES.parent.parent / "evals" / "cases.jsonl"
@@ -62,13 +62,13 @@ class FakePipeline:
 # Case loading
 
 
-def test_seed_cases_load_and_include_out_of_scope(parte61):
+def test_seed_cases_load_and_include_out_of_scope(parte61, parte1):
     cases = load_cases(SEED)
     assert any(c.out_of_scope for c in cases)
+    partes = {"61": parte61, "1": parte1}
     for case in cases:
         for ref in case.expected_secciones:
-            assert ref.parte == "61"
-            parte61.seccion(ref.seccion)  # every expected Sección exists in Parte 61
+            partes[ref.parte].seccion(ref.seccion)  # every expected Sección exists
 
 
 @pytest.mark.parametrize(
@@ -220,3 +220,14 @@ def test_local_pipeline_runs_through_the_harness(parte61, tmp_path):
     assert case["scores"]["retrieval_hit"] is True
     assert case["scores"]["refusal_correct"] is True
     assert {"parte": "61", "seccion": "61.535"} in case["cited_secciones"]
+
+
+def test_seccion_of_an_attached_definicion_counts_as_retrieved(tmp_path):
+    [case] = load_cases(
+        _write(tmp_path, _case(expected_secciones=[{"parte": "61", "seccion": "61.430"}, {"parte": "1", "seccion": "1.11"}]))
+    )
+    answered = Answer(sentences=[Sentence("Sí.", [_citation("61.430")])], refused=False)
+    with_def = PipelineResult(["61"], [SeccionRef("61", "61.430")], answered, definiciones=[DefinicionRef("1", "1.11", "Área de control (CTA)")])
+    assert score(case, with_def).retrieval_recall == 1.0
+    without = PipelineResult(["61"], [SeccionRef("61", "61.430")], answered)
+    assert score(case, without).retrieval_recall == 0.5
