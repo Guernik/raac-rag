@@ -77,6 +77,7 @@ def main(argv: list[str] | None = None) -> int:
         out = {
             "routed_partes": run.routed_partes,
             "visited_nodes": run.visited_nodes,
+            "followed_remisiones": run.followed_remisiones,
             "secciones": [f"{r.parte}:{r.seccion}" for r in run.retrieved_secciones],
             "answer": run.answer.to_dict(),
         }
