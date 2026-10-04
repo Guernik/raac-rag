@@ -16,12 +16,9 @@ sequenceDiagram
     loop each routed Parte
         R->>P: chat(question, tree of the Parte)
         P-->>R: tool calls get_page_content(pages)
-        opt a Sección read has a Remisión worth reading
-            P->>R: follow_reference(desde, hacia)
-            R-->>P: text of the referenced Sección<br/>(one hop, any loaded Parte)
-        end
     end
-    R->>R: PDF pages read + followed Secciones → Secciones
+    R->>R: PDF pages read → Secciones
+    R->>R: + Secciones their Remisiones name<br/>(one hop, any loaded Parte, no LLM)
     R->>A: Retrieval (Secciones + visited nodes)
     A->>L: one document per Sección<br/>(one content block per PDF page), citations on
     L-->>A: text blocks with cited_text + block ranges

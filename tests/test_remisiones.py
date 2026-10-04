@@ -1,13 +1,11 @@
-"""Remisiones extracted by ParteParser and followed one hop by tree search (no LLM calls)."""
+"""Remisiones extracted by ParteParser and followed one hop after tree search (no LLM calls)."""
 
-import json
+from types import SimpleNamespace
 
-import pytest
-from agents import function_tool
-
+from raac import retriever
 from raac.indexer import ParteIndex
 from raac.parser import ParsedParte
-from raac.retriever import ReferenceFollower, Retriever, follow_reference_tool
+from raac.retriever import RetrievedSeccion, Retriever, follow_remisiones
 
 
 def targets(parte: ParsedParte, seccion_id: str) -> list[tuple[str, str | None]]:
@@ -50,65 +48,58 @@ def test_seccion_lists_and_broken_ids(parte61):
     assert all(r.to_seccion != s.id for s in parte61.secciones for r in s.remisiones)
 
 
-@pytest.fixture
-def follower(parte61, parte67):
-    return ReferenceFollower(parte61, {"61": parte61, "67": parte67})
+def retrieved(*pairs: tuple[ParsedParte, str]) -> list[RetrievedSeccion]:
+    return [RetrievedSeccion(parte, parte.seccion(sid)) for parte, sid in pairs]
 
 
-def test_follow_seccion_remision(follower):
-    text = follower.follow("61.535", "61.520")
-    assert text.startswith("RAAC Parte 61 - Sección 61.520")
-    assert "(páginas PDF 63-65)" in text
-    assert [(r.parte.code, r.seccion.id) for r in follower.followed] == [("61", "61.520")]
-    assert follower.log == ["61:61.535 -> 61:61.520"]
+def ids(secciones: list[RetrievedSeccion]) -> list[str]:
+    return [f"{r.parte.code}:{r.seccion.id}" for r in secciones]
 
 
-def test_follow_parte_remision_lists_secciones_then_reads_one(follower):
-    listing = follower.follow("61.405", "RAAC 67")
-    assert "67.020 Clases de certificado médico y su aplicación" in listing
-    assert follower.followed == []
-    text = follower.follow("61.405", "67.020")
-    assert text.startswith("RAAC Parte 67 - Sección 67.020")
-    assert [(r.parte.code, r.seccion.id) for r in follower.followed] == [("67", "67.020")]
+def test_follows_seccion_remisiones(parte61, parte67):
+    progress = []
+    followed, log = follow_remisiones(retrieved((parte61, "61.535")), {"61": parte61, "67": parte67}, progress.append)
+    assert ids(followed) == ["61:61.520"]
+    assert log == ["61:61.535 -> 61:61.520"]
+    assert progress == ["Siguiendo una remisión a Parte 61, Sección 61.520"]
 
 
-def test_never_more_than_one_hop(follower):
-    follower.follow("61.535", "61.520")
-    # 61.520 was reached through a Remisión: its own Remisiones are a second hop.
-    assert "solo se sigue un salto" in follower.follow("61.520", "61.515")
-    # Secciones of another Parte can never be a starting point.
-    follower.follow("61.405", "67.020")
-    assert "no es de la RAAC Parte 61" in follower.follow("67.020", "67.025")
-    assert [r.seccion.id for r in follower.followed] == ["61.520", "67.020"]
+def test_parte_remisiones_are_left_to_routing(parte61, parte67):
+    # 61.405(f) "conforme a la RAAC 67" names no Sección.
+    assert follow_remisiones(retrieved((parte61, "61.405")), {"61": parte61, "67": parte67}) == ([], [])
 
 
-def test_only_what_the_seccion_refers_to(follower):
-    assert "no remite a 61.001" in follower.follow("61.535", "61.001")
-    assert "Sus Remisiones: 61.520" in follower.follow("61.535", "67")
-    assert "no está cargada" in follower.follow("61.060", "121")
-    assert follower.followed == []
+def test_never_more_than_one_hop(parte61):
+    # 61.605 -> 61.610 -> 61.600: 61.610 was reached through a Remisión, so 61.600 is a second hop.
+    followed, _ = follow_remisiones(retrieved((parte61, "61.605")), {"61": parte61})
+    assert "61:61.610" in ids(followed) and "61:61.600" not in ids(followed)
 
 
-def test_tool_schema(follower):
-    tool = follow_reference_tool(follower, function_tool)
-    assert tool.name == "follow_reference"
-    assert set(tool.params_json_schema["properties"]) == {"desde", "hacia"}
+def test_skips_retrieved_unloaded_and_repeated_targets(parte61):
+    # 61.060 names 61.140, 61.130, 61.135 and Partes 67, 121, 135; 61.130 is already retrieved.
+    followed, log = follow_remisiones(retrieved((parte61, "61.060"), (parte61, "61.130")), {"61": parte61})
+    assert ids(followed) == ["61:61.140", "61:61.135"]
+    assert log == ["61:61.060 -> 61:61.140", "61:61.060 -> 61:61.135"]
+
+
+def test_followed_secciones_are_capped(parte61, monkeypatch):
+    monkeypatch.setattr(retriever, "MAX_FOLLOWED", 1)
+    followed, _ = follow_remisiones(retrieved((parte61, "61.060")), {"61": parte61})
+    assert ids(followed) == ["61:61.140"]
 
 
 def test_followed_secciones_join_the_retrieval(parte61, parte67):
-    def fake_search(_client, _question, _doc_id, follower):
-        follower.follow("61.405", "67.020")
-        return [{"type": "tool_call", "name": "get_page_content", "arguments": json.dumps({"pages": "51"})}]
-
-    progress = []
+    # Tree search reads PDF page 67 (end of 61.530, 61.535); 61.535 names 61.520.
+    client = SimpleNamespace(
+        chat=lambda *a, **k: SimpleNamespace(
+            events=[{"type": "tool_call", "name": "get_page_content", "arguments": '{"pages": "67"}'}]
+        )
+    )
     r = Retriever(
-        client=None,
-        partes=[(parte61, ParteIndex("61", "h", "d61", [])), (parte67, ParteIndex("67", "h", "d67", []))],
-        router=type("R", (), {"route": lambda self, q: ["61"]})(),
-        on_progress=progress.append,
-        search=fake_search,
-    ).retrieve("¿Qué necesito para volar solo como alumno?")
-    ids = [(s.parte.code, s.seccion.id) for s in r.secciones]
-    assert ("61", "61.405") in ids and ids[-1] == ("67", "67.020")
-    assert r.followed_remisiones == ["61:61.405 -> 67:67.020"]
-    assert "Siguiendo una remisión a Parte 67, Sección 67.020" in progress
+        client,
+        [(parte61, ParteIndex("61", "h", "d61", [])), (parte67, ParteIndex("67", "h", "d67", []))],
+        router=SimpleNamespace(route=lambda q: ["61"]),
+    ).retrieve("¿Puedo volar VFR de noche con mi PPL?")
+    assert "61:61.535" in ids(r.secciones) and "61:61.520" in ids(r.secciones)
+    assert ids(r.secciones)[-len(r.followed_remisiones):] == [f.split(" -> ")[1] for f in r.followed_remisiones]
+    assert any(f.endswith("-> 61:61.520") for f in r.followed_remisiones)

@@ -2,7 +2,7 @@
 
 A Remisión points to another Parte ("conforme a la RAAC 67") or to a Sección
 ("Sección 61.520 (a)(1)(v)", "Sección 67.015 del RAAC 67"). ParteParser attaches
-them to each Sección; tree search may follow one of them, one hop (retriever.py);
+them to each Sección; the Retriever adds the Secciones they name, one hop (retriever.py);
 a refusal names the likely Parte and cites the Remisión's verbatim clause.
 """
 
