@@ -1,5 +1,6 @@
 """CLI: `raac ask "<pregunta>"` answers from Partes 1, 61, 67 and 91 with Citations; `raac route` shows or
-scores Parte routing; `raac fetch` downloads the RAAC vigente; `raac eval` runs the eval set."""
+scores Parte routing; `raac fetch` downloads the RAAC vigente; `raac eval` runs the eval set;
+`raac generate-cases` writes candidate eval cases and `raac review` accepts, edits or rejects them."""
 
 import argparse
 import json
@@ -10,14 +11,16 @@ from pathlib import Path
 import anthropic
 import httpx
 
-from . import corpus, evals, strings
+from . import casegen, corpus, evals, strings
 from .answerer import Answer, Citation
-from .config import load_env, load_judge_model
+from .config import load_env, load_judge_model, load_tool_model
 from .judge import CorrectnessJudge
+from .parser import parse
 from .pipeline import DEFAULT_PARTES, build_local_pipeline
 from .router import routing_report
 
 DEFAULT_CASES = Path("evals/cases.jsonl")
+DEFAULT_CANDIDATES = Path("evals/candidates.jsonl")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -41,12 +44,29 @@ def main(argv: list[str] | None = None) -> int:
     fetch = sub.add_parser("fetch", help="Discover all Partes on the ANAC page and download their PDFs")
     fetch.add_argument("--dir", type=Path, default=Path(".raac/corpus"))
     fetch.add_argument("--parte", action="append", help="Only this Parte (repeatable)")
+    gen = sub.add_parser("generate-cases", help="Write candidate eval cases from sampled Secciones for review")
+    gen.add_argument("--parte", action="append", default=[], help="Parte to sample, downloaded from ANAC (repeatable)")
+    gen.add_argument("--pdf", action="append", type=Path, default=[], help="Local Parte PDF to sample instead (repeatable)")
+    gen.add_argument("-n", type=int, default=5, help="Candidates per Parte (default 5)")
+    gen.add_argument("--seed", type=int, help="Sampling seed, for a repeatable sample")
+    gen.add_argument("--candidates", type=Path, default=DEFAULT_CANDIDATES)
+    gen.add_argument("--cases", type=Path, default=DEFAULT_CASES, help="Secciones already covered here are skipped")
+    rev = sub.add_parser("review", help="Accept, edit or reject pending candidate eval cases")
+    rev.add_argument("--candidates", type=Path, default=DEFAULT_CANDIDATES)
+    rev.add_argument("--cases", type=Path, default=DEFAULT_CASES, help="Accepted candidates are appended here")
     args = ap.parse_args(argv)
+    if args.command == "generate-cases" and not (args.parte or args.pdf):
+        ap.error("generate-cases needs --parte or --pdf")
     if args.command == "route" and not (args.question or args.cases):
         ap.error("route needs a question or --cases")
     load_env()
     if args.command == "fetch":
         return fetch_corpus(args.dir, args.parte)
+    if args.command == "review":
+        casegen.review(args.candidates, args.cases)
+        return 0
+    if args.command == "generate-cases":
+        return generate_cases(args)
 
     def progress(msg: str) -> None:
         print(msg, file=sys.stderr)
@@ -110,6 +130,29 @@ def fetch_corpus(root: Path, only: list[str] | None = None) -> int:
             flush=True,
         )
     print(strings.FETCH_SUMMARY.format(total=len(listings), **counts))
+    return 0
+
+
+def generate_cases(args: argparse.Namespace) -> int:
+    pdfs = [p.read_bytes() for p in args.pdf]
+    pdfs += [corpus.download(listing).data for listing in corpus.fetch_listings(args.parte)] if args.parte else []
+    model = load_tool_model("casegen")
+    client = anthropic.Anthropic()
+    candidates = casegen.load_candidates(args.candidates)
+    added = discarded = 0
+    for data in pdfs:
+        parte = parse(data)
+        exclude = casegen.covered_secciones(args.cases, candidates, parte.code)
+        new, notes = casegen.generate(
+            client, model, parte, args.n, exclude, args.seed, on_progress=lambda m: print(m, file=sys.stderr)
+        )
+        candidates += new
+        casegen.save_candidates(candidates, args.candidates)  # keep what was paid for if a later Parte fails
+        added += len(new)
+        discarded += len(notes)
+        for note in notes:
+            print(strings.GENERATE_DISCARDED.format(nota=note), file=sys.stderr)
+    print(strings.GENERATE_SUMMARY.format(generados=added, path=args.candidates, descartados=discarded))
     return 0
 
 

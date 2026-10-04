@@ -8,3 +8,6 @@ answer = "claude-opus-5-5"     # Answer with the Citations API
 
 # Eval only, not a pipeline stage: correctness judge against reference Answers (RAAC_MODEL_JUDGE overrides).
 judge = "claude-opus-5-5"
+
+# Not a pipeline stage: writes candidate eval cases (`raac generate-cases`), reviewed by the owner.
+casegen = "claude-opus-5-5"

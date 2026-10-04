@@ -35,3 +35,16 @@ def version(edicion: str | None, enmienda: str | None, fecha: str | None) -> str
         return None
     text = VERSION_ENMIENDA.format(edicion=edicion, enmienda=enmienda) if enmienda else VERSION.format(edicion=edicion)
     return VERSION_FECHA.format(version=text, fecha=fecha) if fecha else text
+REVIEW_CARD = (
+    "\n[{n}/{total}] {id}\n"
+    "Pregunta: {pregunta}\n\n"
+    "Sección esperada: Parte {parte}, Sección {seccion} ({titulo})\n{texto}\n\n"
+    "Respuesta de referencia: {respuesta}\n"
+)
+REVIEW_PROMPT = "[a]ceptar, [e]ditar, [r]echazar, [s]altar, [q] salir: "
+REVIEW_UNKNOWN = "Opción no válida."
+REVIEW_EDIT_QUESTION = "Nueva pregunta (Enter la deja igual): "
+REVIEW_EDIT_ANSWER = "Nueva respuesta de referencia (Enter la deja igual): "
+REVIEW_SUMMARY = "{aceptados} aceptados, {rechazados} rechazados, {saltados} saltados, {pendientes} pendientes."
+GENERATE_SUMMARY = "{generados} candidatos nuevos en {path}; {descartados} descartados."
+GENERATE_DISCARDED = "Descartado {nota}"
