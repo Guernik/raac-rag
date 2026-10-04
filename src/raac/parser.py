@@ -1,12 +1,14 @@
 """ParteParser: pure PDF -> ParsedParte.
 
-Reads the Parte code from the running header, the Edición/Enmienda and the
+Reads the Parte code from the running header, the Edición/Enmienda, date and
 printed page label from each page footer, and splits the body into Secciones
 (id, title, PDF pages, printed page labels, text per page, text rectangles).
+Footers of one Parte may disagree; they are kept per page (ADR 0004).
 """
 
 import hashlib
 import re
+from collections import Counter
 from dataclasses import dataclass, field
 
 import pymupdf
@@ -18,7 +20,9 @@ _HEADER_RE = re.compile(r"^\s*RAAC\s+PARTE\s+(\S+)", re.I)
 _FOOTER_RE = re.compile(r"^\s*(ADMINISTRACI[ÓO]N\s+NACIONAL|(\d+\s*[º°]|[IVXLC]+)\s+Edici[óo]n\b)", re.I)
 _FOOTER_ZONE = 0.85  # footer blocks start below this fraction of the page height
 _EDICION_RE = re.compile(r"(?:^|\n)\s*(\d+)\s*[º°]?\s+Edici[óo]n|(?:^|\n)\s*([IVXLC]+)\s+Edici[óo]n", re.I)
-_ENMIENDA_RE = re.compile(r"(?:^|\n)\s*Enmienda\s+([IVXLC]+)\s*(?:\n|$)", re.I)
+_ENMIENDA_RE = re.compile(r"(?:^|\n)\s*Enmienda\s+(\d+|[IVXLC]+)\s*(?:\n|$)", re.I)
+_MONTHS = "enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|setiembre|octubre|noviembre|diciembre"
+_FECHA_RE = re.compile(rf"(?:^|\n)\s*((?:\d{{1,2}}\s+)?(?:{_MONTHS})\s+\d{{4}})\s*(?:\n|$)", re.I)
 # Printed page label after "DE AVIACIÓN CIVIL" (61, 67, front matter of 1 and 91)...
 _FOOTER_LABEL_RE = re.compile(r"CIVIL[ \t]*(?:\n[ \t]*)?(\d+|[ivxlc]+|[IVXLC]+)[ \t]*(?:\n|$)")
 # ...or in the running header as "<division> <n>. <m>" (body of 1 and 91, e.g. "SUBPARTE B 2. 39").
@@ -38,6 +42,15 @@ class Rect:
     y0: float
     x1: float
     y1: float
+
+
+@dataclass(frozen=True)
+class PageVersion:
+    """Edición/Enmienda and date as one page footer prints them."""
+
+    edicion: str
+    enmienda: str | None  # None when the footer prints none
+    fecha: str | None  # e.g. "27 febrero 2026", "mayo 2026"
 
 
 @dataclass
@@ -70,12 +83,16 @@ class Seccion:
 @dataclass
 class ParsedParte:
     code: str
-    edicion: str
-    enmienda: str | None  # None when the footer prints only the Edición
+    edicion: str  # the most common footer Edición/Enmienda, for logs only (ADR 0004)
+    enmienda: str | None
     page_count: int
     printed_pages: list[str | None]  # index i -> printed label of PDF page i+1
+    page_versions: list[PageVersion | None]  # index i -> footer of PDF page i+1
     secciones: list[Seccion]
     content_hash: str
+
+    def page_version(self, pdf_page: int) -> PageVersion | None:
+        return self.page_versions[pdf_page - 1]
 
     def seccion(self, seccion_id: str) -> Seccion:
         for s in self.secciones:
@@ -90,7 +107,7 @@ class ParsedParte:
 def parse(pdf: bytes) -> ParsedParte:
     doc = pymupdf.open(stream=pdf, filetype="pdf")
     code = None
-    versions: list[tuple[str, str | None] | None] = []
+    versions: list[PageVersion | None] = []
     printed: list[str | None] = []
     bodies: list[list[tuple]] = []
     for page in doc:
@@ -116,12 +133,10 @@ def parse(pdf: bytes) -> ParsedParte:
 
     if code is None:
         raise ParseError("Parte code not found in any page header ('RAAC PARTE <code>')")
-    found = {v for v in versions if v}
+    found = Counter((v.edicion, v.enmienda) for v in versions if v)
     if not found:
         raise ParseError(f"Parte {code}: Edición/Enmienda not found in any page footer")
-    if len(found) > 1:
-        raise ParseError(f"Parte {code}: footers disagree on Edición/Enmienda: {sorted(found, key=str)}")
-    edicion, enmienda = found.pop()
+    (edicion, enmienda), _ = found.most_common(1)[0]
 
     secciones = _split_secciones(code, bodies, printed)
     if not secciones:
@@ -132,19 +147,22 @@ def parse(pdf: bytes) -> ParsedParte:
         enmienda=enmienda,
         page_count=doc.page_count,
         printed_pages=printed,
+        page_versions=versions,
         secciones=secciones,
         content_hash=hashlib.sha256(pdf).hexdigest(),
     )
 
 
-def _footer_version(footer: str) -> tuple[str, str | None] | None:
-    """(Edición, Enmienda) as roman numerals; Enmienda is None when the footer prints none."""
+def _footer_version(footer: str) -> PageVersion | None:
+    """Edición and Enmienda as roman numerals ("Enmienda 1" -> "I"), and the printed date."""
     m = _EDICION_RE.search(footer)
     if not m:
         return None
     edicion = _roman(int(m.group(1))) if m.group(1) else m.group(2).upper()
     e = _ENMIENDA_RE.search(footer)
-    return edicion, e.group(1).upper() if e else None
+    enmienda = None if e is None else _roman(int(e.group(1))) if e.group(1).isdigit() else e.group(1).upper()
+    f = _FECHA_RE.search(footer)
+    return PageVersion(edicion, enmienda, _clean(f.group(1)).lower() if f else None)
 
 
 def _printed_label(footer: str, header: str) -> str | None:

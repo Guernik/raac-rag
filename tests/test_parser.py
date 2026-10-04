@@ -98,3 +98,32 @@ def test_parte_91_headings_mid_block_and_after_subparte_indice(parte91_sample):
 def test_page_check_list_is_not_a_seccion(parte1):
     # "Lista de verificación de páginas" pairs the label "1.1" with "SUBPARTE A".
     assert "1.1" not in [s.id for s in parte1.secciones]
+
+
+def _pdf_with_footers(footers: list[str]) -> bytes:
+    doc = pymupdf.open()
+    for n, footer in enumerate(footers, 1):
+        page = doc.new_page()
+        page.insert_text((72, 60), "RAAC PARTE 77")
+        page.insert_text((72, 120), f"77.{n}\nTítulo {n}\nTexto de la Sección.")
+        page.insert_text((72, page.rect.height - 100), footer)
+    return doc.tobytes()
+
+
+def test_footers_that_disagree_are_kept_per_page(parte26):
+    # ADR 0004: PDF page 7 prints "4º Edición" in a Parte whose other footers print "1° Edición".
+    assert parte26.page_version(7).edicion == "IV"
+    assert parte26.page_version(5).edicion == "I"
+    assert parte26.page_version(5).fecha == "23 marzo 2022"
+    assert parte26.page_version(1) is None  # cover
+    assert (parte26.edicion, parte26.enmienda) == ("I", None)  # most common, for logs only
+
+
+def test_arabic_enmienda_and_footer_date():
+    parte = parse(_pdf_with_footers([
+        "ADMINISTRACIÓN NACIONAL\nI Edición\nmayo 2026\nDE AVIACIÓN CIVIL\nEnmienda 1",
+        "ADMINISTRACIÓN NACIONAL\nI Edición\n4 Mayo 2026\nDE AVIACIÓN CIVIL\nEnmienda I",
+    ]))
+    v1, v2 = parte.page_version(1), parte.page_version(2)
+    assert (v1.edicion, v1.enmienda, v1.fecha) == ("I", "I", "mayo 2026")
+    assert (v2.edicion, v2.enmienda, v2.fecha) == ("I", "I", "4 mayo 2026")

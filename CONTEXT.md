@@ -28,11 +28,11 @@ A term defined in Parte 1 and used across other **Partes**.
 _Avoid_: glossary entry
 
 **Edición** / **Enmienda**:
-The version of a **Parte**, printed in every page footer (e.g. "VI Edición, Enmienda I, mayo 2026"). A new Enmienda replaces the previous text entirely.
+What a page footer prints about its revision (e.g. "VI Edición, Enmienda I, mayo 2026"). Pages left unchanged by an amendment keep their older footer, and some footers are wrong, so pages of one **Parte** can disagree. The version of a Parte is its published PDF as a whole, identified by content hash (ADR 0004).
 _Avoid_: version, revision
 
 **RAAC vigente**:
-The **Edición**/**Enmienda** of each **Parte** currently in force, as listed by ANAC. The only text the product answers from.
+The PDF of each **Parte** currently in force, as listed by ANAC. The only text the product answers from.
 _Avoid_: current, latest
 
 ### Answers
@@ -46,7 +46,7 @@ The uncited parts of an **Answer** that state no requirement of their own: a lea
 _Avoid_: summary, intro
 
 **Citation**:
-A pointer from an **Answer** sentence to the **Sección** that supports it: **Parte**, **Sección**, **PDF page**, and **Edición**.
+A pointer from an **Answer** sentence to the **Sección** that supports it: **Parte**, **Sección**, **PDF page**, and the **Edición**/**Enmienda** printed on the cited page.
 _Avoid_: reference, source, footnote
 
 **Conversation**:

@@ -1,7 +1,7 @@
 stateDiagram-v2
     [*] --> Candidate: new content hash fetched
     Candidate --> Checking: parsed + indexed
-    Checking --> Live: Edición/Enmienda parsed from footer,<br/>sane page count, Parte's eval cases green
+    Checking --> Live: PDF parses,<br/>sane page count, Parte's eval cases green
     Checking --> Rejected: any check fails
     Rejected --> [*]: old index keeps serving,<br/>human alerted
     Live --> Retired: newer candidate promoted

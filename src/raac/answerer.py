@@ -25,6 +25,7 @@ from typing import Any
 
 import anthropic
 
+from .parser import ParsedParte
 from .remisiones import Remision, find_remisiones, parte_codes
 from .retriever import Retrieval, RetrievedSeccion
 
@@ -59,8 +60,9 @@ class Citation:
     pdf_page_end: int
     printed_page_start: str | None
     printed_page_end: str | None
-    edicion: str
+    edicion: str | None  # as printed in the footer of the first cited page (ADR 0004)
     enmienda: str | None
+    fecha: str | None
     source_url: str
     cited_text: str
 
@@ -94,21 +96,21 @@ class Answer:
 
 
 def build_documents(retrieval: Retrieval) -> list[dict[str, Any]]:
-    return [
-        {
+    docs = []
+    for r in retrieval.secciones:
+        doc = {
             "type": "document",
             "source": {
                 "type": "content",
                 "content": [{"type": "text", "text": page.text} for page in r.seccion.pages],
             },
             "title": f"RAAC Parte {r.parte.code} - Sección {r.seccion.id} {r.seccion.title}",
-            "context": f"Edición {r.parte.edicion}, Enmienda {r.parte.enmienda}"
-            if r.parte.enmienda
-            else f"Edición {r.parte.edicion}",
             "citations": {"enabled": True},
         }
-        for r in retrieval.secciones
-    ]
+        if context := _footer_context(r.parte, r.seccion.pdf_page_start):
+            doc["context"] = context
+        docs.append(doc)
+    return docs
 
 
 def answer(
@@ -230,8 +232,7 @@ def _remision_citation(remision: Remision, r: RetrievedSeccion, source_urls: dic
         pdf_page_end=page.pdf_page,
         printed_page_start=page.printed_page,
         printed_page_end=page.printed_page,
-        edicion=r.parte.edicion,
-        enmienda=r.parte.enmienda,
+        **_page_version(r.parte, page.pdf_page),
         source_url=source_urls[r.parte.code],
         cited_text=remision.text,
     )
@@ -258,8 +259,19 @@ def _map_citation(raw: dict[str, Any], retrieval: Retrieval, source_urls: dict[s
         pdf_page_end=pages[-1].pdf_page,
         printed_page_start=pages[0].printed_page,
         printed_page_end=pages[-1].printed_page,
-        edicion=r.parte.edicion,
-        enmienda=r.parte.enmienda,
+        **_page_version(r.parte, pages[0].pdf_page),
         source_url=source_urls[r.parte.code],
         cited_text=raw["cited_text"],
     )
+
+
+def _page_version(parte: ParsedParte, pdf_page: int) -> dict[str, str | None]:
+    v = parte.page_version(pdf_page)
+    return {"edicion": v and v.edicion, "enmienda": v and v.enmienda, "fecha": v and v.fecha}
+
+
+def _footer_context(parte: ParsedParte, pdf_page: int) -> str:
+    v = parte.page_version(pdf_page)
+    if v is None:
+        return ""
+    return ", ".join(x for x in (f"Edición {v.edicion}", v.enmienda and f"Enmienda {v.enmienda}", v.fecha) if x)

@@ -35,7 +35,7 @@ def _write(tmp_path, *cases):
 
 
 def _citation(seccion: str) -> Citation:
-    return Citation("61", seccion, "t", 67, 67, "10", "10", "VI", "I", URL, "texto")
+    return Citation("61", seccion, "t", 67, 67, "10", "10", "VI", "I", "mayo 2026", URL, "texto")
 
 
 class FakePipeline:

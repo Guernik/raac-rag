@@ -26,3 +26,9 @@ def parte67() -> ParsedParte:
 def parte91_sample() -> ParsedParte:
     # PDF pages 1, 23-25, 40, 42, 45, 48, 59 and 101 of Parte 91 IV Edición (the full PDF is 10 MB).
     return parse((FIXTURES / "raac-parte-91-sample.pdf").read_bytes())
+
+
+@pytest.fixture(scope="session")
+def parte26() -> ParsedParte:
+    # Parte 26 I Edición: PDF page 7's footer prints "4º Edición" (ADR 0004).
+    return parse((FIXTURES / "raac-parte-26.pdf").read_bytes())

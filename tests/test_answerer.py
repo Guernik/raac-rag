@@ -70,7 +70,7 @@ def test_citation_joined_with_parsed_parte(retrieval, response, parte61):
     for c in cites:
         assert (c.parte, c.pdf_page_start, c.pdf_page_end) == ("61", 67, 67)
         assert (c.printed_page_start, c.printed_page_end) == ("10", "10")
-        assert (c.edicion, c.enmienda, c.source_url) == ("VI", "I", URL)
+        assert (c.edicion, c.enmienda, c.fecha, c.source_url) == ("VI", "I", "mayo 2026", URL)
         assert c.seccion_title == "Operaciones VFR nocturnas - Régimen transitorio"
         # cited_text comes verbatim from the source, never from model prose.
         assert c.cited_text.strip() in parte61.seccion("61.535").pages[0].text
@@ -108,7 +108,7 @@ def test_render_marks_every_sentence_and_prints_citation_fields(retrieval, respo
         assert re.search(re.escape(sentence.text) + r" (\[\d+\])+", body), sentence.text
     assert re.search(
         r"\[\d+\] Parte 61, Sección 61\.535 \(Operaciones VFR nocturnas - Régimen transitorio\), "
-        r"página PDF 67 \(página impresa 10\), Edición VI Enmienda I - " + re.escape(URL),
+        r"página PDF 67 \(página impresa 10\), Edición VI Enmienda I \(mayo 2026\) - " + re.escape(URL),
         out,
     )
     for dropped in answer.dropped_uncited:
@@ -237,3 +237,19 @@ def test_no_citations_means_refusal(two_secciones):
 def test_api_refusal_stop_reason_is_a_refusal(two_secciones):
     answer = map_response({"stop_reason": "refusal", "content": []}, two_secciones, {"61": URL})
     assert answer.refused
+
+
+def test_citation_shows_the_cited_pages_own_footer(parte26):
+    # ADR 0004: Parte 26 is I Edición by most footers, but 26.001's page prints "4º Edición".
+    retrieval = Retrieval(routed_partes=["26"], secciones=[RetrievedSeccion(parte26, parte26.seccion("26.001"))])
+    assert build_documents(retrieval)[0]["context"] == "Edición IV, 23 marzo 2022"
+    raw = {
+        "type": "content_block_location",
+        "document_index": 0,
+        "start_block_index": 0,
+        "end_block_index": 1,
+        "cited_text": "Definición.",
+    }
+    response = {"content": [{"type": "text", "text": "Hay una definición.", "citations": [raw]}], "model": "m"}
+    c = map_response(response, retrieval, {"26": URL}).sentences[0].citations[0]
+    assert (parte26.edicion, c.edicion, c.enmienda, c.fecha) == ("I", "IV", None, "23 marzo 2022")
