@@ -19,6 +19,7 @@ PROGRESS_DOWNLOADING = "Descargando Parte {parte}..."
 PROGRESS_INDEXING = "Indexando Parte {parte}..."
 PROGRESS_SEARCHING = "Buscando en Parte {parte}..."
 PROGRESS_READING = "Leyendo Parte {parte}, páginas PDF {pages}"
+PROGRESS_FOLLOWING = "Siguiendo una remisión a Parte {parte}, Sección {seccion}"
 PROGRESS_ANSWERING = "Redactando la respuesta..."
 FETCH_STATUS = {"new": "nueva", "changed": "cambiada", "unchanged": "sin cambios"}
 FETCH_LINE = "Parte {parte}: {estado} ({sha256}) - {titulo}"

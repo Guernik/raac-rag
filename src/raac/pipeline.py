@@ -41,6 +41,7 @@ class PipelineResult:
     retrieved_secciones: list[SeccionRef]
     answer: Answer
     visited_nodes: list[str] = field(default_factory=list)  # "<parte>:<node_id>"
+    followed_remisiones: list[str] = field(default_factory=list)  # "<parte>:<sección> -> <parte>:<sección>"
 
 
 class Pipeline(Protocol):
@@ -101,6 +102,7 @@ class LocalPipeline:
         return PipelineResult(
             routed_partes=retrieval.routed_partes,
             visited_nodes=retrieval.visited_nodes,
+            followed_remisiones=retrieval.followed_remisiones,
             retrieved_secciones=[SeccionRef(r.parte.code, r.seccion.id) for r in retrieval.secciones],
             answer=result,
         )

@@ -16,6 +16,11 @@ classDiagram
         text
         rects
     }
+    class Remision {
+        to_parte
+        to_seccion
+        text
+    }
     class ParteIndex {
         parte
         content_hash
@@ -48,6 +53,7 @@ classDiagram
     }
     ParsedParte "1" *-- "many" Seccion
     Seccion "1" *-- "many" SeccionPage
+    Seccion "1" *-- "0..*" Remision
     ParteIndex ..> ParsedParte : indexes (same content hash)
     Answer "1" *-- "many" Sentence
     Sentence "1" *-- "0..*" Citation : 0 only for Framing

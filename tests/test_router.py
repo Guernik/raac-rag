@@ -90,10 +90,9 @@ class FakePageIndex:
         self.pages_by_doc = pages_by_doc
         self.searched: list[str] = []
 
-    def chat(self, question, doc_id, stream, instructions):
+    def search(self, _client, question, doc_id, follower):
         self.searched.append(doc_id)
-        events = [{"type": "tool_call", "name": "get_page_content", "arguments": {"pages": self.pages_by_doc[doc_id]}}]
-        return SimpleNamespace(events=events)
+        return [{"type": "tool_call", "name": "get_page_content", "arguments": {"pages": self.pages_by_doc[doc_id]}}]
 
 
 def _index(parsed, pages: int) -> ParteIndex:
@@ -106,7 +105,8 @@ def test_retriever_searches_only_routed_partes(parte61, parte67, parte91_sample)
     pageindex = FakePageIndex({"doc-61": "67", "doc-67": "13", "doc-91": "6"})
     router = SimpleNamespace(route=lambda q: ["61", "91", "135"])  # 135 is not loaded
     progress = []
-    r = Retriever(pageindex, partes, router=router, on_progress=progress.append).retrieve("¿VFR nocturno con PPL?")
+    r = Retriever(None, partes, router=router, on_progress=progress.append, search=pageindex.search)
+    r = r.retrieve("¿VFR nocturno con PPL?")
     assert r.routed_partes == ["61", "91"]
     assert pageindex.searched == ["doc-61", "doc-91"]
     assert r.visited_nodes == ["61:0000", "91:0000"]
@@ -119,7 +119,7 @@ def test_retriever_searches_only_routed_partes(parte61, parte67, parte91_sample)
 def test_retriever_without_router_searches_every_parte(parte61, parte67):
     partes = [(p, _index(p, p.page_count)) for p in (parte61, parte67)]
     pageindex = FakePageIndex({"doc-61": "67", "doc-67": "13"})
-    r = Retriever(pageindex, partes).retrieve("x")
+    r = Retriever(None, partes, search=pageindex.search).retrieve("x")
     assert r.routed_partes == ["61", "67"]
 
 
