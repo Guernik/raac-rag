@@ -17,6 +17,7 @@ class ParteIndex:
     content_hash: str
     doc_id: str
     tree: list[dict[str, Any]]  # PageIndex nodes, each with a "secciones" list of Sección ids
+    description: str | None = None  # PageIndex document description: the Parte's root summary
 
 
 def pageindex_client(models: Models, storage_path: Path) -> PageIndexClient:
@@ -41,6 +42,7 @@ def index(parsed: ParsedParte, pdf_path: Path, client: PageIndexClient, storage_
         content_hash=parsed.content_hash,
         doc_id=doc_id,
         tree=attach_secciones(tree, parsed),
+        description=client.get_document(doc_id).get("description"),
     )
 
 

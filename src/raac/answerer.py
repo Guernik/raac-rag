@@ -60,7 +60,7 @@ class Citation:
     printed_page_start: str | None
     printed_page_end: str | None
     edicion: str
-    enmienda: str
+    enmienda: str | None
     source_url: str
     cited_text: str
 
@@ -102,7 +102,9 @@ def build_documents(retrieval: Retrieval) -> list[dict[str, Any]]:
                 "content": [{"type": "text", "text": page.text} for page in r.seccion.pages],
             },
             "title": f"RAAC Parte {r.parte.code} - Sección {r.seccion.id} {r.seccion.title}",
-            "context": f"Edición {r.parte.edicion}, Enmienda {r.parte.enmienda}",
+            "context": f"Edición {r.parte.edicion}, Enmienda {r.parte.enmienda}"
+            if r.parte.enmienda
+            else f"Edición {r.parte.edicion}",
             "citations": {"enabled": True},
         }
         for r in retrieval.secciones

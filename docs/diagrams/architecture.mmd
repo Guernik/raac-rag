@@ -18,6 +18,7 @@ flowchart TB
     end
 
     subgraph answer["Answering"]
+        router["router.py<br/>Parte routing<br/><i>Haiku 4.5</i>"]
         retriever["retriever.py<br/>tree search<br/><i>Opus 5.5</i>"]
         answerer["answerer.py<br/>Citations API<br/><i>Opus 5.5</i>"]
     end
@@ -37,6 +38,8 @@ flowchart TB
     corpus -.-> pdfs
     indexer -.-> pg
     cache --> retriever
+    cache -- root summaries --> router
+    router -- routed Partes --> retriever
     pg -.-> retriever
     retriever --> answerer
     answerer --> cli

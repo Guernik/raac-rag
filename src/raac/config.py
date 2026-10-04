@@ -13,6 +13,7 @@ _MODELS_FILE = Path(__file__).with_name("models.toml")
 @dataclass(frozen=True)
 class Models:
     indexing: str
+    routing: str
     search: str
     answer: str
 
@@ -20,7 +21,7 @@ class Models:
 def load_models(path: Path = _MODELS_FILE) -> Models:
     data = tomllib.loads(path.read_text())
     stages = {}
-    for stage in ("indexing", "search", "answer"):
+    for stage in ("indexing", "routing", "search", "answer"):
         value = os.environ.get(f"RAAC_MODEL_{stage.upper()}") or data.get(stage)
         if not value:
             raise ValueError(f"No model configured for stage {stage!r} in {path}")
