@@ -26,6 +26,7 @@ flowchart TB
     evals["evals.py<br/>eval cases → report"]
     judge["judge.py<br/>correctness vs reference<br/><i>Opus 5.5</i>"]
     casegen["casegen.py<br/>candidate eval cases<br/><i>Opus 5.5</i>"]
+    cloud["cloud.py<br/>PageIndex Cloud baseline"]
 
     cli["cli.py<br/>raac ask / eval / fetch<br/>generate-cases / review"]
     api["FastAPI<br/>streaming"]
@@ -50,6 +51,7 @@ flowchart TB
     parser -- Secciones --> casegen
     casegen -- reviewed cases --> evals
     casegen --> cli
+    corpus --> cloud --> evals
     answerer -.-> api -.-> web
 
     classDef planned stroke-dasharray: 5 5

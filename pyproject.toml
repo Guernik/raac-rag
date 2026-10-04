@@ -6,6 +6,7 @@
 #              needs ANTHROPIC_API_KEY, from the environment or a .env file: cp .env.example .env;
 #              models per stage in src/raac/models.toml)
 #   eval:     uv run raac eval   (cases in evals/cases.jsonl; report in evals/reports/; --no-judge skips the correctness judge)
+#             uv run raac eval --pipeline cloud   (PageIndex Cloud baseline, same cases; needs PAGEINDEX_API_KEY)
 #   routing:  uv run raac route --cases evals/routing-cases.jsonl
 #   cases:    uv run raac generate-cases --parte 61 -n 5   (or --pdf path/to/parte.pdf; writes evals/candidates.jsonl)
 #             uv run raac review   (accept/edit/reject each pending candidate; accepted ones join evals/cases.jsonl)
