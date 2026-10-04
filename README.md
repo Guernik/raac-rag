@@ -31,7 +31,7 @@ The share link is the stable citation URL. It carries no version, so a new Enmie
 
 <p align="center"><img src="docs/diagrams/indexing.png" alt="Indexing a Parte" width="780"></p>
 
-The parser reads the Parte code from the page header and the Edición, Enmienda and printed page label from each page footer. It keeps the physical PDF page (for `#page=N` links) and the printed page label apart: in Parte 61, Sección 61.535 is on PDF page 67 but printed page 10.
+The parser reads the Parte code from the page header and the Edición, Enmienda, date and printed page label from each page footer. Footers of one Parte may disagree, so they are kept per page and a Citation shows the cited page's own (ADR 0004). It keeps the physical PDF page (for `#page=N` links) and the printed page label apart: in Parte 61, Sección 61.535 is on PDF page 67 but printed page 10.
 
 ## Answering a question
 

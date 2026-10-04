@@ -158,17 +158,12 @@ def render(result: Answer) -> str:
                 impresa_start=c.printed_page_start,
                 impresa_end=c.printed_page_end,
             )
-        lines.append(
-            strings.CITATION.format(
-                n=n,
-                parte=c.parte,
-                seccion=c.seccion,
-                titulo=c.seccion_title,
-                paginas=paginas,
-                version=strings.version(c.edicion, c.enmienda),
-                url=c.source_url,
-            )
-        )
+        version = strings.version(c.edicion, c.enmienda, c.fecha)
+        fields = dict(n=n, parte=c.parte, seccion=c.seccion, titulo=c.seccion_title, paginas=paginas, url=c.source_url)
+        if version:
+            lines.append(strings.CITATION.format(version=version, **fields))
+        else:
+            lines.append(strings.CITATION_NO_VERSION.format(**fields))
     return "\n".join(lines)
 
 
