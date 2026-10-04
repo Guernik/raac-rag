@@ -23,8 +23,9 @@ _SEARCH_INSTRUCTIONS = (
     "Tu tarea es localizar, en la RAAC, el texto que responde la pregunta. "
     "Revisá la estructura del documento y leé con get_page_content las páginas de "
     "todas las Secciones pertinentes, incluidas las que establezcan regímenes "
-    "transitorios o excepciones. Si una de esas Secciones remite a otra Sección o Parte "
-    "cuyo texto hace falta para responder, leelo con follow_reference. "
+    "transitorios o excepciones. Si un requisito pertinente se define en otra Sección o "
+    "Parte a la que remiten (por ejemplo 'conforme a la RAAC 67' o 'prevista en la "
+    "Sección 61.520'), leé ese texto con follow_reference antes de responder. "
     "Luego respondé en una sola oración."
 )
 _FOLLOW_DESCRIPTION = (
