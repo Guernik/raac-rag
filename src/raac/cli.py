@@ -79,6 +79,7 @@ def main(argv: list[str] | None = None) -> int:
             "routed_partes": run.routed_partes,
             "visited_nodes": run.visited_nodes,
             "secciones": [f"{r.parte}:{r.seccion}" for r in run.retrieved_secciones],
+            "definiciones": [f"{d.parte}:{d.seccion}:{d.term}" for d in run.definiciones],
             "answer": run.answer.to_dict(),
         }
         print(json.dumps(out, ensure_ascii=False, indent=2))
@@ -128,7 +129,7 @@ def render(result: Answer) -> str:
             raise ValueError(f"Uncited sentence must not reach the output: {text!r}")
         marks = []
         for c in citations:
-            key = (c.parte, c.seccion, c.pdf_page_start, c.pdf_page_end)
+            key = (c.parte, c.seccion, c.definicion, c.pdf_page_start, c.pdf_page_end)
             if key not in keys:
                 numbered.append(c)
                 keys[key] = len(numbered)

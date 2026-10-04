@@ -1,6 +1,6 @@
 flowchart LR
     pdf["Parte PDF"] --> parse["ParteParser<br/>(PyMuPDF)"]
-    parse --> pp["ParsedParte<br/>code · content hash<br/>Secciones · Remisiones · footer per page"]
+    parse --> pp["ParsedParte<br/>code · content hash<br/>Secciones · Remisiones · footer per page<br/>Definiciones (Parte 1)"]
     pdf --> pi["PageIndex local<br/>(Haiku 4.5 summaries)"]
     pi --> tree["tree of nodes<br/>(page ranges + summaries)"]
     pp --> attach["attach Sección ids<br/>to each node"]

@@ -15,6 +15,10 @@ When the Secciones do not cover (part of) the question, the model writes one
 uncited line starting with GAP_MARKER. That line is never shown: it only marks
 the Answer as incomplete, and the Partes it names are kept as likely Partes when
 a retrieved Sección has a Remisión to them, cited from that Remisión's text.
+
+Parte 1 Definiciones attached to the Retrieval follow the Secciones as documents of
+their own, so the model can cite one when the Answer relies on the defined meaning.
+A Definición the model does not cite never becomes a Citation.
 """
 
 import json
@@ -25,9 +29,10 @@ from typing import Any
 
 import anthropic
 
-from .parser import ParsedParte
+from . import strings
+from .parser import ParsedParte, SeccionPage
 from .remisiones import Remision, find_remisiones, parte_codes
-from .retriever import Retrieval, RetrievedSeccion
+from .retriever import Retrieval, RetrievedDefinicion, RetrievedSeccion
 
 GAP_MARKER = "SIN RESPALDO:"
 
@@ -40,7 +45,9 @@ SYSTEM = (
     "No agregues nada de conocimiento propio. Si los documentos no alcanzan para responder "
     "la pregunta, o una parte de ella, terminá con una línea aparte, sin citas, que empiece "
     f"con '{GAP_MARKER}' y diga qué falta; si los documentos remiten a otra Parte de la RAAC "
-    "que probablemente lo cubra, nombrala ahí (por ejemplo 'Parte 67')."
+    "que probablemente lo cubra, nombrala ahí (por ejemplo 'Parte 67'). "
+    "Algunos documentos son Definiciones de la Parte 1: usalas para entender los términos "
+    "de las Secciones y citalas solo si la respuesta depende del significado definido."
 )
 # A sentence ends at terminal punctuation (optionally closing an emphasis) followed by
 # whitespace, so "61.520" does not split, or at a line break.
@@ -65,6 +72,7 @@ class Citation:
     fecha: str | None
     source_url: str
     cited_text: str
+    definicion: str | None = None  # the defined term, when the Citation is a Parte 1 Definición
 
 
 @dataclass
@@ -110,6 +118,19 @@ def build_documents(retrieval: Retrieval) -> list[dict[str, Any]]:
         if context := _footer_context(r.parte, r.seccion.pdf_page_start):
             doc["context"] = context
         docs.append(doc)
+    for d in retrieval.definiciones:
+        doc = {
+            "type": "document",
+            "source": {
+                "type": "content",
+                "content": [{"type": "text", "text": page.text} for page in d.definicion.pages],
+            },
+            "title": f"RAAC Parte {d.parte.code} - Sección {d.definicion.seccion_id} - Definición: {d.definicion.term}",
+            "citations": {"enabled": True},
+        }
+        if context := _footer_context(d.parte, d.definicion.pages[0].pdf_page):
+            doc["context"] = context
+        docs.append(doc)
     return docs
 
 
@@ -145,6 +166,10 @@ def answer(
             "question": standalone_question,
             # Document order, so a replay can rebuild the documents the citation indices point into.
             "secciones": [{"parte": r.parte.code, "seccion": r.seccion.id} for r in retrieval.secciones],
+            "definiciones": [
+                {"parte": d.parte.code, "seccion": d.definicion.seccion_id, "term": d.definicion.term}
+                for d in retrieval.definiciones
+            ],
             "response": response,
         }
         record_path.write_text(json.dumps(record, ensure_ascii=False, indent=2))
@@ -247,21 +272,30 @@ def _capitalize(text: str) -> str:
 def _map_citation(raw: dict[str, Any], retrieval: Retrieval, source_urls: dict[str, str]) -> Citation:
     if raw.get("type") != "content_block_location":
         raise ValueError(f"Unexpected citation type {raw.get('type')!r}")
-    r: RetrievedSeccion = retrieval.secciones[raw["document_index"]]
-    pages = r.seccion.pages[raw["start_block_index"] : raw["end_block_index"]]
+    index = raw["document_index"]
+    if index >= len(retrieval.secciones):
+        d: RetrievedDefinicion = retrieval.definiciones[index - len(retrieval.secciones)]
+        parte, seccion_id, all_pages = d.parte, d.definicion.seccion_id, d.definicion.pages
+        title, term = strings.DEFINICION_TITLE.format(term=d.definicion.term), d.definicion.term
+    else:
+        r: RetrievedSeccion = retrieval.secciones[index]
+        parte, seccion_id, all_pages = r.parte, r.seccion.id, r.seccion.pages
+        title, term = r.seccion.title, None
+    pages: list[SeccionPage] = all_pages[raw["start_block_index"] : raw["end_block_index"]]
     if not pages:
-        raise ValueError(f"Citation block range out of bounds for Sección {r.seccion.id}: {raw}")
+        raise ValueError(f"Citation block range out of bounds for Sección {seccion_id}: {raw}")
     return Citation(
-        parte=r.parte.code,
-        seccion=r.seccion.id,
-        seccion_title=r.seccion.title,
+        parte=parte.code,
+        seccion=seccion_id,
+        seccion_title=title,
         pdf_page_start=pages[0].pdf_page,
         pdf_page_end=pages[-1].pdf_page,
         printed_page_start=pages[0].printed_page,
         printed_page_end=pages[-1].printed_page,
-        **_page_version(r.parte, pages[0].pdf_page),
-        source_url=source_urls[r.parte.code],
+        **_page_version(parte, pages[0].pdf_page),
+        source_url=source_urls[parte.code],
         cited_text=raw["cited_text"],
+        definicion=term,
     )
 
 
