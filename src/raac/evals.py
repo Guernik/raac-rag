@@ -1,7 +1,8 @@
 """Eval harness: run eval cases against any Pipeline and score each stage separately.
 
 Scores per case:
-- retrieval: which expected Secciones are among the retrieved ones (in-scope cases);
+- retrieval: which expected Secciones are among the retrieved ones (in-scope cases); the
+  Sección holding an attached Parte 1 Definición counts as retrieved;
 - grounding: share of the Answer's sentences that carried a Citation, counting the
   uncited sentences the Answerer dropped (answered cases; a refusal cites nothing);
 - refusal: whether the pipeline refused exactly when the case is out of scope.
@@ -16,7 +17,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from .pipeline import Pipeline, PipelineResult, SeccionRef
+from .pipeline import DefinicionRef, Pipeline, PipelineResult, SeccionRef
 
 REPORT_SCHEMA_VERSION = 1
 _CASE_KEYS = {"id", "question", "expected_secciones", "reference_answer", "out_of_scope", "source"}
@@ -89,7 +90,7 @@ class CaseScores:
 
 
 def score(case: EvalCase, result: PipelineResult) -> CaseScores:
-    retrieved = set(result.retrieved_secciones)
+    retrieved = set(result.retrieved_secciones) | {SeccionRef(d.parte, d.seccion) for d in result.definiciones}
     hit = recall = None
     if not case.out_of_scope:
         found = [e for e in case.expected_secciones if e in retrieved]
@@ -119,6 +120,7 @@ class CaseResult:
     latency_s: float
     routed_partes: list[str] = field(default_factory=list)
     retrieved_secciones: list[SeccionRef] = field(default_factory=list)
+    definiciones: list[DefinicionRef] = field(default_factory=list)
     cited_secciones: list[SeccionRef] = field(default_factory=list)
     answer: dict[str, Any] | None = None
     served_model: str | None = None
@@ -154,6 +156,7 @@ def run_case(pipeline: Pipeline, case: EvalCase) -> CaseResult:
         latency_s=time.monotonic() - started,
         routed_partes=result.routed_partes,
         retrieved_secciones=result.retrieved_secciones,
+        definiciones=result.definiciones,
         cited_secciones=cited,
         answer=result.answer.to_dict(),
         served_model=result.answer.model,

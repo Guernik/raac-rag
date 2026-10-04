@@ -28,6 +28,13 @@ class SeccionRef:
 
 
 @dataclass(frozen=True)
+class DefinicionRef:
+    parte: str
+    seccion: str
+    term: str
+
+
+@dataclass(frozen=True)
 class IndexVersion:
     parte: str
     content_hash: str
@@ -41,6 +48,7 @@ class PipelineResult:
     retrieved_secciones: list[SeccionRef]
     answer: Answer
     visited_nodes: list[str] = field(default_factory=list)  # "<parte>:<node_id>"
+    definiciones: list[DefinicionRef] = field(default_factory=list)  # Parte 1 Definiciones given as context
 
 
 class Pipeline(Protocol):
@@ -102,6 +110,9 @@ class LocalPipeline:
             routed_partes=retrieval.routed_partes,
             visited_nodes=retrieval.visited_nodes,
             retrieved_secciones=[SeccionRef(r.parte.code, r.seccion.id) for r in retrieval.secciones],
+            definiciones=[
+                DefinicionRef(d.parte.code, d.definicion.seccion_id, d.definicion.term) for d in retrieval.definiciones
+            ],
             answer=result,
         )
 

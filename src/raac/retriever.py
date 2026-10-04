@@ -3,6 +3,10 @@
 Parte routing first picks which Partes to search (router.py). Tree search is
 PageIndex's own local agent over each routed ParteIndex; we observe its tool
 calls to learn which PDF pages it read, then map those pages to Secciones.
+Pages read in Parte 1's Definiciones Sección (1.11, ~50 pages) map to the
+Definiciones on them, not to the whole Sección. When Parte 1 is loaded, the
+Definiciones the retrieved Secciones use are also attached as context for the
+Answerer (definiciones.py), whether or not Parte 1 was routed.
 """
 
 import json
@@ -12,9 +16,9 @@ from typing import Any, Protocol
 
 from pageindex import PageIndexClient
 
-from . import strings
+from . import definiciones, strings
 from .indexer import ParteIndex, walk
-from .parser import ParsedParte, Seccion
+from .parser import DEFINICIONES_PARTE, DEFINICIONES_SECCION, Definicion, ParsedParte, Seccion
 
 _SEARCH_INSTRUCTIONS = (
     "Tu tarea es localizar, en la RAAC, el texto que responde la pregunta. "
@@ -31,10 +35,17 @@ class RetrievedSeccion:
 
 
 @dataclass
+class RetrievedDefinicion:
+    parte: ParsedParte
+    definicion: Definicion
+
+
+@dataclass
 class Retrieval:
     routed_partes: list[str]
     visited_nodes: list[str] = field(default_factory=list)  # "<parte>:<node_id>"
     secciones: list[RetrievedSeccion] = field(default_factory=list)
+    definiciones: list[RetrievedDefinicion] = field(default_factory=list)  # context; cited only if relied on
 
 
 Progress = Callable[[str], None]
@@ -77,7 +88,21 @@ class Retriever:
             part = retrieval_from_events(stream.events, parsed, index, self._progress)
             retrieval.visited_nodes += part.visited_nodes
             retrieval.secciones += part.secciones
+            retrieval.definiciones += part.definiciones
+        if DEFINICIONES_PARTE in self._partes:
+            read = {id(d.definicion) for d in retrieval.definiciones}
+            retrieval.definiciones += [
+                d
+                for d in attach_definiciones(retrieval.secciones, self._partes[DEFINICIONES_PARTE][0])
+                if id(d.definicion) not in read
+            ]
         return retrieval
+
+
+def attach_definiciones(secciones: list[RetrievedSeccion], parte1: ParsedParte) -> list[RetrievedDefinicion]:
+    """Parte 1 Definiciones the retrieved Secciones use."""
+    used = definiciones.used_by((r.seccion.text for r in secciones), parte1.definiciones)
+    return [RetrievedDefinicion(parte1, d) for d in used]
 
 
 def retrieval_from_events(
@@ -104,10 +129,18 @@ def retrieval_from_events(
         for node in walk(index.tree)
         if not node.get("nodes") and any(node["start_index"] <= p <= node["end_index"] for p in pages)
     ]
+    secciones = parsed.secciones_on_pages(pages)
+    read_definiciones = []
+    if parsed.definiciones and any(s.id == DEFINICIONES_SECCION for s in secciones):
+        secciones = [s for s in secciones if s.id != DEFINICIONES_SECCION]
+        read_definiciones = [
+            RetrievedDefinicion(parsed, d) for d in parsed.definiciones if any(p.pdf_page in pages for p in d.pages)
+        ]
     return Retrieval(
         routed_partes=[parsed.code],
         visited_nodes=visited,
-        secciones=[RetrievedSeccion(parsed, s) for s in parsed.secciones_on_pages(pages)],
+        secciones=[RetrievedSeccion(parsed, s) for s in secciones],
+        definiciones=read_definiciones,
     )
 
 

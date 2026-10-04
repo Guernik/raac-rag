@@ -14,7 +14,7 @@ import pytest
 from conftest import FIXTURES
 from raac.answerer import build_documents, map_response
 from raac.cli import render
-from raac.retriever import Retrieval, RetrievedSeccion
+from raac.retriever import Retrieval, RetrievedDefinicion, RetrievedSeccion
 
 URL = "https://docs.anac.gob.ar/index.php/s/PtMG8j8sFeRyren"
 
@@ -253,3 +253,82 @@ def test_citation_shows_the_cited_pages_own_footer(parte26):
     response = {"content": [{"type": "text", "text": "Hay una definición.", "citations": [raw]}], "model": "m"}
     c = map_response(response, retrieval, {"26": URL}).sentences[0].citations[0]
     assert (parte26.edicion, c.edicion, c.enmienda, c.fecha) == ("I", "IV", None, "23 marzo 2022")
+
+
+# Parte 1 Definiciones attached as context follow the Secciones as documents.
+
+URL1 = "https://docs.anac.gob.ar/index.php/s/parte1"
+
+
+@pytest.fixture
+def with_definiciones(parte1, parte61):
+    defs = {d.term: d for d in parte1.definiciones}
+    return Retrieval(
+        routed_partes=["61"],
+        secciones=[RetrievedSeccion(parte61, parte61.seccion("61.535"))],
+        definiciones=[RetrievedDefinicion(parte1, defs[t]) for t in ("Vuelo nocturno", "Noche")],
+    )
+
+
+def test_definiciones_are_documents_after_the_secciones(with_definiciones):
+    docs = build_documents(with_definiciones)
+    assert [d["title"] for d in docs] == [
+        "RAAC Parte 61 - Sección 61.535 Operaciones VFR nocturnas - Régimen transitorio",
+        "RAAC Parte 1 - Sección 1.11 - Definición: Vuelo nocturno",
+        "RAAC Parte 1 - Sección 1.11 - Definición: Noche",
+    ]
+    noche = docs[2]
+    assert noche["citations"] == {"enabled": True}
+    assert [b["text"][:6] for b in noche["source"]["content"]] == ["Noche:", "corres"]  # one block per PDF page
+    assert noche["context"] == "Edición V, 24 septiembre 2024"
+
+
+def test_cited_definicion_maps_to_parte_1(with_definiciones):
+    answer = map_response(
+        _response(
+            ("Sin instrucción nocturna no podés volar VFR de noche", [_cite(0, 0)]),
+            (", y la noche ", []),
+            ("comienza al fin del crepúsculo civil vespertino", [_cite(2, 0, "Noche: Las horas comprendidas")]),
+            (".", []),
+        ),
+        with_definiciones,
+        {"61": URL, "1": URL1},
+    )
+    [sentence] = answer.sentences
+    c = sentence.citations[1]
+    assert (c.parte, c.seccion, c.definicion, c.seccion_title) == ("1", "1.11", "Noche", "Definición de «Noche»")
+    assert (c.pdf_page_start, c.printed_page_start, c.edicion, c.source_url) == (38, "2.27", "V", URL1)
+    assert sentence.citations[0].definicion is None
+
+
+def test_definiciones_not_relied_on_are_not_citations(with_definiciones):
+    answer = map_response(
+        _response(("Sin instrucción nocturna no podés volar VFR de noche", [_cite(0, 0)]), (".", [])),
+        with_definiciones,
+        {"61": URL, "1": URL1},
+    )
+    cites = [c for s in answer.sentences for c in s.citations]
+    assert cites and all((c.parte, c.definicion) == ("61", None) for c in cites)
+
+
+def test_live_recording_cites_only_the_definiciones_it_relies_on(parte1, parte61):
+    # `raac ask "Soy alumno piloto, ¿puedo volar solo en una TMA?"` with Partes 1 and 61 (the fixture
+    # PDFs), recorded with --record. Tree search read Parte 1 pages, so ~150 Definiciones were documents.
+    record = json.loads((FIXTURES / "citations-response-definicion-tma.json").read_text())
+    partes = {"1": parte1, "61": parte61}
+    defs = {d.term: d for d in parte1.definiciones}
+    retrieval = Retrieval(
+        routed_partes=["61", "1"],
+        secciones=[RetrievedSeccion(partes[s["parte"]], partes[s["parte"]].seccion(s["seccion"])) for s in record["secciones"]],
+        definiciones=[RetrievedDefinicion(parte1, defs[d["term"]]) for d in record["definiciones"]],
+    )
+    assert len(retrieval.definiciones) > 100
+    answer = map_response(record["response"], retrieval, {"1": URL1, "61": URL})
+    cites = [c for s in answer.sentences for c in s.citations]
+    cited_definiciones = {c.definicion for c in cites if c.definicion}
+    assert cited_definiciones == {"Área de control terminal (TMA)", "Área de control (CTA)"}
+    assert "61.430" in {c.seccion for c in cites}
+    for c in cites:
+        if c.definicion:
+            assert (c.parte, c.seccion) == ("1", "1.11")
+            assert c.cited_text.strip() in defs[c.definicion].text

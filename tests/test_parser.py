@@ -127,3 +127,33 @@ def test_arabic_enmienda_and_footer_date():
     v1, v2 = parte.page_version(1), parte.page_version(2)
     assert (v1.edicion, v1.enmienda, v1.fecha) == ("I", "I", "mayo 2026")
     assert (v2.edicion, v2.enmienda, v2.fecha) == ("I", "I", "4 mayo 2026")
+
+
+def test_parte_1_definiciones(parte1):
+    # Subparte B (Sección 1.11): bold term at the left margin, up to a colon.
+    defs = {d.term: d for d in parte1.definiciones}
+    assert len(parte1.definiciones) > 500
+    assert parte1.definiciones[0].term == "A prueba de fuego"
+    assert parte1.definiciones[-1].term == "Zonas de vuelo protegidas"
+    noche = defs["Noche"]
+    assert noche.seccion_id == "1.11"
+    assert noche.text.startswith("Noche: Las horas comprendidas entre el fin del crepúsculo civil vespertino")
+    assert "6º por debajo del" in noche.text  # its NOTA belongs to it
+    assert [(p.pdf_page, p.printed_page) for p in noche.pages] == [(38, "2.27"), (39, "2.28")]  # runs onto the next page
+    assert noche.pages[0].rects
+    # Part of the term is not bold; the term still runs up to the colon.
+    assert defs["Parte (de producto)"].text == "Parte (de producto): Todo material, componente o accesorio aeronáutico."
+    assert defs["Área de control terminal (TMA)"].text.startswith("Área de control terminal (TMA): Área de control establecida")
+
+
+def test_definiciones_indented_sub_items_and_closing_titles(parte1):
+    terms = {d.term for d in parte1.definiciones}
+    # Indented bold terms are items of the Definición above them.
+    assert not {"Nieve seca", "Nieve mojada", "Entrenador para procedimientos de vuelo"} & terms
+    # The Parte title printed before Subparte C does not end up in the last Definición.
+    assert "REGULACIONES" not in parte1.definiciones[-1].text
+    assert all("Abreviaturas y siglas" not in d.text for d in parte1.definiciones)
+
+
+def test_definiciones_only_from_parte_1(parte61, parte67):
+    assert parte61.definiciones == [] and parte67.definiciones == []
