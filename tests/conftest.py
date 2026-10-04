@@ -1,3 +1,4 @@
+import socket
 from pathlib import Path
 
 import pytest
@@ -5,6 +6,16 @@ import pytest
 from raac.parser import ParsedParte, parse
 
 FIXTURES = Path(__file__).parent / "fixtures"
+
+
+@pytest.fixture(autouse=True)
+def no_network(monkeypatch):
+    # Tests replay recorded responses; a live call (Anthropic, PageIndex, docs.anac.gob.ar) is a bug, not a skip.
+    def refuse(self, address, *args, **kwargs):
+        raise RuntimeError(f"test tried a live network call to {address!r}")
+
+    monkeypatch.setattr(socket.socket, "connect", refuse)
+    monkeypatch.setattr(socket.socket, "connect_ex", refuse)
 
 
 @pytest.fixture(scope="session")
