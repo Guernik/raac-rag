@@ -24,6 +24,7 @@ flowchart TB
     end
 
     evals["evals.py<br/>eval cases → report"]
+    judge["judge.py<br/>correctness vs reference<br/><i>Opus 5.5</i>"]
 
     cli["cli.py<br/>raac ask / eval / fetch"]
     api["FastAPI<br/>streaming"]
@@ -44,6 +45,7 @@ flowchart TB
     retriever --> answerer
     answerer --> cli
     answerer --> evals --> cli
+    evals -- Answer + reference --> judge
     answerer -.-> api -.-> web
 
     classDef planned stroke-dasharray: 5 5

@@ -1,0 +1,218 @@
+{
+  "correcta": {
+    "case": "61-vfr-nocturno-ppl",
+    "request": {
+      "model": "claude-opus-5-5",
+      "max_tokens": 1024,
+      "system": "Evaluás respuestas sobre las Regulaciones Argentinas de Aviación Civil (RAAC). Recibís una pregunta, una respuesta de referencia escrita por un experto y la respuesta a evaluar. Juzgá solo si la respuesta a evaluar es correcta frente a la referencia: \"correcta\" si transmite lo esencial de la referencia (requisitos, condiciones, números, plazos y la conclusión) sin contradecirla; \"parcial\" si acierta en parte pero omite algo esencial de la referencia o agrega una afirmación dudosa; \"incorrecta\" si la contradice, falla en lo central o se niega a responder cuando la referencia sí responde. Si la referencia dice que la respuesta debe declarar que no encontró respaldo, una respuesta que lo declara es correcta y una que responde igual es incorrecta. No penalices la redacción, el orden, el voseo ni el detalle adicional que no contradiga la referencia. No uses conocimiento propio sobre la RAAC: la referencia manda. Explicá tu veredicto en una o dos oraciones en español.",
+      "messages": [
+        {
+          "role": "user",
+          "content": "<pregunta>\n¿Puedo volar VFR de noche con mi licencia de piloto privado?\n</pregunta>\n\n<referencia>\nSolo si recibiste instrucción en vuelo VFR nocturno o tenés habilitación de vuelo nocturno; si no, para actuar como piloto al mando en VFR nocturno tenés que acreditar la experiencia de la Sección 61.520 (a)(1)(v) o (b)(1)(v) y que un instructor de vuelo lo deje constando en tu libro de vuelo junto con tu aptitud para operar VFR nocturno. Mientras no lo cumplas, la licencia lleva la limitación \"Carece de atribuciones para operaciones VFR nocturnas\". Hasta el 31 de diciembre de 2027 los postulantes que no quieran esa atribución pueden reemplazar esas 3 horas por 3 horas de doble comando.\n</referencia>\n\n<respuesta>\nEl titular de una licencia de Piloto Privado de Avión que no haya recibido instrucción en vuelo VFR nocturno, o carezca de habilitación de vuelo nocturno (o vuelo nocturno local), no podrá ejercer las atribuciones como piloto al mando en operaciones VFR nocturno, salvo que acredite la experiencia prevista en la Sección 61.520 (a)(1)(v) o 61.520 (b)(1) (v) según corresponda y que un instructor de vuelo habilitado deje constancia en el libro de vuelo del cumplimiento de lo anterior y de la aptitud para operar VFR nocturno. Esa experiencia consiste en tres (3) horas de instrucción en vuelo nocturno que incluyan diez (10) despegues y diez (10) aterrizajes, cada aterrizaje involucrará un vuelo de patrón de tráfico en un aeródromo. Hasta tanto no se cumpla lo dispuesto en (a), se consignará en la licencia la limitación: \"Carece de atribuciones para operaciones VFR nocturnas\". Hasta el 31 de diciembre de 2027, los postulantes a la Licencia de Piloto Privado que no deseen obtener las atribuciones para operaciones VFR nocturnas, podrán reemplazar las tres (3) horas correspondientes a dicha atribución por tres (3) horas de instrucción doble comando. En ese caso la licencia lleva la misma leyenda de limitación, pudiendo el titular cumplir con lo dispuesto en el inciso (a) más adelante para levantarla. Tené en cuenta que la instrucción de vuelo por instrumentos especificada en la Sección 61.515 y en vuelo nocturno indicada en la Sección 61.520, no habilitan al titular de una licencia de piloto privado para pilotar aeronaves en vuelos IFR.\n</respuesta>"
+        }
+      ],
+      "output_config": {
+        "format": {
+          "type": "json_schema",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "fundamento": {
+                "type": "string"
+              },
+              "veredicto": {
+                "type": "string",
+                "enum": [
+                  "correcta",
+                  "parcial",
+                  "incorrecta"
+                ]
+              }
+            },
+            "required": [
+              "fundamento",
+              "veredicto"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "response": {
+      "id": "msg_011CfghzyfRwoiRjiVLoKNNF",
+      "container": null,
+      "content": [
+        {
+          "text": "{\"fundamento\":\"La respuesta reproduce todos los elementos esenciales de la referencia: la condición de instrucción o habilitación nocturna, la acreditación de experiencia de la 61.520 (a)(1)(v) o (b)(1)(v) con constancia del instructor en el libro de vuelo, la limitación consignada en la licencia y la alternativa de 3 horas de doble comando hasta el 31/12/2027. El detalle adicional (10 despegues y aterrizajes, que no habilita para IFR) no contradice la referencia.\",\"veredicto\":\"correcta\"}",
+          "type": "text"
+        }
+      ],
+      "diagnostics": null,
+      "model": "claude-opus-5-5",
+      "role": "assistant",
+      "stop_details": null,
+      "stop_reason": "end_turn",
+      "stop_sequence": null,
+      "type": "message",
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "inference_geo": "global",
+        "input_tokens": 1614,
+        "output_tokens": 200,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard"
+      }
+    }
+  },
+  "incorrecta": {
+    "case": "61-vfr-nocturno-ppl",
+    "request": {
+      "model": "claude-opus-5-5",
+      "max_tokens": 1024,
+      "system": "Evaluás respuestas sobre las Regulaciones Argentinas de Aviación Civil (RAAC). Recibís una pregunta, una respuesta de referencia escrita por un experto y la respuesta a evaluar. Juzgá solo si la respuesta a evaluar es correcta frente a la referencia: \"correcta\" si transmite lo esencial de la referencia (requisitos, condiciones, números, plazos y la conclusión) sin contradecirla; \"parcial\" si acierta en parte pero omite algo esencial de la referencia o agrega una afirmación dudosa; \"incorrecta\" si la contradice, falla en lo central o se niega a responder cuando la referencia sí responde. Si la referencia dice que la respuesta debe declarar que no encontró respaldo, una respuesta que lo declara es correcta y una que responde igual es incorrecta. No penalices la redacción, el orden, el voseo ni el detalle adicional que no contradiga la referencia. No uses conocimiento propio sobre la RAAC: la referencia manda. Explicá tu veredicto en una o dos oraciones en español.",
+      "messages": [
+        {
+          "role": "user",
+          "content": "<pregunta>\n¿Puedo volar VFR de noche con mi licencia de piloto privado?\n</pregunta>\n\n<referencia>\nSolo si recibiste instrucción en vuelo VFR nocturno o tenés habilitación de vuelo nocturno; si no, para actuar como piloto al mando en VFR nocturno tenés que acreditar la experiencia de la Sección 61.520 (a)(1)(v) o (b)(1)(v) y que un instructor de vuelo lo deje constando en tu libro de vuelo junto con tu aptitud para operar VFR nocturno. Mientras no lo cumplas, la licencia lleva la limitación \"Carece de atribuciones para operaciones VFR nocturnas\". Hasta el 31 de diciembre de 2027 los postulantes que no quieran esa atribución pueden reemplazar esas 3 horas por 3 horas de doble comando.\n</referencia>\n\n<respuesta>\nSí, la licencia de piloto privado incluye siempre las atribuciones VFR nocturnas, sin ningún requisito adicional.\n</respuesta>"
+        }
+      ],
+      "output_config": {
+        "format": {
+          "type": "json_schema",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "fundamento": {
+                "type": "string"
+              },
+              "veredicto": {
+                "type": "string",
+                "enum": [
+                  "correcta",
+                  "parcial",
+                  "incorrecta"
+                ]
+              }
+            },
+            "required": [
+              "fundamento",
+              "veredicto"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "response": {
+      "id": "msg_011Cfgi1Emn7qGw1my7QiV8m",
+      "container": null,
+      "content": [
+        {
+          "text": "{\"fundamento\":\"La respuesta contradice la referencia: afirma que la licencia incluye siempre atribuciones VFR nocturnas sin requisitos. Según la referencia, se requiere instrucción o habilitación nocturna, o acreditar la experiencia de la Sección 61.520 con constancia de un instructor; de lo contrario la licencia lleva la limitación correspondiente.\",\"veredicto\":\"incorrecta\"}",
+          "type": "text"
+        }
+      ],
+      "diagnostics": null,
+      "model": "claude-opus-5-5",
+      "role": "assistant",
+      "stop_details": null,
+      "stop_reason": "end_turn",
+      "stop_sequence": null,
+      "type": "message",
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "inference_geo": "global",
+        "input_tokens": 1013,
+        "output_tokens": 149,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard"
+      }
+    }
+  },
+  "rechazo": {
+    "case": "fuera-notam-aeroparque",
+    "request": {
+      "model": "claude-opus-5-5",
+      "max_tokens": 1024,
+      "system": "Evaluás respuestas sobre las Regulaciones Argentinas de Aviación Civil (RAAC). Recibís una pregunta, una respuesta de referencia escrita por un experto y la respuesta a evaluar. Juzgá solo si la respuesta a evaluar es correcta frente a la referencia: \"correcta\" si transmite lo esencial de la referencia (requisitos, condiciones, números, plazos y la conclusión) sin contradecirla; \"parcial\" si acierta en parte pero omite algo esencial de la referencia o agrega una afirmación dudosa; \"incorrecta\" si la contradice, falla en lo central o se niega a responder cuando la referencia sí responde. Si la referencia dice que la respuesta debe declarar que no encontró respaldo, una respuesta que lo declara es correcta y una que responde igual es incorrecta. No penalices la redacción, el orden, el voseo ni el detalle adicional que no contradiga la referencia. No uses conocimiento propio sobre la RAAC: la referencia manda. Explicá tu veredicto en una o dos oraciones en español.",
+      "messages": [
+        {
+          "role": "user",
+          "content": "<pregunta>\n¿Qué NOTAM hay vigentes hoy para Aeroparque?\n</pregunta>\n\n<referencia>\nLa RAAC no publica NOTAM; la respuesta debe decir que no encontró respaldo y no citar nada.\n</referencia>\n\n<respuesta>\nNo encontré respaldo en la RAAC vigente cargada para responder esta pregunta.\n</respuesta>"
+        }
+      ],
+      "output_config": {
+        "format": {
+          "type": "json_schema",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "fundamento": {
+                "type": "string"
+              },
+              "veredicto": {
+                "type": "string",
+                "enum": [
+                  "correcta",
+                  "parcial",
+                  "incorrecta"
+                ]
+              }
+            },
+            "required": [
+              "fundamento",
+              "veredicto"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "response": {
+      "id": "msg_011Cfgi1Wy6bUVx7qTjqQws4",
+      "container": null,
+      "content": [
+        {
+          "text": "{\"fundamento\":\"La referencia indica que la respuesta debe declarar que no encontró respaldo y no citar nada, y la respuesta evaluada hace exactamente eso sin inventar NOTAM ni citas.\",\"veredicto\":\"correcta\"}",
+          "type": "text"
+        }
+      ],
+      "diagnostics": null,
+      "model": "claude-opus-5-5",
+      "role": "assistant",
+      "stop_details": null,
+      "stop_reason": "end_turn",
+      "stop_sequence": null,
+      "type": "message",
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "inference_geo": "global",
+        "input_tokens": 775,
+        "output_tokens": 88,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard"
+      }
+    }
+  }
+}

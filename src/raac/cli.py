@@ -7,11 +7,13 @@ import sys
 from datetime import UTC, datetime
 from pathlib import Path
 
+import anthropic
 import httpx
 
 from . import corpus, evals, strings
 from .answerer import Answer, Citation
-from .config import load_env
+from .config import load_env, load_judge_model
+from .judge import CorrectnessJudge
 from .pipeline import DEFAULT_PARTES, build_local_pipeline
 from .router import routing_report
 
@@ -35,6 +37,7 @@ def main(argv: list[str] | None = None) -> int:
     ev.add_argument("--cases", type=Path, default=DEFAULT_CASES)
     _add_corpus_args(ev)
     ev.add_argument("--out", type=Path, help="Report path; default evals/reports/<UTC timestamp>-local.json")
+    ev.add_argument("--no-judge", action="store_true", help="Skip the correctness judge (no reference Answer comparison)")
     fetch = sub.add_parser("fetch", help="Discover all Partes on the ANAC page and download their PDFs")
     fetch.add_argument("--dir", type=Path, default=Path(".raac/corpus"))
     fetch.add_argument("--parte", action="append", help="Only this Parte (repeatable)")
@@ -50,8 +53,9 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "eval":
         cases = evals.load_cases(args.cases)  # fail on a malformed case before spending on indexing
+        judge = None if args.no_judge else CorrectnessJudge(anthropic.Anthropic(), load_judge_model())
         pipeline = build_local_pipeline(args.parte or DEFAULT_PARTES, args.cache_dir, progress, offline=args.offline)
-        report = evals.run_eval(pipeline, cases, args.cases)
+        report = evals.run_eval(pipeline, cases, args.cases, judge)
         out = args.out or Path("evals/reports") / f"{datetime.now(UTC):%Y%m%dT%H%M%SZ}-{pipeline.name}.json"
         evals.write_report(report, out)
         print(evals.summarize(report))

@@ -5,8 +5,9 @@ Scores per case:
   Sección holding an attached Parte 1 Definición counts as retrieved;
 - grounding: share of the Answer's sentences that carried a Citation, counting the
   uncited sentences the Answerer dropped (answered cases; a refusal cites nothing);
-- refusal: whether the pipeline refused exactly when the case is out of scope.
-Correctness against the reference Answer is scored separately (LLM judge, not here).
+- refusal: whether the pipeline refused exactly when the case is out of scope;
+- correctness: an LLM judge's verdict on the Answer against the case's reference Answer
+  (judge.py), with its rationale kept in the report; only when a judge is given.
 """
 
 import hashlib
@@ -17,9 +18,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from .judge import Correctness, CorrectnessJudge
 from .pipeline import DefinicionRef, Pipeline, PipelineResult, SeccionRef
 
-REPORT_SCHEMA_VERSION = 1
+REPORT_SCHEMA_VERSION = 2
 _CASE_KEYS = {"id", "question", "expected_secciones", "reference_answer", "out_of_scope", "source"}
 
 
@@ -87,6 +89,7 @@ class CaseScores:
     retrieval_recall: float | None  # share of expected Secciones retrieved
     grounding: float | None  # cited sentences / all sentences written; None when refused
     refusal_correct: bool
+    correctness: float | None = None  # judge score (1 / 0.5 / 0); None when not judged or the judge failed
 
 
 def score(case: EvalCase, result: PipelineResult) -> CaseScores:
@@ -124,10 +127,11 @@ class CaseResult:
     cited_secciones: list[SeccionRef] = field(default_factory=list)
     answer: dict[str, Any] | None = None
     served_model: str | None = None
+    judge: Correctness | None = None  # verdict and rationale, for spot-checking the judge
     error: str | None = None
 
 
-def run_case(pipeline: Pipeline, case: EvalCase) -> CaseResult:
+def run_case(pipeline: Pipeline, case: EvalCase, judge: CorrectnessJudge | None = None) -> CaseResult:
     started = time.monotonic()
     try:
         result = pipeline.run(case.question)
@@ -147,12 +151,17 @@ def run_case(pipeline: Pipeline, case: EvalCase) -> CaseResult:
             ref = SeccionRef(c.parte, c.seccion)
             if ref not in cited:
                 cited.append(ref)
+    scores = score(case, result)
+    judgement = None
+    if judge is not None:
+        judgement = judge.judge(case.question, case.reference_answer, result.answer)
+        scores.correctness = judgement.score
     return CaseResult(
         id=case.id,
         question=case.question,
         out_of_scope=case.out_of_scope,
         expected_secciones=case.expected_secciones,
-        scores=score(case, result),
+        scores=scores,
         latency_s=time.monotonic() - started,
         routed_partes=result.routed_partes,
         retrieved_secciones=result.retrieved_secciones,
@@ -160,11 +169,16 @@ def run_case(pipeline: Pipeline, case: EvalCase) -> CaseResult:
         cited_secciones=cited,
         answer=result.answer.to_dict(),
         served_model=result.answer.model,
+        judge=judgement,
     )
 
 
-def aggregate(results: list[CaseResult]) -> dict[str, Any]:
-    """Aggregate scores. A case that errored counts as a failure in every rate it belongs to."""
+def aggregate(results: list[CaseResult], judged: bool = False) -> dict[str, Any]:
+    """Aggregate scores. A case that errored counts as a failure in every rate it belongs to.
+
+    Correctness is averaged over cases the judge scored, plus pipeline errors as 0; a case
+    whose judge call failed is left out and counted in `judge_errors`.
+    """
     in_scope = [r for r in results if not r.out_of_scope]
     out_scope = [r for r in results if r.out_of_scope]
 
@@ -175,6 +189,14 @@ def aggregate(results: list[CaseResult]) -> dict[str, Any]:
         return sum(values) / len(values) if values else None
 
     answered = [r for r in results if r.scores is None or r.scores.grounding is not None]
+    correctness = None
+    if judged:
+        correctness = {
+            "correctness_mean": mean(
+                [r.scores.correctness if r.scores else 0.0 for r in results if r.scores is None or r.scores.correctness is not None]
+            ),
+            "judge_errors": sum(1 for r in results if r.judge and r.judge.error),
+        }
     return {
         "cases": len(results),
         "in_scope": len(in_scope),
@@ -186,13 +208,19 @@ def aggregate(results: list[CaseResult]) -> dict[str, Any]:
         "uncited_sentences": sum(len(r.answer["dropped_uncited"]) for r in results if r.answer),
         "refusal_rate_out_of_scope": rate(out_scope, lambda s: s.refusal_correct),
         "false_refusal_rate_in_scope": rate(in_scope, lambda s: not s.refusal_correct),
+        **(correctness or {}),
         "latency_s_mean": mean([r.latency_s for r in results]),
     }
 
 
-def run_eval(pipeline: Pipeline, cases: list[EvalCase], cases_path: Path | None = None) -> dict[str, Any]:
+def run_eval(
+    pipeline: Pipeline,
+    cases: list[EvalCase],
+    cases_path: Path | None = None,
+    judge: CorrectnessJudge | None = None,
+) -> dict[str, Any]:
     """Run every case and return the report (JSON-serializable, stable keys across pipelines)."""
-    results = [run_case(pipeline, case) for case in cases]
+    results = [run_case(pipeline, case, judge) for case in cases]
     served = sorted({r.served_model for r in results if r.served_model})
     return {
         "schema_version": REPORT_SCHEMA_VERSION,
@@ -205,7 +233,13 @@ def run_eval(pipeline: Pipeline, cases: list[EvalCase], cases_path: Path | None 
         },
         "cases_file": str(cases_path) if cases_path else None,
         "cases_sha256": _cases_hash(cases),
-        "aggregate": aggregate(results),
+        "judge": None
+        if judge is None
+        else {
+            "model": judge.model,
+            "served_models": sorted({r.judge.model for r in results if r.judge and r.judge.model}),
+        },
+        "aggregate": aggregate(results, judged=judge is not None),
         "cases": [asdict(r) for r in results],
     }
 
@@ -221,17 +255,24 @@ def summarize(report: dict[str, Any]) -> str:
             return "-"
         return f"{value:.2f}" if isinstance(value, float) else str(value)
 
-    lines = [f"{'case':<32} {'hit':>5} {'recall':>6} {'ground':>6} {'refusal':>7}  error"]
+    lines = [f"{'case':<32} {'hit':>5} {'recall':>6} {'ground':>6} {'refusal':>7} {'correct':>7}  error"]
     for c in report["cases"]:
         s = c["scores"] or {}
+        error = c["error"] or ((c.get("judge") or {}).get("error") and f"judge: {c['judge']['error']}") or ""
         lines.append(
             f"{c['id']:<32} {fmt(s.get('retrieval_hit')):>5} {fmt(s.get('retrieval_recall')):>6} "
-            f"{fmt(s.get('grounding')):>6} {fmt(s.get('refusal_correct')):>7}  {c['error'] or ''}"
+            f"{fmt(s.get('grounding')):>6} {fmt(s.get('refusal_correct')):>7} {fmt(s.get('correctness')):>7}  {error}"
         )
+    judged = [c for c in report["cases"] if c.get("judge") and c["judge"]["verdict"]]
+    if judged:
+        lines.append("")
+        lines += [f"{c['id']}: {c['judge']['verdict']} - {c['judge']['rationale']}" for c in judged]
     lines.append("")
     lines += [f"{k}: {fmt(v)}" for k, v in report["aggregate"].items()]
     p = report["pipeline"]
     lines.append(f"pipeline: {p['name']} models={p['models']} served={p['served_answer_models']}")
+    if report.get("judge"):
+        lines.append(f"judge: {report['judge']['model']} served={report['judge']['served_models']}")
     lines += [
         f"index: Parte {v['parte']} {v['content_hash'][:16]} Edición {v['edicion']} Enmienda {v['enmienda']}"
         + (" (cached PDF)" if v["from_cache"] else "")

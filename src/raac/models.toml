@@ -5,3 +5,6 @@ indexing = "claude-haiku-4-5"  # PageIndex node summaries and tree refinement
 routing = "claude-haiku-4-5"   # Parte routing over titles and root summaries
 search = "claude-opus-5-5"     # PageIndex tree search
 answer = "claude-opus-5-5"     # Answer with the Citations API
+
+# Eval only, not a pipeline stage: correctness judge against reference Answers (RAAC_MODEL_JUDGE overrides).
+judge = "claude-opus-5-5"
