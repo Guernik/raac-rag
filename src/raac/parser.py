@@ -2,7 +2,8 @@
 
 Reads the Parte code from the running header, the Edición/Enmienda, date and
 printed page label from each page footer, and splits the body into Secciones
-(id, title, PDF pages, printed page labels, text per page, text rectangles).
+(id, title, PDF pages, printed page labels, text per page, text rectangles,
+Remisiones).
 Footers of one Parte may disagree; they are kept per page (ADR 0004).
 """
 
@@ -12,6 +13,8 @@ from collections import Counter
 from dataclasses import dataclass, field
 
 import pymupdf
+
+from .remisiones import Remision, extract_remisiones
 
 _HEADER_RE = re.compile(r"^\s*RAAC\s+PARTE\s+(\S+)", re.I)
 # Footers vary by Parte, e.g. "ADMINISTRACIÓN NACIONAL\nVI Edición\nmayo 2026\nDE AVIACIÓN CIVIL\n 10\nEnmienda I"
@@ -66,6 +69,7 @@ class Seccion:
     id: str  # e.g. "61.535"
     title: str
     pages: list[SeccionPage]
+    remisiones: list[Remision] = field(default_factory=list, repr=False, compare=False)
 
     @property
     def pdf_page_start(self) -> int:
@@ -141,6 +145,8 @@ def parse(pdf: bytes) -> ParsedParte:
     secciones = _split_secciones(code, bodies, printed)
     if not secciones:
         raise ParseError(f"Parte {code}: no Secciones found")
+    for s in secciones:
+        s.remisiones = extract_remisiones(s, code)
     return ParsedParte(
         code=code,
         edicion=edicion,

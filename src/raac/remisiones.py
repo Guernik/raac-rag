@@ -1,14 +1,18 @@
-"""Remisiones to other Partes found in the text of a Sección.
+"""Remisiones found in the text of a Sección, by deterministic patterns.
 
-Only what the grounding step needs: which Partes a Sección's text refers to, and
-the verbatim line(s) where it does, so a refusal can name the likely Parte and
-cite the Remisión. Remisiones to specific Secciones and following them are #8.
+A Remisión points to another Parte ("conforme a la RAAC 67") or to a Sección
+("Sección 61.520 (a)(1)(v)", "Sección 67.015 del RAAC 67"). ParteParser attaches
+them to each Sección; a refusal names the likely Parte and cites the Remisión's verbatim clause.
 """
 
-import re
-from dataclasses import dataclass
+from __future__ import annotations
 
-from .parser import Seccion
+import re
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .parser import Seccion
 
 # A Parte code: a number (not the start of a Sección id such as 61.535) or a short
 # letter code such as HL or VLA.
@@ -20,6 +24,14 @@ _REMISION = re.compile(
     _HEAD + rf"({_CODE}(?:\s*(?:,|\by\b|\bo\b|\bó\b)\s*(?:RAAC\s+)?(?:(?i:Partes?)\s+)?{_CODE})*)"
 )
 _CODE_RE = re.compile(_CODE)
+# A Sección id, sometimes broken after the dot ("61. 815"), with optional incisos.
+_SID = r"\d{1,3}\.\s?\d{1,4}\b"
+_INCISOS = r"(?:\s*\([a-zA-Z0-9]{1,4}\))*"
+# "Sección 61.520", "Secciones 61.515 y 61.520", "Sección 61.520 (a)(1)(v) o 61.520 (b)(1) (v)".
+_SECCION_REMISION = re.compile(
+    rf"\b(?i:Secci[oó]n(?:es)?)\s+({_SID}{_INCISOS}(?:\s*(?:,|\by\b|\bo\b|\bó\b)\s*{_SID}{_INCISOS})*)"
+)
+_SID_RE = re.compile(r"(\d{1,3})\.\s?(\d{1,4})\b")
 _NOT_CODES = {"DE", "DEL", "EL", "EN", "LA", "LAS", "LOS"}
 # PDF text breaks lines mid-clause; a clause ends a line with . ; or :, and an inciso
 # marker such as "(ii)" sits on its own line.
@@ -30,9 +42,10 @@ _INCISO = re.compile(r"^\s*\(?[a-z0-9]{1,4}\)\s*$")
 @dataclass(frozen=True)
 class Remision:
     to_parte: str
-    seccion: Seccion
+    seccion: Seccion = field(repr=False, compare=False)  # the Sección whose text holds the Remisión
     page_index: int  # into seccion.pages
     text: str  # the clause holding the Remisión, verbatim from the page text
+    to_seccion: str | None = None  # None for a Remisión to a whole Parte
 
 
 def parte_codes(text: str) -> list[str]:
@@ -56,6 +69,29 @@ def find_remisiones(seccion: Seccion, own_parte: str) -> list[Remision]:
                     continue
                 found[code] = Remision(to_parte=code, seccion=seccion, page_index=i, text=line)
     return list(found.values())
+
+
+def extract_remisiones(seccion: Seccion, own_parte: str) -> list[Remision]:
+    """Every Remisión in `seccion`: to other Partes and to Secciones (own Parte included,
+    never to itself), first occurrence per target, in text order."""
+    found: dict[tuple[str, str | None], tuple[tuple[int, int], Remision]] = {}
+    heading = {seccion.id, *seccion.title.split()}
+
+    def add(key: tuple[str, str | None], at: tuple[int, int], page_text: str, span: tuple[int, int]) -> None:
+        if key not in found:
+            text = _clause(page_text, *span, heading=heading)
+            found[key] = (at, Remision(to_parte=key[0], seccion=seccion, page_index=at[0], text=text, to_seccion=key[1]))
+
+    for i, page in enumerate(seccion.pages):
+        for m in _REMISION.finditer(page.text):
+            for code in _CODE_RE.findall(m.group(1)):
+                if code not in _NOT_CODES and code != own_parte:
+                    add((code, None), (i, m.start()), page.text, m.span())
+        for m in _SECCION_REMISION.finditer(page.text):
+            for parte, n in _SID_RE.findall(m.group(1)):
+                if f"{parte}.{n}" != seccion.id:
+                    add((parte, f"{parte}.{n}"), (i, m.start()), page.text, m.span())
+    return [r for _, r in sorted(found.values(), key=lambda item: item[0])]
 
 
 def _clause(text: str, start: int, end: int, heading: set[str]) -> str:
