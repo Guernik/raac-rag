@@ -33,6 +33,7 @@ class IndexVersion:
     content_hash: str
     edicion: str | None = None
     enmienda: str | None = None
+    from_cache: bool = False  # ANAC was unreachable or the run was offline; the content hash is the version either way
 
 
 @dataclass
@@ -67,6 +68,7 @@ class LocalPipeline:
         source_urls: dict[str, str],
         on_progress: Callable[[str], None] = lambda _msg: None,
         router: ParteRouter | None = None,
+        from_cache: frozenset[str] = frozenset(),
     ):
         self._progress = on_progress
         self._retriever = retriever
@@ -75,6 +77,7 @@ class LocalPipeline:
         self._models = models
         self._partes = partes
         self._source_urls = source_urls
+        self._from_cache = from_cache
 
     def models(self) -> dict[str, str]:
         return {
@@ -85,7 +88,10 @@ class LocalPipeline:
         }
 
     def index_versions(self) -> list[IndexVersion]:
-        return [IndexVersion(p.code, p.content_hash, p.edicion, p.enmienda) for p in self._partes]
+        return [
+            IndexVersion(p.code, p.content_hash, p.edicion, p.enmienda, from_cache=p.code in self._from_cache)
+            for p in self._partes
+        ]
 
     def run(self, standalone_question: str, record_path: Path | None = None) -> PipelineResult:
         retrieval = self._retriever.retrieve(standalone_question)
@@ -111,8 +117,9 @@ def build_local_pipeline(
     cache_dir: Path,
     on_progress: Callable[[str], None] = lambda _msg: None,
     routing_record_path: Path | None = None,
+    offline: bool = False,
 ) -> LocalPipeline:
-    """Download, parse and index each Parte (cached by content hash), then wire the pipeline."""
+    """Download (or, when ANAC is down or `offline`, load from cache), parse and index each Parte, then wire the pipeline."""
     models = load_models()
     cache_dir.mkdir(parents=True, exist_ok=True)
     storage = cache_dir / "pageindex"
@@ -121,9 +128,8 @@ def build_local_pipeline(
     loaded = []
     cards = []
     source_urls = {}
-    for listing in corpus.fetch_listings(partes):
-        on_progress(strings.PROGRESS_DOWNLOADING.format(parte=listing.parte))
-        pdf = corpus.download(listing)
+    sourced = corpus.load_partes(partes, corpus.CorpusStore(cache_dir / "corpus"), offline, on_progress)
+    for listing, pdf in ((s.listing, s.pdf) for s in sourced):
         pdf_path = cache_dir / f"raac-{listing.parte}-{pdf.sha256[:16]}.pdf"
         pdf_path.write_bytes(pdf.data)
         parsed = parse(pdf.data)
@@ -142,4 +148,5 @@ def build_local_pipeline(
         source_urls,
         on_progress,
         router=router,
+        from_cache=frozenset(s.listing.parte for s in sourced if s.from_cache),
     )

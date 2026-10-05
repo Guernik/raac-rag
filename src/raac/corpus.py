@@ -12,11 +12,14 @@ import re
 import time
 import urllib.parse
 import xml.etree.ElementTree as ET
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
 import httpx
+
+from . import strings
 
 RAAC_PAGE_URL = "https://www.argentina.gob.ar/anac/raac-dnar-regulaciones-argentinas-de-aviacion-civil/raac"
 SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/{id}/export?format=csv"
@@ -60,6 +63,13 @@ class ParteListing:
 class Pdf:
     data: bytes
     sha256: str
+
+
+@dataclass(frozen=True)
+class SourcedPdf:
+    listing: ParteListing
+    pdf: Pdf
+    from_cache: bool  # ANAC was unreachable (or the run was offline), so the newest stored PDF was used
 
 
 def sheet_id_from_page(html: str) -> str:
@@ -121,7 +131,7 @@ def find_listing(listings: list[ParteListing], parte: str) -> ParteListing:
 
 
 def list_partes(client: httpx.Client | None = None) -> list[ParteListing]:
-    client = client or httpx.Client(follow_redirects=True, timeout=60)
+    client = client or httpx.Client(follow_redirects=True, timeout=httpx.Timeout(60, connect=10))
     html = _get(client, RAAC_PAGE_URL).text
     sheet = _get(client, SHEET_CSV_URL.format(id=sheet_id_from_page(html)))
     return parse_sheet(sheet.content.decode("utf-8"))
@@ -134,7 +144,7 @@ def fetch_listings(partes: list[str], client: httpx.Client | None = None) -> lis
 
 
 def download(listing: ParteListing, client: httpx.Client | None = None) -> Pdf:
-    client = client or httpx.Client(follow_redirects=True, timeout=120)
+    client = client or httpx.Client(follow_redirects=True, timeout=httpx.Timeout(120, connect=10))
     if listing.file_id:
         data = _get(client, _resolve_folder_file(listing, client), auth=(listing.token, "")).content
     else:
@@ -182,6 +192,63 @@ class CorpusStore:
         self.root.mkdir(parents=True, exist_ok=True)
         self._manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True))
         return status
+
+    def latest(self, parte: str) -> tuple[ParteListing, Pdf] | None:
+        """The newest stored PDF of a Parte, with the listing it was downloaded under."""
+        entry = self.manifest().get(parte)
+        if entry is None:
+            return None
+        path = self.path(parte, entry["sha256"])
+        data = path.read_bytes()
+        pdf = Pdf(data=data, sha256=hashlib.sha256(data).hexdigest())
+        if pdf.sha256 != entry["sha256"]:
+            raise CorpusError(f"Parte {parte}: {path} does not match its content hash")
+        return ParteListing(parte=parte, titulo=entry["titulo"], share_url=entry["share_url"]), pdf
+
+
+def load_partes(
+    partes: list[str],
+    store: CorpusStore,
+    offline: bool = False,
+    on_progress: Callable[[str], None] = lambda _msg: None,
+    client: httpx.Client | None = None,
+) -> list[SourcedPdf]:
+    """Download each Parte into the store; when ANAC can't serve it, fall back to the newest stored PDF.
+
+    `offline` skips ANAC entirely. After a transport error the rest of the run is offline too,
+    so a host that is down costs one round of retries, not one per Parte.
+    """
+    client = client or httpx.Client(follow_redirects=True, timeout=httpx.Timeout(120, connect=10))
+    unreachable = "offline run" if offline else None
+    listings: dict[str, ParteListing] = {}
+    if not offline:
+        try:
+            listings = {l.parte: l for l in fetch_listings(partes, client)}
+        except httpx.HTTPError as e:
+            unreachable = f"RAAC listing unreachable ({type(e).__name__}: {e})"
+    sourced = []
+    for parte in partes:
+        reason = unreachable
+        if reason is None:
+            listing = listings[parte]
+            on_progress(strings.PROGRESS_DOWNLOADING.format(parte=parte))
+            try:
+                pdf = download(listing, client)
+            except httpx.HTTPError as e:
+                reason = f"download failed ({type(e).__name__}: {e})"
+                if isinstance(e, httpx.TransportError):
+                    unreachable = reason
+            else:
+                store.put(listing, pdf)
+                sourced.append(SourcedPdf(listing, pdf, from_cache=False))
+                continue
+        cached = store.latest(parte)
+        if cached is None:
+            raise CorpusError(f"Parte {parte}: {reason} and no cached PDF in {store.root}")
+        listing, pdf = cached
+        on_progress(strings.PROGRESS_FROM_CACHE.format(parte=parte, sha256=pdf.sha256[:12]))
+        sourced.append(SourcedPdf(listing, pdf, from_cache=True))
+    return sourced
 
 
 def _resolve_folder_file(listing: ParteListing, client: httpx.Client) -> str:

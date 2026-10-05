@@ -15,3 +15,7 @@ flowchart TD
     J -- different --> L["changed"]
     J -- same --> M["unchanged"]
     K & L & M --> N["&lt;root&gt;/&lt;parte&gt;/&lt;sha256&gt;.pdf<br/>+ manifest.json"]
+    A & G & H -- "unreachable<br/>(ask, eval)" --> R{"Parte in manifest?"}
+    O["--offline"] --> R
+    R -- no --> X
+    R -- yes --> S["newest stored PDF<br/>(recorded as from cache)"]
