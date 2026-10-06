@@ -1,3 +1,4 @@
+import os
 import socket
 from pathlib import Path
 
@@ -6,6 +7,9 @@ import pytest
 from raac.parser import ParsedParte, parse
 
 FIXTURES = Path(__file__).parent / "fixtures"
+
+# LiteLLM fetches its model price map at import unless told not to; PageIndex sets the same default.
+os.environ.setdefault("LITELLM_LOCAL_MODEL_COST_MAP", "True")
 
 
 @pytest.fixture(autouse=True)

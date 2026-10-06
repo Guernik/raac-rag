@@ -5,8 +5,8 @@
 #             (Partes 1, 61, 67, 91 by default; --parte X to pick; --json shows routed Partes and visited nodes;
 #              needs ANTHROPIC_API_KEY, from the environment or a .env file: cp .env.example .env;
 #              models per stage in src/raac/models.toml)
-#   eval:     uv run raac eval   (cases in evals/cases.jsonl; report in evals/reports/; --case <id> runs a subset;
-#             --no-judge skips the correctness judge)
+#   eval:     uv run raac eval   (cases in evals/cases.jsonl; report in evals/reports/, with tokens and cost
+#             per stage priced from src/raac/prices.toml; --case <id> runs a subset; --no-judge skips the correctness judge)
 #             per stage while iterating: raac eval --stage retrieval, then
 #             raac eval --stage answer --retrievals evals/reports/<that report>.json (no routing or search)
 #             uv run raac eval --pipeline cloud   (PageIndex Cloud baseline, same cases; needs PAGEINDEX_API_KEY)
@@ -22,6 +22,7 @@ requires-python = ">=3.11"
 dependencies = [
     "anthropic>=1.11",
     "httpx>=0.27",
+    "openai-agents>=0.18.1",
     "pageindex>=0.2.21",
     "pymupdf>=1.26",
     "python-dotenv>=1.2.4",

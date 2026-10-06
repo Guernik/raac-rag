@@ -33,6 +33,7 @@ from . import strings
 from .parser import ParsedParte, SeccionPage
 from .remisiones import Remision, find_remisiones, parte_codes
 from .retriever import Retrieval, RetrievedDefinicion, RetrievedSeccion
+from .usage import UsageMeter
 
 GAP_MARKER = "SIN RESPALDO:"
 
@@ -141,6 +142,7 @@ def answer(
     retrieval: Retrieval,
     source_urls: dict[str, str],
     record_path: Path | None = None,
+    meter: UsageMeter | None = None,
 ) -> Answer:
     if not retrieval.secciones:
         return Answer(sentences=[], refused=True)
@@ -161,6 +163,8 @@ def answer(
     ) as stream:
         message = stream.get_final_message()
     response = message.model_dump(mode="json")
+    if meter is not None:
+        meter.record_anthropic("answer", response, requested_model=model)
     if record_path is not None:
         record = {
             "question": standalone_question,

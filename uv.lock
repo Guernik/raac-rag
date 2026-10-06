@@ -2069,6 +2069,7 @@ source = { editable = "." }
 dependencies = [
     { name = "anthropic" },
     { name = "httpx" },
+    { name = "openai-agents" },
     { name = "pageindex" },
     { name = "pymupdf" },
     { name = "python-dotenv" },
@@ -2083,6 +2084,7 @@ dev = [
 requires-dist = [
     { name = "anthropic", specifier = ">=1.11" },
     { name = "httpx", specifier = ">=0.27" },
+    { name = "openai-agents", specifier = ">=0.18.1" },
     { name = "pageindex", specifier = ">=0.2.21" },
     { name = "pymupdf", specifier = ">=1.26" },
     { name = "python-dotenv", specifier = ">=1.2.4" },

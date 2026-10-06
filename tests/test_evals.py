@@ -89,6 +89,9 @@ class FakePipeline:
         result = self._result(standalone_question)
         return PipelineRetrieval(result.routed_partes, result.retrieved_secciones, result.visited_nodes, result.definiciones)
 
+    def take_usage(self):
+        return {}
+
     def answer(self, standalone_question, secciones, definiciones=None):
         self.calls["answer"].append((standalone_question, secciones))
         self.calls["definiciones"].append(definiciones)
@@ -355,6 +358,11 @@ def test_local_pipeline_runs_through_the_harness(parte61, tmp_path):
     assert case["scores"]["refusal_correct"] is True
     assert {"parte": "61", "seccion": "61.535"} in case["cited_secciones"]
 
+    usage = record["response"]["usage"]
+    assert case["usage"]["answer"]["input_tokens"] == usage["input_tokens"]
+    assert case["usage"]["answer"]["output_tokens"] == usage["output_tokens"]
+    assert case["cost_usd"] == pytest.approx((usage["input_tokens"] * 4 + usage["output_tokens"] * 20) / 1e6)
+
 
 _MODELS = Models(indexing="claude-haiku-4-5", routing="claude-haiku-4-5", search="claude-opus-5-5", answer="claude-opus-5-5")
 
@@ -373,6 +381,7 @@ def test_local_answer_only_pipeline_replays_recorded_secciones(parte61):
     titles = [b["title"] for b in request["messages"][0]["content"] if b["type"] == "document"]
     assert titles == [f"RAAC Parte 61 - Sección {r.seccion} {parte61.seccion(r.seccion).title}" for r in refs]
     assert not result.refused and any(c.seccion == "61.535" for s in result.sentences for c in s.citations)
+    assert pipeline.take_usage()["answer"].input_tokens == record["response"]["usage"]["input_tokens"]
     with pytest.raises(KeyError, match="Parte 91 is not loaded"):
         pipeline.answer(record["question"], [SeccionRef("91", "91.1")])
 

@@ -17,7 +17,7 @@ Today the pipeline runs end to end from the command line (`raac fetch`, `raac as
 
 <p align="center"><img src="docs/diagrams/architecture.png" alt="High-level architecture" width="480"></p>
 
-Retrieval uses PageIndex in local mode (an LLM reads a tree of each Parte, no vector store, [ADR 0001](docs/adr/0001-pageindex-local-for-retrieval.md)). Answers are written with the Claude Citations API so every Citation is data returned by the API, never text parsed out of the model's prose ([ADR 0002](docs/adr/0002-answers-via-claude-citations.md)). Models per stage (in italics above) are set in [`src/raac/models.toml`](src/raac/models.toml).
+Retrieval uses PageIndex in local mode (an LLM reads a tree of each Parte, no vector store, [ADR 0001](docs/adr/0001-pageindex-local-for-retrieval.md)). Answers are written with the Claude Citations API so every Citation is data returned by the API, never text parsed out of the model's prose ([ADR 0002](docs/adr/0002-answers-via-claude-citations.md)). Models per stage (in italics above) are set in [`src/raac/models.toml`](src/raac/models.toml). Eval reports record tokens and USD cost per stage (routing, search, answer) and in total, priced from [`src/raac/prices.toml`](src/raac/prices.toml).
 
 ## Corpus discovery and download
 
