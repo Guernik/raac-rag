@@ -21,6 +21,7 @@ from .config import Models, load_models
 from .parser import ParsedParte, parse
 from .retriever import Retrieval, RetrievedDefinicion, RetrievedSeccion, Retriever
 from .router import ParteRouter, parte_card
+from .usage import StageUsage, UsageMeter
 
 DEFAULT_PARTES = ["1", "61", "67", "91"]
 
@@ -62,6 +63,7 @@ class PipelineResult:
     answer: Answer
     visited_nodes: list[str] = field(default_factory=list)  # "<parte>:<node_id>"
     definiciones: list[DefinicionRef] = field(default_factory=list)  # Parte 1 Definiciones given as context
+    usage: dict[str, StageUsage] = field(default_factory=dict)  # per stage: routing, search, answer
 
 
 class Pipeline(Protocol):
@@ -73,7 +75,9 @@ class Pipeline(Protocol):
 
     def index_versions(self) -> list[IndexVersion]: ...
 
-    def run(self, standalone_question: str) -> PipelineResult: ...
+    def run(self, standalone_question: str) -> PipelineResult:
+        """On failure, the raised exception may carry the usage spent so far as `.usage`."""
+        ...
 
 
 class StagedPipeline(Pipeline, Protocol):
@@ -85,6 +89,10 @@ class StagedPipeline(Pipeline, Protocol):
         self, standalone_question: str, secciones: list[SeccionRef], definiciones: list[DefinicionRef] | None = None
     ) -> Answer:
         """The Answerer over these Secciones, in this order; no routing or search call."""
+        ...
+
+    def take_usage(self) -> dict[str, StageUsage]:
+        """Usage per stage recorded since the last take, including by a call that raised."""
         ...
 
 
@@ -105,7 +113,9 @@ class LocalPipeline:
         on_progress: Callable[[str], None] = lambda _msg: None,
         router: ParteRouter | None = None,
         from_cache: frozenset[str] = frozenset(),
+        meter: UsageMeter | None = None,
     ):
+        self._meter = meter or UsageMeter()  # shared with the router and Retriever that record into it
         self._progress = on_progress
         self._retriever = retriever
         self.router = router
@@ -130,13 +140,20 @@ class LocalPipeline:
         ]
 
     def run(self, standalone_question: str, record_path: Path | None = None) -> PipelineResult:
-        retrieval = self._retrieve(standalone_question)
+        self._meter.take()  # drop anything recorded outside a run, e.g. by `raac route`
+        try:
+            retrieval = self._retrieve(standalone_question)
+            result = self._answer(standalone_question, retrieval, record_path)
+        except Exception as e:
+            e.usage = self._meter.take()  # what the failed exchange already cost
+            raise
         return PipelineResult(
             routed_partes=retrieval.routed_partes,
             visited_nodes=retrieval.visited_nodes,
             retrieved_secciones=_refs(retrieval),
             definiciones=_definicion_refs(retrieval),
-            answer=self._answer(standalone_question, retrieval, record_path),
+            answer=result,
+            usage=self._meter.take(),
         )
 
     def retrieve(self, standalone_question: str) -> PipelineRetrieval:
@@ -168,6 +185,9 @@ class LocalPipeline:
             attached.append(RetrievedDefinicion(parte, match[0]))
         return self._answer(standalone_question, Retrieval(routed_partes=[], secciones=retrieved, definiciones=attached))
 
+    def take_usage(self) -> dict[str, StageUsage]:
+        return self._meter.take()
+
     def _retrieve(self, standalone_question: str) -> Retrieval:
         if self._retriever is None:
             raise AnswerOnlyError("this pipeline was built for the answer stage only; it has no Retriever")
@@ -182,6 +202,7 @@ class LocalPipeline:
             retrieval,
             source_urls=self._source_urls,
             record_path=record_path,
+            meter=self._meter,
         )
 
 
@@ -220,9 +241,10 @@ def build_local_pipeline(
         cards.append(parte_card(listing.parte, listing.titulo, index))
         source_urls[parsed.code] = listing.share_url
     claude = anthropic.Anthropic()
-    router = ParteRouter(claude, models.routing, cards, record_path=routing_record_path)
+    meter = UsageMeter()
+    router = ParteRouter(claude, models.routing, cards, record_path=routing_record_path, meter=meter)
     return LocalPipeline(
-        Retriever(client, loaded, router=router, on_progress=on_progress),
+        Retriever(client, loaded, router=router, on_progress=on_progress, meter=meter),
         claude,
         models,
         [p for p, _ in loaded],
@@ -230,6 +252,7 @@ def build_local_pipeline(
         on_progress,
         router=router,
         from_cache=frozenset(s.listing.parte for s in sourced if s.from_cache),
+        meter=meter,
     )
 
 

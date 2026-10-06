@@ -27,8 +27,10 @@ from typing import Any
 from .answerer import Answer
 from .judge import Correctness, CorrectnessJudge
 from .pipeline import DefinicionRef, IndexVersion, Pipeline, PipelineRetrieval, SeccionRef, StagedPipeline
+from .usage import STAGES as USAGE_STAGES
+from .usage import StageUsage, merge, total_cost
 
-REPORT_SCHEMA_VERSION = 3
+REPORT_SCHEMA_VERSION = 4  # 4: tokens and cost per stage
 RETRIEVAL, ANSWER = "retrieval", "answer"
 STAGES = {"full": (RETRIEVAL, ANSWER), RETRIEVAL: (RETRIEVAL,), ANSWER: (ANSWER,)}
 _CASE_KEYS = {"id", "question", "expected_secciones", "reference_answer", "out_of_scope", "source"}
@@ -149,6 +151,8 @@ class CaseResult:
     served_model: str | None = None
     judge: Correctness | None = None  # verdict and rationale, for spot-checking the judge
     error: str | None = None
+    usage: dict[str, StageUsage] = field(default_factory=dict)  # per stage, also for a case that raised
+    cost_usd: float | None = None  # all stages; None when any stage's cost is unknown
 
 
 def run_case(
@@ -168,24 +172,30 @@ def run_case(
         scores=None,
         latency_s=0.0,
     )
-    retrieval, answer = recorded, None
+    retrieval, answer, staged = recorded, None, None
     try:
         if stages == STAGES["full"]:
             run = pipeline.run(case.question)
             retrieval = PipelineRetrieval(run.routed_partes, run.retrieved_secciones, run.visited_nodes, run.definiciones)
             answer = run.answer
+            result.usage = run.usage
         else:
             staged = _staged(pipeline)
+            staged.take_usage()  # drop anything recorded outside this case
             if RETRIEVAL in stages:
                 retrieval = staged.retrieve(case.question)
             if retrieval is None:
                 raise ReplayError(f"case {case.id!r}: the answer stage needs a recorded Retrieval")
             if ANSWER in stages:
                 answer = staged.answer(case.question, retrieval.retrieved_secciones, retrieval.definiciones)
+            result.usage = staged.take_usage()
     except Exception as e:  # one broken case must not lose the rest of the run
         result.error = f"{type(e).__name__}: {e}"
         result.latency_s = time.monotonic() - started
+        result.usage = (staged.take_usage() if staged else getattr(e, "usage", None)) or {}
+        result.cost_usd = total_cost(result.usage)
         return result
+    result.cost_usd = total_cost(result.usage)
     result.routed_partes = retrieval.routed_partes
     result.visited_nodes = retrieval.visited_nodes
     result.retrieved_secciones = retrieval.retrieved_secciones
@@ -209,7 +219,7 @@ def run_case(
 
 
 def _staged(pipeline: Pipeline) -> StagedPipeline:
-    if not (hasattr(pipeline, "retrieve") and hasattr(pipeline, "answer")):
+    if not all(hasattr(pipeline, m) for m in ("retrieve", "answer", "take_usage")):
         raise ReplayError(f"pipeline {pipeline.name!r} runs end to end only; it cannot run one stage")
     return pipeline  # type: ignore[return-value]
 
@@ -241,6 +251,9 @@ def aggregate(results: list[CaseResult], stages: tuple[str, ...] = STAGES["full"
             ),
             "judge_errors": sum(1 for r in results if r.judge and r.judge.error),
         }
+    usage_stages = list(USAGE_STAGES) + sorted({s for r in results for s in r.usage} - set(USAGE_STAGES))
+    usage = {s: merge([r.usage[s] for r in results if s in r.usage]) for s in usage_stages}
+    cost = total_cost(usage)
     return {
         "cases": len(results),
         "in_scope": len(in_scope),
@@ -254,6 +267,9 @@ def aggregate(results: list[CaseResult], stages: tuple[str, ...] = STAGES["full"
         "false_refusal_rate_in_scope": rate(in_scope, lambda s: s.refusal_correct is False) if answer else None,
         **(correctness or {}),
         "latency_s_mean": mean([r.latency_s for r in results]),
+        "cost_usd": cost,
+        "cost_usd_mean": cost / len(results) if cost is not None and results else None,
+        "usage": {s: asdict(u) for s, u in usage.items()},
     }
 
 
@@ -315,23 +331,40 @@ def summarize(report: dict[str, Any]) -> str:
             return "-"
         return f"{value:.2f}" if isinstance(value, float) else str(value)
 
+    def usd(value: float | None) -> str:
+        return "?" if value is None else f"${value:.4f}"
+
     lines = [f"stages: {', '.join(report['stages'])}"]
     if report.get("retrievals_from"):
         lines.append(f"retrievals replayed from: {report['retrievals_from']}")
-    lines += [f"{'case':<32} {'hit':>5} {'recall':>6} {'ground':>6} {'refusal':>7} {'correct':>7}  error"]
+    lines += [f"{'case':<32} {'hit':>5} {'recall':>6} {'ground':>6} {'refusal':>7} {'correct':>7} {'cost':>9}  error"]
     for c in report["cases"]:
         s = c["scores"] or {}
         error = c["error"] or ((c.get("judge") or {}).get("error") and f"judge: {c['judge']['error']}") or ""
         lines.append(
             f"{c['id']:<32} {fmt(s.get('retrieval_hit')):>5} {fmt(s.get('retrieval_recall')):>6} "
-            f"{fmt(s.get('grounding')):>6} {fmt(s.get('refusal_correct')):>7} {fmt(s.get('correctness')):>7}  {error}"
+            f"{fmt(s.get('grounding')):>6} {fmt(s.get('refusal_correct')):>7} {fmt(s.get('correctness')):>7} "
+            f"{usd(c['cost_usd']):>9}  {error}"
         )
     judged = [c for c in report["cases"] if c.get("judge") and c["judge"]["verdict"]]
     if judged:
         lines.append("")
         lines += [f"{c['id']}: {c['judge']['verdict']} - {c['judge']['rationale']}" for c in judged]
     lines.append("")
-    lines += [f"{k}: {fmt(v)}" for k, v in report["aggregate"].items()]
+    agg = report["aggregate"]
+    lines += [f"{k}: {fmt(v)}" for k, v in agg.items() if k not in ("usage", "cost_usd", "cost_usd_mean")]
+    lines += ["", f"{'stage':<10} {'calls':>5} {'input':>9} {'cache_w':>9} {'cache_r':>9} {'output':>8} {'cost':>9}  models"]
+    for stage, u in agg["usage"].items():
+        notes = [*u["models"]]
+        if u["unpriced_models"]:
+            notes.append(f"unpriced: {', '.join(u['unpriced_models'])}")
+        if u["unmetered_requests"]:
+            notes.append(f"{u['unmetered_requests']} calls unmetered")
+        lines.append(
+            f"{stage:<10} {u['requests']:>5} {u['input_tokens']:>9} {u['cache_creation_input_tokens']:>9} "
+            f"{u['cache_read_input_tokens']:>9} {u['output_tokens']:>8} {usd(u['cost_usd']):>9}  {'; '.join(notes)}"
+        )
+    lines.append(f"total cost: {usd(agg['cost_usd'])} ({usd(agg['cost_usd_mean'])} per case)")
     p = report["pipeline"]
     lines.append(f"pipeline: {p['name']} models={p['models']} served={p['served_answer_models']}")
     if report.get("judge"):

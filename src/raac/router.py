@@ -14,6 +14,7 @@ from typing import Any
 import anthropic
 
 from .indexer import ParteIndex
+from .usage import UsageMeter
 
 SYSTEM = (
     "Elegís en qué Partes de las Regulaciones Argentinas de Aviación Civil (RAAC) "
@@ -102,8 +103,10 @@ class ParteRouter:
         model: str,
         cards: list[ParteCard],
         record_path: Path | None = None,
+        meter: UsageMeter | None = None,
     ):
         self._client = client
+        self._meter = meter
         self._model = model
         self._cards = cards
         self._record_path = record_path
@@ -121,6 +124,8 @@ class ParteRouter:
             return [self._cards[0].code]  # nothing to choose
         response = self._client.messages.create(**build_request(self._model, standalone_question, self._cards))
         raw = response.to_dict()
+        if self._meter is not None:
+            self._meter.record_anthropic("routing", raw)
         if self._record_path:
             self._record_path.write_text(
                 json.dumps({"question": standalone_question, "response": raw}, ensure_ascii=False, indent=2)

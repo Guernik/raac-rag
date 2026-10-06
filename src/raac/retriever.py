@@ -19,6 +19,7 @@ from pageindex import PageIndexClient
 from . import definiciones, strings
 from .indexer import ParteIndex, walk
 from .parser import DEFINICIONES_PARTE, DEFINICIONES_SECCION, Definicion, ParsedParte, Seccion
+from .usage import UsageMeter
 
 _SEARCH_INSTRUCTIONS = (
     "Tu tarea es localizar, en la RAAC, el texto que responde la pregunta. "
@@ -62,8 +63,10 @@ class Retriever:
         partes: list[tuple[ParsedParte, ParteIndex]],
         router: Router | None = None,
         on_progress: Progress = lambda _msg: None,
+        meter: UsageMeter | None = None,
     ):
         self._client = client
+        self._meter = meter
         self._partes = {parsed.code: (parsed, index) for parsed, index in partes}
         self._router = router
         self._progress = on_progress
@@ -85,7 +88,11 @@ class Retriever:
                 stream=True,
                 instructions=_SEARCH_INSTRUCTIONS,
             )
-            part = retrieval_from_events(stream.events, parsed, index, self._progress)
+            if self._meter is None:
+                part = retrieval_from_events(stream.events, parsed, index, self._progress)
+            else:
+                with self._meter.agent_turns("search"):  # every turn of the agent's run
+                    part = retrieval_from_events(stream.events, parsed, index, self._progress)
             retrieval.visited_nodes += part.visited_nodes
             retrieval.secciones += part.secciones
             retrieval.definiciones += part.definiciones
