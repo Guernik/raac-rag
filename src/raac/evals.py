@@ -8,6 +8,12 @@ Scores per case:
 - refusal: whether the pipeline refused exactly when the case is out of scope;
 - correctness: an LLM judge's verdict on the Answer against the case's reference Answer
   (judge.py), with its rationale kept in the report; only when a judge is given.
+
+A run covers one stage or both (STAGES): `retrieval` runs routing + tree search and scores
+retrieval only, recording each case's Retrieval; `answer` replays the Retrievals recorded in
+an earlier report into the Answerer and scores grounding, refusal and correctness only. Scores
+of a stage that did not run are None. The full run (both stages) stays the gate before a change
+is kept, and is the only one a plain `Pipeline` (e.g. PageIndex Cloud) supports.
 """
 
 import hashlib
@@ -18,14 +24,21 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from .answerer import Answer
 from .judge import Correctness, CorrectnessJudge
-from .pipeline import DefinicionRef, Pipeline, PipelineResult, SeccionRef
+from .pipeline import DefinicionRef, IndexVersion, Pipeline, PipelineRetrieval, SeccionRef, StagedPipeline
 
-REPORT_SCHEMA_VERSION = 2
+REPORT_SCHEMA_VERSION = 3
+RETRIEVAL, ANSWER = "retrieval", "answer"
+STAGES = {"full": (RETRIEVAL, ANSWER), RETRIEVAL: (RETRIEVAL,), ANSWER: (ANSWER,)}
 _CASE_KEYS = {"id", "question", "expected_secciones", "reference_answer", "out_of_scope", "source"}
 
 
 class EvalCaseError(ValueError):
+    pass
+
+
+class ReplayError(ValueError):
     pass
 
 
@@ -83,34 +96,40 @@ def load_cases(path: Path) -> list[EvalCase]:
     return cases
 
 
+def select_cases(cases: list[EvalCase], ids: list[str] | None) -> list[EvalCase]:
+    """The named cases, in file order; an unknown id fails instead of silently running fewer."""
+    if not ids:
+        return cases
+    known = {c.id for c in cases}
+    if unknown := [i for i in ids if i not in known]:
+        raise EvalCaseError(f"unknown case ids {unknown}")
+    return [c for c in cases if c.id in set(ids)]
+
+
 @dataclass
 class CaseScores:
     retrieval_hit: bool | None  # any expected Sección retrieved; None when out of scope
     retrieval_recall: float | None  # share of expected Secciones retrieved
     grounding: float | None  # cited sentences / all sentences written; None when refused
-    refusal_correct: bool
+    refusal_correct: bool | None  # None when the answer stage did not run
     correctness: float | None = None  # judge score (1 / 0.5 / 0); None when not judged or the judge failed
 
 
-def score(case: EvalCase, result: PipelineResult) -> CaseScores:
-    retrieved = set(result.retrieved_secciones) | {SeccionRef(d.parte, d.seccion) for d in result.definiciones}
-    hit = recall = None
-    if not case.out_of_scope:
+def score(case: EvalCase, retrieval: PipelineRetrieval | None, answer: Answer | None) -> CaseScores:
+    """Score the stages that ran: pass None for a stage that did not."""
+    hit = recall = grounding = refusal = None
+    if retrieval is not None and not case.out_of_scope:
+        retrieved = set(retrieval.retrieved_secciones) | {SeccionRef(d.parte, d.seccion) for d in retrieval.definiciones}
         found = [e for e in case.expected_secciones if e in retrieved]
         hit = bool(found)
         recall = len(found) / len(case.expected_secciones)
-    answer = result.answer
-    grounding = None
-    if not answer.refused:
-        cited = sum(1 for s in answer.sentences if s.citations)
-        written = len(answer.sentences) + len(answer.dropped_uncited)
-        grounding = cited / written
-    return CaseScores(
-        retrieval_hit=hit,
-        retrieval_recall=recall,
-        grounding=grounding,
-        refusal_correct=answer.refused == case.out_of_scope,
-    )
+    if answer is not None:
+        if not answer.refused:
+            cited = sum(1 for s in answer.sentences if s.citations)
+            written = len(answer.sentences) + len(answer.dropped_uncited)
+            grounding = cited / written
+        refusal = answer.refused == case.out_of_scope
+    return CaseScores(retrieval_hit=hit, retrieval_recall=recall, grounding=grounding, refusal_correct=refusal)
 
 
 @dataclass
@@ -122,7 +141,8 @@ class CaseResult:
     scores: CaseScores | None  # None when the pipeline raised
     latency_s: float
     routed_partes: list[str] = field(default_factory=list)
-    retrieved_secciones: list[SeccionRef] = field(default_factory=list)
+    visited_nodes: list[str] = field(default_factory=list)
+    retrieved_secciones: list[SeccionRef] = field(default_factory=list)  # replayed ones in the answer stage
     definiciones: list[DefinicionRef] = field(default_factory=list)
     cited_secciones: list[SeccionRef] = field(default_factory=list)
     answer: dict[str, Any] | None = None
@@ -131,53 +151,75 @@ class CaseResult:
     error: str | None = None
 
 
-def run_case(pipeline: Pipeline, case: EvalCase, judge: CorrectnessJudge | None = None) -> CaseResult:
+def run_case(
+    pipeline: Pipeline,
+    case: EvalCase,
+    stages: tuple[str, ...],
+    recorded: PipelineRetrieval | None = None,
+    judge: CorrectnessJudge | None = None,
+) -> CaseResult:
+    """Run `stages` for one case. The answer stage alone replays `recorded` instead of retrieving."""
     started = time.monotonic()
-    try:
-        result = pipeline.run(case.question)
-    except Exception as e:  # one broken case must not lose the rest of the run
-        return CaseResult(
-            id=case.id,
-            question=case.question,
-            out_of_scope=case.out_of_scope,
-            expected_secciones=case.expected_secciones,
-            scores=None,
-            latency_s=time.monotonic() - started,
-            error=f"{type(e).__name__}: {e}",
-        )
-    cited = []
-    for sentence in result.answer.sentences:
-        for c in sentence.citations:
-            ref = SeccionRef(c.parte, c.seccion)
-            if ref not in cited:
-                cited.append(ref)
-    scores = score(case, result)
-    judgement = None
-    if judge is not None:
-        judgement = judge.judge(case.question, case.reference_answer, result.answer)
-        scores.correctness = judgement.score
-    return CaseResult(
+    result = CaseResult(
         id=case.id,
         question=case.question,
         out_of_scope=case.out_of_scope,
         expected_secciones=case.expected_secciones,
-        scores=scores,
-        latency_s=time.monotonic() - started,
-        routed_partes=result.routed_partes,
-        retrieved_secciones=result.retrieved_secciones,
-        definiciones=result.definiciones,
-        cited_secciones=cited,
-        answer=result.answer.to_dict(),
-        served_model=result.answer.model,
-        judge=judgement,
+        scores=None,
+        latency_s=0.0,
     )
+    retrieval, answer = recorded, None
+    try:
+        if stages == STAGES["full"]:
+            run = pipeline.run(case.question)
+            retrieval = PipelineRetrieval(run.routed_partes, run.retrieved_secciones, run.visited_nodes, run.definiciones)
+            answer = run.answer
+        else:
+            staged = _staged(pipeline)
+            if RETRIEVAL in stages:
+                retrieval = staged.retrieve(case.question)
+            if retrieval is None:
+                raise ReplayError(f"case {case.id!r}: the answer stage needs a recorded Retrieval")
+            if ANSWER in stages:
+                answer = staged.answer(case.question, retrieval.retrieved_secciones, retrieval.definiciones)
+    except Exception as e:  # one broken case must not lose the rest of the run
+        result.error = f"{type(e).__name__}: {e}"
+        result.latency_s = time.monotonic() - started
+        return result
+    result.routed_partes = retrieval.routed_partes
+    result.visited_nodes = retrieval.visited_nodes
+    result.retrieved_secciones = retrieval.retrieved_secciones
+    result.definiciones = retrieval.definiciones
+    if answer is not None:
+        cited = []
+        for sentence in answer.sentences:
+            for c in sentence.citations:
+                ref = SeccionRef(c.parte, c.seccion)
+                if ref not in cited:
+                    cited.append(ref)
+        result.cited_secciones = cited
+        result.answer = answer.to_dict()
+        result.served_model = answer.model
+    result.scores = score(case, retrieval if RETRIEVAL in stages else None, answer)
+    result.latency_s = time.monotonic() - started
+    if judge is not None and answer is not None:
+        result.judge = judge.judge(case.question, case.reference_answer, answer)
+        result.scores.correctness = result.judge.score
+    return result
 
 
-def aggregate(results: list[CaseResult], judged: bool = False) -> dict[str, Any]:
+def _staged(pipeline: Pipeline) -> StagedPipeline:
+    if not (hasattr(pipeline, "retrieve") and hasattr(pipeline, "answer")):
+        raise ReplayError(f"pipeline {pipeline.name!r} runs end to end only; it cannot run one stage")
+    return pipeline  # type: ignore[return-value]
+
+
+def aggregate(results: list[CaseResult], stages: tuple[str, ...] = STAGES["full"], judged: bool = False) -> dict[str, Any]:
     """Aggregate scores. A case that errored counts as a failure in every rate it belongs to.
 
-    Correctness is averaged over cases the judge scored, plus pipeline errors as 0; a case
-    whose judge call failed is left out and counted in `judge_errors`.
+    Rates of a stage that did not run are None. Correctness is averaged over cases the judge
+    scored, plus pipeline errors as 0; a case whose judge call failed is left out and counted
+    in `judge_errors`.
     """
     in_scope = [r for r in results if not r.out_of_scope]
     out_scope = [r for r in results if r.out_of_scope]
@@ -189,6 +231,8 @@ def aggregate(results: list[CaseResult], judged: bool = False) -> dict[str, Any]
         return sum(values) / len(values) if values else None
 
     answered = [r for r in results if r.scores is None or r.scores.grounding is not None]
+    retrieval = RETRIEVAL in stages
+    answer = ANSWER in stages
     correctness = None
     if judged:
         correctness = {
@@ -202,12 +246,12 @@ def aggregate(results: list[CaseResult], judged: bool = False) -> dict[str, Any]
         "in_scope": len(in_scope),
         "out_of_scope": len(out_scope),
         "errors": sum(1 for r in results if r.error),
-        "retrieval_hit_rate": rate(in_scope, lambda s: s.retrieval_hit),
-        "retrieval_recall_mean": mean([r.scores.retrieval_recall if r.scores else 0.0 for r in in_scope]),
-        "grounded_rate": rate(answered, lambda s: s.grounding == 1.0),
-        "uncited_sentences": sum(len(r.answer["dropped_uncited"]) for r in results if r.answer),
-        "refusal_rate_out_of_scope": rate(out_scope, lambda s: s.refusal_correct),
-        "false_refusal_rate_in_scope": rate(in_scope, lambda s: not s.refusal_correct),
+        "retrieval_hit_rate": rate(in_scope, lambda s: s.retrieval_hit) if retrieval else None,
+        "retrieval_recall_mean": mean([r.scores.retrieval_recall if r.scores else 0.0 for r in in_scope]) if retrieval else None,
+        "grounded_rate": rate(answered, lambda s: s.grounding == 1.0) if answer else None,
+        "uncited_sentences": sum(len(r.answer["dropped_uncited"]) for r in results if r.answer) if answer else None,
+        "refusal_rate_out_of_scope": rate(out_scope, lambda s: s.refusal_correct) if answer else None,
+        "false_refusal_rate_in_scope": rate(in_scope, lambda s: s.refusal_correct is False) if answer else None,
         **(correctness or {}),
         "latency_s_mean": mean([r.latency_s for r in results]),
     }
@@ -217,14 +261,30 @@ def run_eval(
     pipeline: Pipeline,
     cases: list[EvalCase],
     cases_path: Path | None = None,
+    stage: str = "full",
+    retrievals: "RecordedRetrievals | None" = None,
     judge: CorrectnessJudge | None = None,
 ) -> dict[str, Any]:
-    """Run every case and return the report (JSON-serializable, stable keys across pipelines)."""
-    results = [run_case(pipeline, case, judge) for case in cases]
+    """Run every case through `stage` and return the report (JSON-serializable, stable keys across pipelines).
+
+    The answer stage alone replays `retrievals` (see load_retrievals) and needs one for every case.
+    The judge only runs with the answer stage.
+    """
+    stages = STAGES[stage]
+    if ANSWER not in stages:
+        judge = None
+    recorded: dict[str, PipelineRetrieval] = {}
+    if RETRIEVAL not in stages:
+        if retrievals is None:
+            raise ReplayError("the answer stage needs recorded Retrievals (--retrievals <report>)")
+        recorded = retrievals.for_cases(cases)
+    results = [run_case(pipeline, case, stages, recorded.get(case.id), judge) for case in cases]
     served = sorted({r.served_model for r in results if r.served_model})
     return {
         "schema_version": REPORT_SCHEMA_VERSION,
         "created_at": datetime.now(UTC).isoformat(timespec="seconds"),
+        "stages": list(stages),
+        "retrievals_from": str(retrievals.path) if retrievals and RETRIEVAL not in stages else None,
         "pipeline": {
             "name": pipeline.name,
             "models": pipeline.models(),
@@ -239,7 +299,7 @@ def run_eval(
             "model": judge.model,
             "served_models": sorted({r.judge.model for r in results if r.judge and r.judge.model}),
         },
-        "aggregate": aggregate(results, judged=judge is not None),
+        "aggregate": aggregate(results, stages, judged=judge is not None),
         "cases": [asdict(r) for r in results],
     }
 
@@ -255,7 +315,10 @@ def summarize(report: dict[str, Any]) -> str:
             return "-"
         return f"{value:.2f}" if isinstance(value, float) else str(value)
 
-    lines = [f"{'case':<32} {'hit':>5} {'recall':>6} {'ground':>6} {'refusal':>7} {'correct':>7}  error"]
+    lines = [f"stages: {', '.join(report['stages'])}"]
+    if report.get("retrievals_from"):
+        lines.append(f"retrievals replayed from: {report['retrievals_from']}")
+    lines += [f"{'case':<32} {'hit':>5} {'recall':>6} {'ground':>6} {'refusal':>7} {'correct':>7}  error"]
     for c in report["cases"]:
         s = c["scores"] or {}
         error = c["error"] or ((c.get("judge") or {}).get("error") and f"judge: {c['judge']['error']}") or ""
@@ -283,3 +346,58 @@ def summarize(report: dict[str, Any]) -> str:
 
 def _cases_hash(cases: list[EvalCase]) -> str:
     return hashlib.sha256(json.dumps([asdict(c) for c in cases], ensure_ascii=False, sort_keys=True).encode()).hexdigest()
+
+
+@dataclass
+class RecordedRetrievals:
+    """The per-case Retrievals of an earlier report that ran the retrieval stage, for replay."""
+
+    path: Path
+    index_versions: list[IndexVersion]
+    by_case: dict[str, tuple[str, PipelineRetrieval]]  # case id -> (question, Retrieval)
+    errored: set[str]
+
+    def for_cases(self, cases: list[EvalCase]) -> dict[str, PipelineRetrieval]:
+        """One recorded Retrieval per case; fail loudly on a missing, errored or changed case."""
+        missing = [c.id for c in cases if c.id not in self.by_case and c.id not in self.errored]
+        errored = [c.id for c in cases if c.id in self.errored]
+        changed = [c.id for c in cases if c.id in self.by_case and self.by_case[c.id][0] != c.question]
+        problems = []
+        if missing:
+            problems.append(f"no recorded Retrieval for {missing}")
+        if errored:
+            problems.append(f"the recorded run errored for {errored} (leave them out with --case)")
+        if changed:
+            problems.append(f"the question changed since the recording for {changed}")
+        if problems:
+            raise ReplayError(f"{self.path}: " + "; ".join(problems))
+        return {c.id: self.by_case[c.id][1] for c in cases}
+
+
+def load_retrievals(path: Path) -> RecordedRetrievals:
+    """Read the Retrievals recorded in a report that ran the retrieval stage (alone or end to end)."""
+    try:
+        report = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as e:
+        raise ReplayError(f"{path}: cannot read report ({e})") from e
+    if report.get("schema_version") != REPORT_SCHEMA_VERSION:
+        raise ReplayError(f"{path}: report schema {report.get('schema_version')}, expected {REPORT_SCHEMA_VERSION}")
+    if RETRIEVAL not in report["stages"]:
+        raise ReplayError(f"{path}: this report did not run the retrieval stage, so it holds no Retrieval to replay")
+    by_case = {}
+    errored = set()
+    for c in report["cases"]:
+        if c["error"]:
+            errored.add(c["id"])
+            continue
+        by_case[c["id"]] = (
+            c["question"],
+            PipelineRetrieval(
+                routed_partes=c["routed_partes"],
+                retrieved_secciones=[SeccionRef(**r) for r in c["retrieved_secciones"]],
+                visited_nodes=c["visited_nodes"],
+                definiciones=[DefinicionRef(**d) for d in c["definiciones"]],
+            ),
+        )
+    versions = [IndexVersion(**v) for v in report["pipeline"]["index_versions"]]
+    return RecordedRetrievals(path, versions, by_case, errored)
