@@ -8,6 +8,7 @@ REFUSAL = "No encontré respaldo en la RAAC vigente cargada para responder esta 
 INCOMPLETE = "La RAAC vigente cargada no cubre todo lo que preguntaste. Esto es lo que encontré:"
 LIKELY_PARTE = "Lo que falta probablemente lo regula la Parte {parte}: la Sección {seccion} remite a ella."
 CITATIONS_HEADER = "Citas:"
+DEFINICION_TITLE = "Definición de «{term}»"
 CITATION = "[{n}] Parte {parte}, Sección {seccion} ({titulo}), {paginas}, {version} - {url}"
 CITATION_NO_VERSION = "[{n}] Parte {parte}, Sección {seccion} ({titulo}), {paginas} - {url}"
 VERSION = "Edición {edicion}"

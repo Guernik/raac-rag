@@ -1,0 +1,978 @@
+{
+  "question": "Soy alumno piloto, ¿puedo volar solo en una TMA?",
+  "secciones": [
+    {
+      "parte": "61",
+      "seccion": "61.400"
+    },
+    {
+      "parte": "61",
+      "seccion": "61.405"
+    },
+    {
+      "parte": "61",
+      "seccion": "61.410"
+    },
+    {
+      "parte": "61",
+      "seccion": "61.415"
+    },
+    {
+      "parte": "61",
+      "seccion": "61.420"
+    },
+    {
+      "parte": "61",
+      "seccion": "61.425"
+    },
+    {
+      "parte": "61",
+      "seccion": "61.430"
+    },
+    {
+      "parte": "61",
+      "seccion": "61.505"
+    },
+    {
+      "parte": "61",
+      "seccion": "61.510"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.3"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.7"
+    }
+  ],
+  "definiciones": [
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "A prueba de fuego"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Accidente"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Actos de interferencia ilícita"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Actuación humana"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Acuerdo ADS-C"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Adaptación"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Aerodino"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Aeronave Deportiva Liviana"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Aeronavegabilidad Continuada"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Aeronotificación"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Aerovía (AWY)"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Aeropuerto"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Aeróstato"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "AIRAC"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Alcances"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Alcance visual en la pista (RVR)"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Alteración"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Alteración mayor"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Alteración menor"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Altitud"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Altitud crítica"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Altitud de franqueamiento de obstáculos (OCA) o altura de franqueamiento de obstáculos (OCH)"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Altitud de presión"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Altitud de transición"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Altitud mínima de descenso (MDA) o altura mínima de descenso (MDH)"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Altitud mínima de sector"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Altura"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Alumno piloto"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Amenaza"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Análisis de datos de vuelo"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Aprobación específica"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Aproximación final"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Aproximación final en descenso continuo (CDFA)"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Aproximación frustrada"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Aproximación intermedia"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Aproximación por instrumentos"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Aproximación radar"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Aproximación sincronizada"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Aproximación visual"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Aptitud para el vuelo"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Aptitud psicofisiológica"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Área congestionada"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Área de aproximación"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Área de aproximación final y de despegue (FATO)"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Área de aterrizaje"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Área de control (CTA)"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Área de control terminal (TMA)"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Área de maniobras"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Área de maniobras visuales (circuito)"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Área de movimiento"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Área de seguridad de extremo de pista"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Área de seguridad operacional (de un helipuerto)"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Área de señales"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Área de toma de contacto y de elevación inicial (TLOF)"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Área estéril"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Ascenso en crucero"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Asesoramiento anticolisión"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Aterrizaje forzoso seguro"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Atmósfera tipo"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Tiempo de vuelo aerostato de aire caliente"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Tiempo de vuelo - avión"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Tiempo de vuelo de piloto"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Tiempo de vuelo - helicóptero"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Tiempo de vuelo - planeador"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Tiempo de vuelo por instrumentos"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Tiempo de vuelo solo"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Tiempo en Servicio"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Tipo"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Tipo de RCP"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Tipo de RNP"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Torre de control de aeródromo (TWR)"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Trabajo aéreo"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Traje de supervivencia integrado"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Tramo de aproximación final (FAS)"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Tránsito aéreo"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Tránsito de aeródromo"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Tránsito esencial"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Tránsito esencial local"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Transmisión a ciegas"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Transmisor de localización de emergencia (ELT)"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Transpondedor"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Traslado Aéreo de Órganos (TAO)"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Trayectoria de planeo"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Traza radar"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Tripulación"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Tripulante"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Tripulante de cabina de pasajeros (TCP)"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Tripulante de vuelo"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Umbral de tiempo"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Umbral (THR)"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Unidad de competencia"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Uso Problemático de Ciertas Sustancias"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Velocidad Calibrada"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Velocidad con flaps extendidos"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Velocidad con tren de aterrizaje extendido"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Velocidad Equivalente"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Velocidad Indicada"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Velocidad Máxima para las características de estabilidad"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Velocidad para la operación del tren de aterrizaje"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Velocidad Verdadera"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Vigilancia basada en la performance (PBS)"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Vigilancia de la seguridad operacional"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Vigilancia dependiente automática-contrato (ADS-C)"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Vigilancia dependiente automática-radiodifusión (ADS-B)"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Viraje de base"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Viraje de clase 1"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Viraje de clase 2"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Viraje de procedimiento"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Viraje reglamentario"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Visibilidad"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Visibilidad de vuelo mejorada (Enhanced flight visibility - EFV)"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Visibilidad en tierra"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Visibilidad en vuelo"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Visualizador de “cabeza alta” (HUD)"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Vuelo acrobático"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Vuelo cautivo"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Vuelo controlado"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Vuelo IFR"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Vuelo local"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Vuelo nocturno"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Vuelo de travesía"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Vuelo VFR"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Vuelo VFR controlado"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Vuelo VFR especial"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Zona de control (CTR)"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Zona de parada (SWY)"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Zona despejada de obstáculos (OFZ)"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Zona de toma de contacto (TDZ)"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Zona de tránsito de aeródromo (ATZ)"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Zona libre de obstáculos (CWY)"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Zona peligrosa"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Zona prohibida"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Zona restringida"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Zonas de vuelo protegidas"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Aeronave de despegue vertical"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Servicio de tránsito aéreo"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Certificación Médica Aeronáutica"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Piloto privado"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Avión (Aeroplano)"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Globo"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Miembro de la tripulación de vuelo"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Operar una aeronave"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Piloto al mando"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Comandante de aeronave (piloto al mando)"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Instrucción"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Aeronave"
+    },
+    {
+      "parte": "1",
+      "seccion": "1.11",
+      "term": "Dirigible"
+    }
+  ],
+  "response": {
+    "id": "msg_011CfgUmUFjhKPesHqt7Lxse",
+    "container": null,
+    "content": [
+      {
+        "signature": "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",
+        "thinking": "",
+        "type": "thinking"
+      },
+      {
+        "citations": null,
+        "text": "Sí, podés, pero solo si cumplís condiciones específicas. Una TMA es un ",
+        "type": "text"
+      },
+      {
+        "citations": [
+          {
+            "cited_text": "Área de control terminal (TMA): Área de control establecida generalmente en la confluencia de rutas ATS\nen las inmediaciones de uno o más aeródromos principales.",
+            "document_index": 57,
+            "document_title": "RAAC Parte 1 - Sección 1.11 - Definición: Área de control terminal (TMA)",
+            "end_block_index": 1,
+            "file_id": null,
+            "start_block_index": 0,
+            "type": "content_block_location"
+          }
+        ],
+        "text": "área de control establecida generalmente en la confluencia de rutas ATS en las inmediaciones de uno o más aeródromos principales",
+        "type": "text"
+      },
+      {
+        "citations": null,
+        "text": ", y un área de control es ",
+        "type": "text"
+      },
+      {
+        "citations": [
+          {
+            "cited_text": "Área de control (CTA): Espacio aéreo controlado que se extiende hacia arriba desde un límite especificado\nsobre la superficie terrestre.",
+            "document_index": 56,
+            "document_title": "RAAC Parte 1 - Sección 1.11 - Definición: Área de control (CTA)",
+            "end_block_index": 1,
+            "file_id": null,
+            "start_block_index": 0,
+            "type": "content_block_location"
+          }
+        ],
+        "text": "espacio aéreo controlado que se extiende hacia arriba desde un límite especificado sobre la superficie terrestre",
+        "type": "text"
+      },
+      {
+        "citations": null,
+        "text": ". Por eso aplica la regla de que ",
+        "type": "text"
+      },
+      {
+        "citations": [
+          {
+            "cited_text": "61.430\nOperaciones en un área de control terminal y en aeropuertos ubicados dentro de un\nárea de control terminal\n(a)\nUn alumno piloto no podrá operar una aeronave en vuelo solo en el espacio aéreo controlado a me-\nnos que:\n(1)\nHaya recibido, tanto la instrucción en tierra como en vuelo, de un instructor de vuelo para ope-\nrar en el espacio aéreo controlado; y\n(2)\nel libro de vuelo del alumno piloto haya sido firmado por el instructor que realizó la instrucción,\npara realizar el vuelo solo.\n(b)\nUn alumno piloto no podrá operar una aeronave hacía, desde o en un aeropuerto ubicado en un es-\npacio aéreo controlado a menos que:\n(1)\nEl alumno piloto haya recibido tanto instrucción en tierra como en vuelo, de un instructor de\nvuelo para operar en ese espacio aéreo controlado; y\n(2)\nel libro de vuelo del alumno piloto haya sido firmado por el instructor que proporcionó la instruc-\nción de vuelo.",
+            "document_index": 6,
+            "document_title": "RAAC Parte 61 - Sección 61.430 Operaciones en un área de control terminal y en aeropuertos ubicados dentro de un área de control terminal",
+            "end_block_index": 1,
+            "file_id": null,
+            "start_block_index": 0,
+            "type": "content_block_location"
+          }
+        ],
+        "text": "un alumno piloto no podrá operar una aeronave en vuelo solo en el espacio aéreo controlado a menos que haya recibido, tanto la instrucción en tierra como en vuelo, de un instructor de vuelo para operar en el espacio aéreo controlado; y el libro de vuelo del alumno piloto haya sido firmado por el instructor que realizó la instrucción, para realizar el vuelo solo.",
+        "type": "text"
+      },
+      {
+        "citations": null,
+        "text": " Si además vas a operar hacia, desde o en un aeropuerto ubicado en ese espacio aéreo, necesitás ",
+        "type": "text"
+      },
+      {
+        "citations": [
+          {
+            "cited_text": "61.430\nOperaciones en un área de control terminal y en aeropuertos ubicados dentro de un\nárea de control terminal\n(a)\nUn alumno piloto no podrá operar una aeronave en vuelo solo en el espacio aéreo controlado a me-\nnos que:\n(1)\nHaya recibido, tanto la instrucción en tierra como en vuelo, de un instructor de vuelo para ope-\nrar en el espacio aéreo controlado; y\n(2)\nel libro de vuelo del alumno piloto haya sido firmado por el instructor que realizó la instrucción,\npara realizar el vuelo solo.\n(b)\nUn alumno piloto no podrá operar una aeronave hacía, desde o en un aeropuerto ubicado en un es-\npacio aéreo controlado a menos que:\n(1)\nEl alumno piloto haya recibido tanto instrucción en tierra como en vuelo, de un instructor de\nvuelo para operar en ese espacio aéreo controlado; y\n(2)\nel libro de vuelo del alumno piloto haya sido firmado por el instructor que proporcionó la instruc-\nción de vuelo.",
+            "document_index": 6,
+            "document_title": "RAAC Parte 61 - Sección 61.430 Operaciones en un área de control terminal y en aeropuertos ubicados dentro de un área de control terminal",
+            "end_block_index": 1,
+            "file_id": null,
+            "start_block_index": 0,
+            "type": "content_block_location"
+          }
+        ],
+        "text": "instrucción en tierra como en vuelo, de un instructor de vuelo para operar en ese espacio aéreo controlado",
+        "type": "text"
+      },
+      {
+        "citations": null,
+        "text": " y que tu libro de vuelo esté firmado por ese instructor.\n\nEsto se suma a los requisitos generales del vuelo solo. Por ejemplo, ",
+        "type": "text"
+      },
+      {
+        "citations": [
+          {
+            "cited_text": "(i)\nLa instrucción requerida en esta sección debe realizarla un instructor de vuelo autorizado y que esté\nhabilitado:\n(1)\nPara aviones, en la categoría y clase de aviones;\n(2)\npara helicópteros, en la categoría y tipo de helicópteros; y\n(3)\npara planeadores, en planeador.\n(4)\nPara dirigibles y aeronaves de despegue vertical, en la categoría y tipo de estas aeronaves.\n(j)\nReservado.\n(k)\nAutorizaciones del instructor de vuelo\nNingún alumno piloto puede operar una aeronave en vuelo solo, a menos que la autorización de\nalumno piloto del Apéndice C de esta Parte y el libro de vuelo personal hayan sido autorizadas por\nmedio de la firma de un instructor de vuelo autorizado, para la marca y el modelo específico de aero-\nnave a ser volada. Ningún instructor de vuelo puede autorizar un vuelo solo sin estampar la autoriza-\nción con su firma en el libro de vuelo personal del alumno. La autorización con la firma del instructor\ndebe certificar que dicho instructor:\n(1)\nHa proporcionado al alumno la instrucción en la marca y modelo de aeronave en la que se rea-\nlizará el vuelo solo;\n(2)\nha estimado que el alumno reúne los requisitos de instrucción de vuelo establecidos en esta\nsección; y\n(3)\nha determinado que el alumno está capacitado para realizar el vuelo solo seguro en dicha ae-\nronave.",
+            "document_index": 2,
+            "document_title": "RAAC Parte 61 - Sección 61.410 Requerimientos para el vuelo solo de alumno piloto",
+            "end_block_index": 4,
+            "file_id": null,
+            "start_block_index": 3,
+            "type": "content_block_location"
+          }
+        ],
+        "text": "ningún alumno piloto puede operar una aeronave en vuelo solo, a menos que la autorización de alumno piloto del Apéndice C de esta Parte y el libro de vuelo personal hayan sido autorizadas por medio de la firma de un instructor de vuelo autorizado, para la marca y el modelo específico de aeronave a ser volada.",
+        "type": "text"
+      },
+      {
+        "citations": null,
+        "text": " También rigen las limitaciones generales: no podés actuar como piloto al mando ",
+        "type": "text"
+      },
+      {
+        "citations": [
+          {
+            "cited_text": "61.415\nLimitaciones Generales\n(a)\nUn alumno piloto no puede actuar como piloto al mando de una aeronave:\n(1)\nQue transporte pasajeros;\n(2)\nque transporte carga por compensación o arrendamiento;\n(3)\nen vuelos por compensación o arrendamiento;\n(4)\nen promociones comerciales;\n(5)\nen vuelos internacionales;\n(6)\ncon una visibilidad en vuelo y terrestre menor de cinco (5) Km.;\n(7)\ncuando el vuelo no pueda realizarse por medio de referencias visuales en la superficie; o\n(8)\nen contra de cualquier limitación anotada en el libro de vuelo personal (bitácora) del alumno pi-\nloto por el instructor.\n(b)\nUn alumno piloto no puede actuar como piloto, o miembro de la tripulación, en ninguna aeronave en\nel cual sea obligatorio más de un piloto según el certificado tipo de la aeronave, o en la reglamenta-",
+            "document_index": 3,
+            "document_title": "RAAC Parte 61 - Sección 61.415 Limitaciones Generales",
+            "end_block_index": 1,
+            "file_id": null,
+            "start_block_index": 0,
+            "type": "content_block_location"
+          }
+        ],
+        "text": "con una visibilidad en vuelo y terrestre menor de cinco (5) Km.; cuando el vuelo no pueda realizarse por medio de referencias visuales en la superficie; o en contra de cualquier limitación anotada en el libro de vuelo personal (bitácora) del alumno piloto por el instructor.",
+        "type": "text"
+      },
+      {
+        "citations": null,
+        "text": " Si el vuelo dentro de la TMA es además de travesía o implica aterrizar en otro aeródromo, tenés que cumplir los requisitos adicionales de la Sección 61.425, ya que ",
+        "type": "text"
+      },
+      {
+        "citations": [
+          {
+            "cited_text": "61.425\nRequisitos para el vuelo de travesía: Alumno que aspire a la licencia de piloto privado\n(a)\nGeneralidades\nExcepto en casos de emergencia, ningún alumno piloto puede pilotar una aeronave en vuelo solo de\ntravesía (cross-country), ni puede realizar un aterrizaje en ningún punto, excepto el aeropuerto o ae-\nródromo de despegue, a menos que el alumno reúna los requisitos de esta sección.\n(b)\nInstrucción de vuelo\nEl alumno piloto, además de la instrucción de vuelo en maniobras y procedimientos antes del vuelo\nsolo, debe haber recibido y anotado la instrucción dada por su instructor de vuelo de las maniobras y\nprocedimientos apropiados de esta sección en relación con la licencia a la que aspira. En forma adi-\ncional, un alumno piloto, debe demostrar un nivel aceptable de performance, a juicio del instructor de\nvuelo, que firmará su libro de vuelo personal certificando la realización de las maniobras y procedi-\nmientos de pilotaje de esta sección.\n(1)\nPara todas las aeronaves\n(i)\nLa utilización de las cartas aeronáuticas para la navegación VFR usando navegación vi-\nsual y a estima con la ayuda del compás magnético;\n(ii)\n(ii) comportamiento de la aeronave en vuelo de travesía, obtención y análisis de los re-\nportes meteorológicos aeronáuticos y los pronósticos, incluyendo el reconocimiento de\nlas situaciones meteorológicas críticas y estimar la visibilidad mientras se encuentre en\nvuelo;\n(iii)\ncondiciones de emergencias en el vuelo de travesía, incluyendo procedimientos al en-\ncontrarse perdido en vuelo, condiciones meteorológicas adversas y procedimientos de\naproximaciones y aterrizajes de emergencias simulados fuera de aeródromos o aero-\npuertos;\n(iv)\nprocedimientos de circuito de tránsito aéreo, incluyendo llegadas y salidas normales del\nárea, precauciones contra la turbulencia de estela y evitar colisiones en el aire;\n(v)\nproblemas operacionales de reconocimiento asociados con las diferentes características\ndel terreno en áreas geográficas en la que se va a efectuar el vuelo de travesía; y\n(vi)\napropiada operación de los instrumentos y equipos instalados en la aeronave que se va\na volar.\n(2)\nPara aviones\nAdemás de lo establecido en el párrafo (b)(1) de esta sección:",
+            "document_index": 5,
+            "document_title": "RAAC Parte 61 - Sección 61.425 Requisitos para el vuelo de travesía: Alumno que aspire a la licencia de piloto privado",
+            "end_block_index": 1,
+            "file_id": null,
+            "start_block_index": 0,
+            "type": "content_block_location"
+          }
+        ],
+        "text": "excepto en casos de emergencia, ningún alumno piloto puede pilotar una aeronave en vuelo solo de travesía (cross-country), ni puede realizar un aterrizaje en ningún punto, excepto el aeropuerto o aeródromo de despegue, a menos que el alumno reúna los requisitos de esta sección.",
+        "type": "text"
+      }
+    ],
+    "context_management": null,
+    "diagnostics": null,
+    "model": "claude-opus-5-5",
+    "role": "assistant",
+    "stop_details": null,
+    "stop_reason": "end_turn",
+    "stop_sequence": null,
+    "type": "message",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "fallback_credit": null,
+      "inference_geo": "global",
+      "input_tokens": 47886,
+      "iterations": [
+        {
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 0,
+          "input_tokens": 47886,
+          "model": null,
+          "output_tokens": 1206,
+          "type": "message"
+        }
+      ],
+      "output_tokens": 1206,
+      "output_tokens_details": {
+        "thinking_tokens": 225
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": null
+    },
+    "input_transformations": null
+  }
+}

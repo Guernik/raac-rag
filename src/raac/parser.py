@@ -4,7 +4,8 @@ Reads the Parte code from the running header, the Edición/Enmienda, date and
 printed page label from each page footer, and splits the body into Secciones
 (id, title, PDF pages, printed page labels, text per page, text rectangles,
 Remisiones).
-Footers of one Parte may disagree; they are kept per page (ADR 0004).
+Footers of one Parte may disagree; they are kept per page (ADR 0004). For Parte 1
+it also extracts the Definiciones of Subparte B, each with its own pages and text.
 """
 
 import hashlib
@@ -33,6 +34,18 @@ _HEADER_LABEL_RE = re.compile(r"(?:SUBPARTE|AP[EÉ]NDICE|CAP[IÍ]TULO)\s+\S+\s+(
 # Page-check lists pair page labels with division names ("1.1\nSUBPARTE A"); never a title.
 _DIVISION_WORD_RE = re.compile(r"^\s*(CAP[IÍ]TULO|SUBPARTE|AP[EÉ]NDICE)\b", re.I)
 _DIVISION_RE = re.compile(r"^\s*(CAP[IÍ]TULO|SUBPARTE|AP[EÉ]NDICE)\s+\S+\s+[—–-]")
+# Parte 1, Subparte B "Definiciones Generales" is Sección 1.11 (as 1.7 says). Each Definición
+# starts at the left margin with its term in bold up to a colon ("Noche: ..."); indented bold
+# terms are sub-items of the Definición above them ("Nieve seca:" under "Nieve").
+DEFINICIONES_PARTE = "1"
+DEFINICIONES_SECCION = "1.11"
+_MIN_DEFINICIONES = 100
+_BOLD = 16  # PyMuPDF span flag
+_MARGIN_TOLERANCE = 5.0
+# Lines that close the Definiciones: the next division, or the title lines printed above it.
+_DEFINICIONES_END_RE = re.compile(
+    r"^\s*(?:(?:CAP[IÍ]TULO|SUBPARTE|AP[EÉ]NDICE)\s+\S+\s+[—–-]|REGULACIONES ARGENTINAS|PARTE\s+\S+\s+[—–-])", re.I
+)
 
 
 class ParseError(ValueError):
@@ -85,6 +98,19 @@ class Seccion:
 
 
 @dataclass
+class Definicion:
+    """A term defined in Parte 1 and its text, verbatim from its PDF pages."""
+
+    term: str  # as printed, e.g. "Aeródromo (AD)", "Noche"
+    seccion_id: str  # the Sección that holds it, "1.11"
+    pages: list[SeccionPage]
+
+    @property
+    def text(self) -> str:
+        return "\n".join(p.text for p in self.pages)
+
+
+@dataclass
 class ParsedParte:
     code: str
     edicion: str  # the most common footer Edición/Enmienda, for logs only (ADR 0004)
@@ -94,6 +120,7 @@ class ParsedParte:
     page_versions: list[PageVersion | None]  # index i -> footer of PDF page i+1
     secciones: list[Seccion]
     content_hash: str
+    definiciones: list[Definicion] = field(default_factory=list)  # Parte 1 only
 
     def page_version(self, pdf_page: int) -> PageVersion | None:
         return self.page_versions[pdf_page - 1]
@@ -147,6 +174,7 @@ def parse(pdf: bytes) -> ParsedParte:
         raise ParseError(f"Parte {code}: no Secciones found")
     for s in secciones:
         s.remisiones = extract_remisiones(s, code)
+    definiciones = _definiciones(doc, secciones, printed) if code == DEFINICIONES_PARTE else []
     return ParsedParte(
         code=code,
         edicion=edicion,
@@ -156,7 +184,57 @@ def parse(pdf: bytes) -> ParsedParte:
         page_versions=versions,
         secciones=secciones,
         content_hash=hashlib.sha256(pdf).hexdigest(),
+        definiciones=definiciones,
     )
+
+
+def _definiciones(doc: pymupdf.Document, secciones: list[Seccion], printed: list[str | None]) -> list[Definicion]:
+    seccion = next((s for s in secciones if s.id == DEFINICIONES_SECCION), None)
+    if seccion is None:
+        raise ParseError(f"Parte {DEFINICIONES_PARTE}: Sección {DEFINICIONES_SECCION} (Definiciones) not found")
+    definiciones: list[Definicion] = []
+    started = False
+    for page_index in range(seccion.pdf_page_start - 1, seccion.pdf_page_end):
+        page = doc[page_index]
+        lines = list(_body_lines(page))
+        margin = min((x0 for x0, *_ in lines), default=0.0)
+        for x0, bbox, text, bold_start in lines:
+            if not started:
+                started = re.match(rf"^{re.escape(DEFINICIONES_SECCION)}\b", text) is not None
+                continue
+            if _DEFINICIONES_END_RE.match(text):
+                break
+            term, colon, _ = text.partition(":")
+            if bold_start and colon and x0 <= margin + _MARGIN_TOLERANCE and term.strip()[:1].isalpha():
+                definiciones.append(Definicion(term=_clean(term), seccion_id=seccion.id, pages=[]))
+            if definiciones:
+                _append(definiciones[-1], page_index, printed, text, bbox)
+        else:
+            continue
+        break
+    if len(definiciones) < _MIN_DEFINICIONES:
+        raise ParseError(
+            f"Parte {DEFINICIONES_PARTE}: only {len(definiciones)} Definiciones found in Sección {DEFINICIONES_SECCION}"
+        )
+    return definiciones
+
+
+def _body_lines(page: pymupdf.Page):
+    """(x0, bbox, text, starts bold) per text line, without the running header and the footer."""
+    for block in page.get_text("dict", sort=True)["blocks"]:
+        if block.get("type") != 0:
+            continue
+        block_text = "\n".join("".join(s["text"] for s in line["spans"]) for line in block["lines"])
+        if _HEADER_RE.match(block_text):
+            continue
+        if block["bbox"][1] > _FOOTER_ZONE * page.rect.height and _FOOTER_RE.match(block_text):
+            continue
+        for line in block["lines"]:
+            spans = [s for s in line["spans"] if s["text"].strip()]
+            if not spans:
+                continue
+            text = _clean("".join(s["text"] for s in line["spans"]))
+            yield spans[0]["bbox"][0], tuple(line["bbox"]), text, bool(spans[0]["flags"] & _BOLD)
 
 
 def _footer_version(footer: str) -> PageVersion | None:
@@ -291,7 +369,7 @@ def _is_title(line: str) -> bool:
     return bool(line) and line[0].isalpha() and line[0].isupper() and not _DIVISION_WORD_RE.match(line)
 
 
-def _append(seccion: Seccion, page_index: int, printed: list[str | None], text: str, block: tuple) -> None:
+def _append(seccion: Seccion | Definicion, page_index: int, printed: list[str | None], text: str, block: tuple) -> None:
     pdf_page = page_index + 1
     if not seccion.pages or seccion.pages[-1].pdf_page != pdf_page:
         seccion.pages.append(SeccionPage(pdf_page=pdf_page, printed_page=printed[page_index], text=""))

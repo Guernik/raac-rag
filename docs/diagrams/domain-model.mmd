@@ -21,6 +21,10 @@ classDiagram
         to_seccion
         text
     }
+    class Definicion {
+        term
+        seccion_id
+    }
     class ParteIndex {
         parte
         content_hash
@@ -47,6 +51,7 @@ classDiagram
         enmienda
         source_url
         cited_text
+        definicion
     }
     class LikelyParte {
         parte
@@ -54,9 +59,12 @@ classDiagram
     ParsedParte "1" *-- "many" Seccion
     Seccion "1" *-- "many" SeccionPage
     Seccion "1" *-- "0..*" Remision
+    ParsedParte "1" *-- "0..*" Definicion : Parte 1 only
+    Definicion "1" *-- "many" SeccionPage
     ParteIndex ..> ParsedParte : indexes (same content hash)
     Answer "1" *-- "many" Sentence
     Sentence "1" *-- "0..*" Citation : 0 only for Framing
     Answer "1" *-- "0..*" LikelyParte
     LikelyParte --> Citation : cited Remisión
     Citation ..> Seccion : points to
+    Citation ..> Definicion : or to one, when relied on
