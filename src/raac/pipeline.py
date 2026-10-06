@@ -1,7 +1,10 @@
 """Pipeline: question -> retrieved Secciones + Answer, the seam the eval harness runs against.
 
 The local pipeline is CorpusSource + ParteParser + Indexer + Retriever + Answerer. Another
-implementation (e.g. a PageIndex Cloud adapter) only has to satisfy `Pipeline`.
+implementation (e.g. a PageIndex Cloud adapter) only has to satisfy `Pipeline`. A `StagedPipeline`
+can also run its two stages alone: `retrieve` (routing + tree search) and `answer` (Answerer over
+given Secciones and Definiciones), so per-stage evals can replay a recorded Retrieval without
+searching again.
 """
 
 from collections.abc import Callable
@@ -12,10 +15,11 @@ from typing import Protocol
 import anthropic
 
 from . import corpus, indexer, strings
-from .answerer import Answer, answer
+from .answerer import Answer
+from .answerer import answer as write_answer
 from .config import Models, load_models
 from .parser import ParsedParte, parse
-from .retriever import Retriever
+from .retriever import Retrieval, RetrievedDefinicion, RetrievedSeccion, Retriever
 from .router import ParteRouter, parte_card
 
 DEFAULT_PARTES = ["1", "61", "67", "91"]
@@ -44,6 +48,14 @@ class IndexVersion:
 
 
 @dataclass
+class PipelineRetrieval:
+    routed_partes: list[str]
+    retrieved_secciones: list[SeccionRef]
+    visited_nodes: list[str] = field(default_factory=list)  # "<parte>:<node_id>"
+    definiciones: list[DefinicionRef] = field(default_factory=list)  # Parte 1 Definiciones given as context
+
+
+@dataclass
 class PipelineResult:
     routed_partes: list[str]
     retrieved_secciones: list[SeccionRef]
@@ -64,12 +76,28 @@ class Pipeline(Protocol):
     def run(self, standalone_question: str) -> PipelineResult: ...
 
 
+class StagedPipeline(Pipeline, Protocol):
+    def retrieve(self, standalone_question: str) -> PipelineRetrieval:
+        """Routing + tree search only; no answer-model call."""
+        ...
+
+    def answer(
+        self, standalone_question: str, secciones: list[SeccionRef], definiciones: list[DefinicionRef] | None = None
+    ) -> Answer:
+        """The Answerer over these Secciones, in this order; no routing or search call."""
+        ...
+
+
+class AnswerOnlyError(RuntimeError):
+    pass
+
+
 class LocalPipeline:
     name = "local"
 
     def __init__(
         self,
-        retriever: Retriever,
+        retriever: Retriever | None,
         client: anthropic.Anthropic,
         models: Models,
         partes: list[ParsedParte],
@@ -102,9 +130,52 @@ class LocalPipeline:
         ]
 
     def run(self, standalone_question: str, record_path: Path | None = None) -> PipelineResult:
-        retrieval = self._retriever.retrieve(standalone_question)
+        retrieval = self._retrieve(standalone_question)
+        return PipelineResult(
+            routed_partes=retrieval.routed_partes,
+            visited_nodes=retrieval.visited_nodes,
+            retrieved_secciones=_refs(retrieval),
+            definiciones=_definicion_refs(retrieval),
+            answer=self._answer(standalone_question, retrieval, record_path),
+        )
+
+    def retrieve(self, standalone_question: str) -> PipelineRetrieval:
+        retrieval = self._retrieve(standalone_question)
+        return PipelineRetrieval(
+            retrieval.routed_partes, _refs(retrieval), retrieval.visited_nodes, _definicion_refs(retrieval)
+        )
+
+    def answer(
+        self, standalone_question: str, secciones: list[SeccionRef], definiciones: list[DefinicionRef] | None = None
+    ) -> Answer:
+        partes = {p.code: p for p in self._partes}
+
+        def loaded(parte: str, seccion: str) -> ParsedParte:
+            if parte not in partes:
+                raise KeyError(f"Parte {parte} is not loaded; cannot answer from Sección {seccion}")
+            return partes[parte]
+
+        retrieved = []
+        for ref in secciones:
+            parte = loaded(ref.parte, ref.seccion)
+            retrieved.append(RetrievedSeccion(parte, parte.seccion(ref.seccion)))
+        attached = []
+        for ref in definiciones or []:
+            parte = loaded(ref.parte, ref.seccion)
+            match = [d for d in parte.definiciones if d.seccion_id == ref.seccion and d.term == ref.term]
+            if not match:
+                raise KeyError(f"Parte {ref.parte} has no Definición {ref.term!r} in Sección {ref.seccion}")
+            attached.append(RetrievedDefinicion(parte, match[0]))
+        return self._answer(standalone_question, Retrieval(routed_partes=[], secciones=retrieved, definiciones=attached))
+
+    def _retrieve(self, standalone_question: str) -> Retrieval:
+        if self._retriever is None:
+            raise AnswerOnlyError("this pipeline was built for the answer stage only; it has no Retriever")
+        return self._retriever.retrieve(standalone_question)
+
+    def _answer(self, standalone_question: str, retrieval: Retrieval, record_path: Path | None = None) -> Answer:
         self._progress(strings.PROGRESS_ANSWERING)
-        result = answer(
+        return write_answer(
             self._client,
             self._models.answer,
             standalone_question,
@@ -112,15 +183,14 @@ class LocalPipeline:
             source_urls=self._source_urls,
             record_path=record_path,
         )
-        return PipelineResult(
-            routed_partes=retrieval.routed_partes,
-            visited_nodes=retrieval.visited_nodes,
-            retrieved_secciones=[SeccionRef(r.parte.code, r.seccion.id) for r in retrieval.secciones],
-            definiciones=[
-                DefinicionRef(d.parte.code, d.definicion.seccion_id, d.definicion.term) for d in retrieval.definiciones
-            ],
-            answer=result,
-        )
+
+
+def _refs(retrieval: Retrieval) -> list[SeccionRef]:
+    return [SeccionRef(r.parte.code, r.seccion.id) for r in retrieval.secciones]
+
+
+def _definicion_refs(retrieval: Retrieval) -> list[DefinicionRef]:
+    return [DefinicionRef(d.parte.code, d.definicion.seccion_id, d.definicion.term) for d in retrieval.definiciones]
 
 
 def build_local_pipeline(
@@ -161,3 +231,38 @@ def build_local_pipeline(
         router=router,
         from_cache=frozenset(s.listing.parte for s in sourced if s.from_cache),
     )
+
+
+def build_answer_pipeline(
+    versions: list[IndexVersion],
+    cache_dir: Path,
+    on_progress: Callable[[str], None] = lambda _msg: None,
+) -> LocalPipeline:
+    """A pipeline that can only answer, over exactly these Parte versions: no index, router or tree search.
+
+    Each PDF comes from the cache when present, else is downloaded; either way its content hash
+    must match, or the recorded Secciones may not be the ones this PDF holds.
+    """
+    models = load_models()
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    wanted = {v.parte: v.content_hash for v in versions}
+    loaded = []
+    source_urls = {}
+    for listing in corpus.fetch_listings(list(wanted)):
+        content_hash = wanted[listing.parte]
+        pdf_path = cache_dir / f"raac-{listing.parte}-{content_hash[:16]}.pdf"
+        if pdf_path.exists():
+            data = pdf_path.read_bytes()
+        else:
+            on_progress(strings.PROGRESS_DOWNLOADING.format(parte=listing.parte))
+            data = corpus.download(listing).data
+        parsed = parse(data)
+        if parsed.content_hash != content_hash:
+            raise corpus.CorpusError(
+                f"Parte {listing.parte}: recorded version {content_hash[:16]} is not available "
+                f"(got {parsed.content_hash[:16]}); re-run the retrieval stage against the current PDF"
+            )
+        pdf_path.write_bytes(data)
+        loaded.append(parsed)
+        source_urls[parsed.code] = listing.share_url
+    return LocalPipeline(None, anthropic.Anthropic(), models, loaded, source_urls, on_progress)

@@ -1,6 +1,7 @@
 """CLI: `raac ask "<pregunta>"` answers from Partes 1, 61, 67 and 91 with Citations; `raac route` shows or
 scores Parte routing; `raac fetch` downloads the RAAC vigente; `raac eval` runs the eval set against the local pipeline
-or PageIndex Cloud; `raac generate-cases` writes candidate eval cases and `raac review` accepts, edits or rejects them."""
+(end to end or one stage) or PageIndex Cloud; `raac generate-cases` writes candidate eval cases and `raac review`
+accepts, edits or rejects them."""
 
 import argparse
 import json
@@ -16,7 +17,7 @@ from .answerer import Answer, Citation
 from .config import load_env, load_judge_model, load_tool_model
 from .judge import CorrectnessJudge
 from .parser import parse
-from .pipeline import DEFAULT_PARTES, build_local_pipeline
+from .pipeline import DEFAULT_PARTES, build_answer_pipeline, build_local_pipeline
 from .router import routing_report
 
 DEFAULT_CASES = Path("evals/cases.jsonl")
@@ -45,8 +46,17 @@ def main(argv: list[str] | None = None) -> int:
         help="local (ours) or cloud (PageIndex Cloud baseline; needs PAGEINDEX_API_KEY)",
     )
     _add_corpus_args(ev)
-    ev.add_argument("--out", type=Path, help="Report path; default evals/reports/<UTC timestamp>-<pipeline>.json")
+    ev.add_argument("--out", type=Path, help="Report path; default evals/reports/<UTC timestamp>-<pipeline>[-<stage>].json")
     ev.add_argument("--no-judge", action="store_true", help="Skip the correctness judge (no reference Answer comparison)")
+    ev.add_argument(
+        "--stage",
+        choices=list(evals.STAGES),
+        default="full",
+        help="full (default, the gate before keeping a change); retrieval: routing + tree search only; "
+        "answer: replay --retrievals into the Answerer only",
+    )
+    ev.add_argument("--retrievals", type=Path, help="With --stage answer: a report whose recorded Retrievals are replayed")
+    ev.add_argument("--case", action="append", help="Only this case id (repeatable)")
     fetch = sub.add_parser("fetch", help="Discover all Partes on the ANAC page and download their PDFs")
     fetch.add_argument("--dir", type=Path, default=Path(".raac/corpus"))
     fetch.add_argument("--parte", action="append", help="Only this Parte (repeatable)")
@@ -65,6 +75,13 @@ def main(argv: list[str] | None = None) -> int:
         ap.error("generate-cases needs --parte or --pdf")
     if args.command == "route" and not (args.question or args.cases):
         ap.error("route needs a question or --cases")
+    if args.command == "eval":
+        if (args.stage == evals.ANSWER) != bool(args.retrievals):
+            ap.error("--retrievals goes with --stage answer, and --stage answer needs it")
+        if args.stage == evals.ANSWER and args.parte:
+            ap.error("--stage answer loads the Partes recorded in --retrievals; drop --parte")
+        if args.stage != "full" and args.pipeline == "cloud":
+            ap.error("--pipeline cloud runs end to end only; drop --stage")
     load_env()
     if args.command == "fetch":
         return fetch_corpus(args.dir, args.parte)
@@ -78,8 +95,12 @@ def main(argv: list[str] | None = None) -> int:
         print(msg, file=sys.stderr)
 
     if args.command == "eval":
-        cases = evals.load_cases(args.cases)  # fail on a malformed case before spending on indexing
-        judge = None if args.no_judge else CorrectnessJudge(anthropic.Anthropic(), load_judge_model())
+        # Fail on a malformed case, unknown --case or unusable recording before spending on indexing.
+        cases = evals.select_cases(evals.load_cases(args.cases), args.case)
+        judge = None
+        if evals.ANSWER in evals.STAGES[args.stage] and not args.no_judge:
+            judge = CorrectnessJudge(anthropic.Anthropic(), load_judge_model())
+        retrievals = None
         if args.pipeline == "cloud":
             try:
                 pipeline = cloud.build_cloud_pipeline(
@@ -88,10 +109,15 @@ def main(argv: list[str] | None = None) -> int:
             except cloud.CloudKeyMissing as e:
                 print(f"error: {e}", file=sys.stderr)
                 return 2
+        elif args.stage == evals.ANSWER:
+            retrievals = evals.load_retrievals(args.retrievals)
+            retrievals.for_cases(cases)
+            pipeline = build_answer_pipeline(retrievals.index_versions, args.cache_dir, progress)
         else:
             pipeline = build_local_pipeline(args.parte or DEFAULT_PARTES, args.cache_dir, progress, offline=args.offline)
-        report = evals.run_eval(pipeline, cases, args.cases, judge)
-        out = args.out or Path("evals/reports") / f"{datetime.now(UTC):%Y%m%dT%H%M%SZ}-{pipeline.name}.json"
+        report = evals.run_eval(pipeline, cases, args.cases, args.stage, retrievals, judge)
+        suffix = "" if args.stage == "full" else f"-{args.stage}"
+        out = args.out or Path("evals/reports") / f"{datetime.now(UTC):%Y%m%dT%H%M%SZ}-{pipeline.name}{suffix}.json"
         evals.write_report(report, out)
         print(evals.summarize(report))
         print(f"report: {out}")
