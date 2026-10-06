@@ -1,0 +1,177 @@
+[
+  {
+    "seccion": "61.1420",
+    "response": {
+      "id": "msg_011CfgwpkCf7n3NLPbGgkZdr",
+      "container": null,
+      "content": [
+        {
+          "text": "{\"pregunta\":\"Estoy arrancando el curso para sacar la licencia de piloto a distancia de drones, ¿cuántas horas de vuelo me piden como mínimo? ¿Y cómo tengo que ir registrándolas?\",\"respuesta_referencia\":\"Depende de la categoría: para la Categoría Específica necesitás por lo menos 16 hs de vuelo y para la Categoría Certificada por lo menos 40 hs. Esas horas las tenés que hacer durante la instrucción, y te tienen que alcanzar para demostrar que tenés las competencias que se exigen para la licencia. Como alumno piloto a distancia, tenés que registrar tu actividad de vuelo en el libro de vuelo según la normativa vigente, y esa actividad tiene que estar certificada por un instructor de vuelo de RPAS.\"}",
+          "type": "text"
+        }
+      ],
+      "diagnostics": null,
+      "model": "claude-opus-5-5",
+      "role": "assistant",
+      "stop_details": null,
+      "stop_reason": "end_turn",
+      "stop_sequence": null,
+      "type": "message",
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "inference_geo": "global",
+        "input_tokens": 902,
+        "output_tokens": 290,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard"
+      }
+    }
+  },
+  {
+    "seccion": "61.1505",
+    "response": {
+      "id": "msg_011Cfgwq6LsKPL6BUvQd2egM",
+      "container": null,
+      "content": [
+        {
+          "text": "{\"pregunta\":\"Tengo la licencia de piloto a distancia y quiero sacar la habilitación de instructor de vuelo de drones. ¿Qué me piden para llegar a eso?\",\"respuesta_referencia\":\"Tenés que ser titular de la licencia de Piloto a Distancia, tener 18 años, saber leer, hablar, escribir y entender bien el español, y tener el secundario completo (o Polimodal, o un equivalente reconocido por la autoridad). Además necesitás el médico (CMA) vigente según la Parte 67 y aprobar el curso teórico de Instrucción Reconocida para Instructor de Vuelo de RPAS en un CIAC certificado por la ANAC. También tenés que juntar las horas de vuelo exigidas para la Categoría que pidas. Por último, tenés que aprobar un examen teórico y práctico ante un inspector de la especialidad designado por la ANAC o un examinador designado.\"}",
+          "type": "text"
+        }
+      ],
+      "diagnostics": null,
+      "model": "claude-opus-5-5",
+      "role": "assistant",
+      "stop_details": null,
+      "stop_reason": "end_turn",
+      "stop_sequence": null,
+      "type": "message",
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "inference_geo": "global",
+        "input_tokens": 1182,
+        "output_tokens": 326,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard"
+      }
+    }
+  },
+  {
+    "seccion": "61.1705",
+    "response": {
+      "id": "msg_011CfgwqSreTaK3MayRXoSFH",
+      "container": null,
+      "content": [
+        {
+          "text": "{\"pregunta\":\"Mi hijo tiene 15 y quiere sacar la licencia de piloto de ultraliviano motorizado. ¿Desde qué edad puede volar solo y qué más le van a pedir para la licencia?\",\"respuesta_referencia\":\"Para la licencia de piloto ULM tiene que tener 16 años, pero con 15 años y 9 meses ya puede obtener la autorización para volar solo como alumno piloto de ULM. Como es menor, ustedes (padres o tutor) tienen que presentar la autorización para que haga el curso, o la constancia de emancipación, con la firma certificada ante escribano público o juez de paz. Además tiene que: tener la primaria completa o equivalente reconocida por autoridad competente; tener el médico aeronáutico conforme a la Parte 67; aprobar el examen teórico ante la ANAC o ante un examinador; aprobar la prueba de pericia en vuelo ante un inspector de vuelo o examinador designado por la autoridad; y demostrar que habla y entiende inglés si lo va a usar en las comunicaciones radiotelefónicas. Si no lo demuestra, la licencia le sale con una limitación.\"}",
+          "type": "text"
+        }
+      ],
+      "diagnostics": null,
+      "model": "claude-opus-5-5",
+      "role": "assistant",
+      "stop_details": null,
+      "stop_reason": "end_turn",
+      "stop_sequence": null,
+      "type": "message",
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "inference_geo": "global",
+        "input_tokens": 1219,
+        "output_tokens": 408,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard"
+      }
+    }
+  },
+  {
+    "seccion": "67.400",
+    "response": {
+      "id": "msg_011Cfgwqtm8Hg4xRp1ta9uiy",
+      "container": null,
+      "content": [
+        {
+          "text": "{\"pregunta\":\"Soy controlador y en la revisación para el médico Clase 3 me dieron no apto por un tema de salud que ya me estuvieron tratando. ¿Se termina ahí o tengo alguna forma de pelearla?\",\"respuesta_referencia\":\"No se termina ahí. Si no cumplís cualquiera de los requisitos médicos de la Clase 3, te declaran no apto, pero podés pedirle a la junta médica de ANAC que reconsidere tu calificación. Incluso podrías obtener una dispensa médica (DM). Para eso, la patología tiene que haber sido investigada y tratada según las mejores prácticas médicas, y tienen que estimar que no es probable que te impida ejercer con seguridad las atribuciones de tu licencia y habilitación. Si te la otorgan, igual vas a tener que seguir haciendo los reconocimientos de renovación dentro de los intervalos que fija la norma.\"}",
+          "type": "text"
+        }
+      ],
+      "diagnostics": null,
+      "model": "claude-opus-5-5",
+      "role": "assistant",
+      "stop_details": null,
+      "stop_reason": "end_turn",
+      "stop_sequence": null,
+      "type": "message",
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "inference_geo": "global",
+        "input_tokens": 1141,
+        "output_tokens": 324,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard"
+      }
+    }
+  },
+  {
+    "seccion": "67.515",
+    "response": {
+      "id": "msg_011CfgwrKrzPf89WwwZDoZUg",
+      "container": null,
+      "content": [
+        {
+          "text": "{\"pregunta\":\"Tengo 45 años y me toca renovar el médico. ¿Me van a hacer audiometría sí o sí, y qué valores tengo que dar para no quedar afuera?\",\"respuesta_referencia\":\"La audiometría de tono puro es obligatoria en el examen inicial y, pasados los 40, como mínimo una vez cada dos años. En los demás reconocimientos te evalúan en un cuarto silencioso con voz susurrada y de conversación, y la audiometría es optativa si esa prueba sale absolutamente satisfactoria. Sin audífonos ni otra ayuda para amplificar el sonido, y sin patología del conducto auditivo externo, en el mejor oído no podés tener una caída de umbral mayor de 30 dB en 500, 1.000 o 2.000 Hz, ni mayor de 50 dB en 3.000 Hz. Además, de espaldas al examinador, a 2 m y en un cuarto silencioso, tenés que oír con ambos oídos una voz de intensidad normal y discriminar el lenguaje aeronáutico; si no lo lográs, quedás no apto. Si una audiometría muestra una caída mayor a 30 dB en dos o más de esas frecuencias (500, 1.000, 2.000 o 3.000 Hz), te la tienen que complementar con una logoaudiometría. Esa logoaudiometría es satisfactoria si discriminás al menos el 80% a menos de 60 dB, por lo menos en el mejor oído. Aunque te pases de esos límites en el mejor oído, te pueden declarar apto si tenés una discriminación normal del lenguaje técnico aeronáutico y de las señales de radiofaros. Esa discriminación se evalúa con un ruido de fondo que reproduzca o simule el de tu puesto de trabajo, tanto con voz directa como transmitida por los medios aeronáuticos habituales.\"}",
+          "type": "text"
+        }
+      ],
+      "diagnostics": null,
+      "model": "claude-opus-5-5",
+      "role": "assistant",
+      "stop_details": null,
+      "stop_reason": "end_turn",
+      "stop_sequence": null,
+      "type": "message",
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "inference_geo": "global",
+        "input_tokens": 1859,
+        "output_tokens": 657,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard"
+      }
+    }
+  }
+]

@@ -45,3 +45,11 @@ def load_env(path: Path = Path(".env")) -> None:
     load_dotenv(path, override=False)
     if not os.environ.get("ANTHROPIC_API_KEY") and os.environ.get("RAAC_ANTHROPIC_API_KEY"):
         os.environ["ANTHROPIC_API_KEY"] = os.environ["RAAC_ANTHROPIC_API_KEY"]
+
+
+def load_tool_model(name: str, path: Path = _MODELS_FILE) -> str:
+    """Model for a tool outside the pipeline stages (e.g. `casegen`), with a RAAC_MODEL_<NAME> override."""
+    value = os.environ.get(f"RAAC_MODEL_{name.upper()}") or tomllib.loads(path.read_text()).get(name)
+    if not value:
+        raise ValueError(f"No model configured for {name!r} in {path}")
+    return value
