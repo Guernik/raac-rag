@@ -5,7 +5,7 @@
 #             (Partes 1, 61, 67, 91 by default; --parte X to pick; --json shows routed Partes and visited nodes;
 #              needs ANTHROPIC_API_KEY, from the environment or a .env file: cp .env.example .env;
 #              models per stage in src/raac/models.toml)
-#   eval:     uv run raac eval   (cases in evals/cases.jsonl; report in evals/reports/)
+#   eval:     uv run raac eval   (cases in evals/cases.jsonl; report in evals/reports/; --no-judge skips the correctness judge)
 #   routing:  uv run raac route --cases evals/routing-cases.jsonl
 
 [project]

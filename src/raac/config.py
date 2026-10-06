@@ -1,4 +1,4 @@
-"""Model per pipeline stage, read from models.toml with env overrides; local settings from .env."""
+"""Model per pipeline stage (and for the eval judge), read from models.toml with env overrides; local settings from .env."""
 
 import os
 import tomllib
@@ -27,6 +27,14 @@ def load_models(path: Path = _MODELS_FILE) -> Models:
             raise ValueError(f"No model configured for stage {stage!r} in {path}")
         stages[stage] = value
     return Models(**stages)
+
+
+def load_judge_model(path: Path = _MODELS_FILE) -> str:
+    """Model for the eval correctness judge; not a pipeline stage, so not part of Models."""
+    value = os.environ.get("RAAC_MODEL_JUDGE") or tomllib.loads(path.read_text()).get("judge")
+    if not value:
+        raise ValueError(f"No model configured for the eval judge in {path}")
+    return value
 
 
 def load_env(path: Path = Path(".env")) -> None:

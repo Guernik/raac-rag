@@ -130,10 +130,10 @@ def _by_id(report):
 
 def test_per_case_scores(report):
     cases = _by_id(report)
-    assert cases["hit"]["scores"] == {"retrieval_hit": True, "retrieval_recall": 0.5, "grounding": 1.0, "refusal_correct": True}
+    assert cases["hit"]["scores"] == {"retrieval_hit": True, "retrieval_recall": 0.5, "grounding": 1.0, "refusal_correct": True, "correctness": None}
     assert cases["hit"]["cited_secciones"] == [{"parte": "61", "seccion": "61.535"}]
-    assert cases["miss"]["scores"] == {"retrieval_hit": False, "retrieval_recall": 0.0, "grounding": None, "refusal_correct": False}
-    assert cases["fuera-ok"]["scores"] == {"retrieval_hit": None, "retrieval_recall": None, "grounding": None, "refusal_correct": True}
+    assert cases["miss"]["scores"] == {"retrieval_hit": False, "retrieval_recall": 0.0, "grounding": None, "refusal_correct": False, "correctness": None}
+    assert cases["fuera-ok"]["scores"] == {"retrieval_hit": None, "retrieval_recall": None, "grounding": None, "refusal_correct": True, "correctness": None}
     assert cases["fuera-mal"]["scores"]["grounding"] == 0.5
     assert cases["fuera-mal"]["scores"]["refusal_correct"] is False
     assert cases["roto"]["scores"] is None and cases["roto"]["error"] == "RuntimeError: boom"
