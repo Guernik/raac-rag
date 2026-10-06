@@ -1,6 +1,6 @@
 """CLI: `raac ask "<pregunta>"` answers from Partes 1, 61, 67 and 91 with Citations; `raac route` shows or
-scores Parte routing; `raac fetch` downloads the RAAC vigente; `raac eval` runs the eval set;
-`raac generate-cases` writes candidate eval cases and `raac review` accepts, edits or rejects them."""
+scores Parte routing; `raac fetch` downloads the RAAC vigente; `raac eval` runs the eval set against the local pipeline
+or PageIndex Cloud; `raac generate-cases` writes candidate eval cases and `raac review` accepts, edits or rejects them."""
 
 import argparse
 import json
@@ -11,7 +11,7 @@ from pathlib import Path
 import anthropic
 import httpx
 
-from . import casegen, corpus, evals, strings
+from . import casegen, cloud, corpus, evals, strings
 from .answerer import Answer, Citation
 from .config import load_env, load_judge_model, load_tool_model
 from .judge import CorrectnessJudge
@@ -36,10 +36,16 @@ def main(argv: list[str] | None = None) -> int:
     route.add_argument("question", nargs="?")
     route.add_argument("--cases", type=Path, help="JSONL eval cases; expected Partes come from expected_secciones")
     _add_corpus_args(route)
-    ev = sub.add_parser("eval", help="Run the eval set against the local pipeline and write a report")
+    ev = sub.add_parser("eval", help="Run the eval set against a pipeline and write a report")
     ev.add_argument("--cases", type=Path, default=DEFAULT_CASES)
+    ev.add_argument(
+        "--pipeline",
+        choices=["local", "cloud"],
+        default="local",
+        help="local (ours) or cloud (PageIndex Cloud baseline; needs PAGEINDEX_API_KEY)",
+    )
     _add_corpus_args(ev)
-    ev.add_argument("--out", type=Path, help="Report path; default evals/reports/<UTC timestamp>-local.json")
+    ev.add_argument("--out", type=Path, help="Report path; default evals/reports/<UTC timestamp>-<pipeline>.json")
     ev.add_argument("--no-judge", action="store_true", help="Skip the correctness judge (no reference Answer comparison)")
     fetch = sub.add_parser("fetch", help="Discover all Partes on the ANAC page and download their PDFs")
     fetch.add_argument("--dir", type=Path, default=Path(".raac/corpus"))
@@ -74,7 +80,16 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "eval":
         cases = evals.load_cases(args.cases)  # fail on a malformed case before spending on indexing
         judge = None if args.no_judge else CorrectnessJudge(anthropic.Anthropic(), load_judge_model())
-        pipeline = build_local_pipeline(args.parte or DEFAULT_PARTES, args.cache_dir, progress, offline=args.offline)
+        if args.pipeline == "cloud":
+            try:
+                pipeline = cloud.build_cloud_pipeline(
+                    args.parte or DEFAULT_PARTES, args.cache_dir, progress, offline=args.offline
+                )
+            except cloud.CloudKeyMissing as e:
+                print(f"error: {e}", file=sys.stderr)
+                return 2
+        else:
+            pipeline = build_local_pipeline(args.parte or DEFAULT_PARTES, args.cache_dir, progress, offline=args.offline)
         report = evals.run_eval(pipeline, cases, args.cases, judge)
         out = args.out or Path("evals/reports") / f"{datetime.now(UTC):%Y%m%dT%H%M%SZ}-{pipeline.name}.json"
         evals.write_report(report, out)
