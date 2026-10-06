@@ -50,7 +50,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "eval":
         cases = evals.load_cases(args.cases)  # fail on a malformed case before spending on indexing
-        pipeline = build_local_pipeline(args.parte or DEFAULT_PARTES, args.cache_dir, progress)
+        pipeline = build_local_pipeline(args.parte or DEFAULT_PARTES, args.cache_dir, progress, offline=args.offline)
         report = evals.run_eval(pipeline, cases, args.cases)
         out = args.out or Path("evals/reports") / f"{datetime.now(UTC):%Y%m%dT%H%M%SZ}-{pipeline.name}.json"
         evals.write_report(report, out)
@@ -63,6 +63,7 @@ def main(argv: list[str] | None = None) -> int:
         args.cache_dir,
         progress,
         routing_record_path=getattr(args, "record_routing", None),
+        offline=args.offline,
     )
     if args.command == "route":
         if args.cases:
@@ -110,6 +111,7 @@ def fetch_corpus(root: Path, only: list[str] | None = None) -> int:
 def _add_corpus_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--parte", action="append", help=f"Parte to load (repeatable; default {' '.join(DEFAULT_PARTES)})")
     p.add_argument("--cache-dir", type=Path, default=Path(".raac"))
+    p.add_argument("--offline", action="store_true", help="Skip ANAC and use the PDFs cached under <cache-dir>/corpus")
     p.set_defaults(parte=None)
 
 

@@ -208,3 +208,69 @@ def test_fetch_command_reports_unchanged_on_second_run(tmp_path, monkeypatch, ca
     out = capsys.readouterr().out
     assert "Parte HL: sin cambios" in out
     assert "1 Partes descargadas: 0 nuevas, 0 cambiadas, 1 sin cambios." in out
+
+
+# load_partes: CLI and evals keep working from the cache when docs.anac.gob.ar is down
+
+SHEET_ROUTES = {corpus.RAAC_PAGE_URL: PAGE_HTML.encode(), corpus.SHEET_CSV_URL.format(id=SHEET_ID): SHEET_CSV.encode()}
+
+
+def _anac_down(requests: list) -> httpx.Client:
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        if request.url.host == "docs.anac.gob.ar":
+            raise httpx.ConnectTimeout("timed out", request=request)
+        return httpx.Response(200, content=SHEET_ROUTES[str(request.url)])
+
+    return httpx.Client(transport=httpx.MockTransport(handler))
+
+
+def _cached(store: CorpusStore, parte: str, data: bytes) -> Pdf:
+    listing = corpus.find_listing(parse_sheet(SHEET_CSV), parte)
+    pdf = _pdf(data)
+    store.put(listing, pdf)
+    return pdf
+
+
+def test_falls_back_to_newest_cached_pdf_when_anac_is_down(tmp_path, monkeypatch):
+    monkeypatch.setattr(corpus.time, "sleep", lambda _s: None)
+    store = CorpusStore(tmp_path)
+    _cached(store, "61", b"%PDF 61 old")
+    pdf61 = _cached(store, "61", b"%PDF 61 new")
+    pdf91 = _cached(store, "91", b"%PDF 91")
+    requests, progress = [], []
+
+    sourced = corpus.load_partes(["61", "91"], store, on_progress=progress.append, client=_anac_down(requests))
+
+    assert [(s.listing.parte, s.pdf, s.from_cache) for s in sourced] == [("61", pdf61, True), ("91", pdf91, True)]
+    assert sourced[0].listing.share_url == store.manifest()["61"]["share_url"]
+    assert f"Usando copia local de Parte 61 ({pdf61.sha256[:12]})" in progress
+    # a host that is down costs one round of retries, not one per Parte
+    assert len([r for r in requests if r.url.host == "docs.anac.gob.ar"]) == 6
+
+
+def test_anac_down_without_cache_names_the_parte(tmp_path, monkeypatch):
+    monkeypatch.setattr(corpus.time, "sleep", lambda _s: None)
+    with pytest.raises(CorpusError, match="Parte 61: download failed.*no cached PDF"):
+        corpus.load_partes(["61"], CorpusStore(tmp_path), client=_anac_down([]))
+
+
+def test_offline_makes_no_request(tmp_path):
+    store = CorpusStore(tmp_path)
+    pdf = _cached(store, "61", b"%PDF 61")
+
+    def refuse(request: httpx.Request) -> httpx.Response:
+        raise AssertionError(f"offline run requested {request.url}")
+
+    client = httpx.Client(transport=httpx.MockTransport(refuse))
+    sourced = corpus.load_partes(["61"], store, offline=True, client=client)
+    assert [(s.pdf, s.from_cache) for s in sourced] == [(pdf, True)]
+
+
+def test_downloads_into_the_store_when_anac_is_up(tmp_path):
+    listing = corpus.find_listing(parse_sheet(SHEET_CSV), "61")
+    client = _client({**SHEET_ROUTES, listing.download_url: b"%PDF 61"})
+    store = CorpusStore(tmp_path)
+    sourced = corpus.load_partes(["61"], store, client=client)
+    assert [(s.pdf, s.from_cache) for s in sourced] == [(_pdf(b"%PDF 61"), False)]
+    assert store.latest("61") == (ParteListing("61", listing.titulo, listing.share_url), _pdf(b"%PDF 61"))

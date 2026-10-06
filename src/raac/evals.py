@@ -229,7 +229,11 @@ def summarize(report: dict[str, Any]) -> str:
     lines += [f"{k}: {fmt(v)}" for k, v in report["aggregate"].items()]
     p = report["pipeline"]
     lines.append(f"pipeline: {p['name']} models={p['models']} served={p['served_answer_models']}")
-    lines += [f"index: Parte {v['parte']} {v['content_hash'][:16]} Edición {v['edicion']} Enmienda {v['enmienda']}" for v in p["index_versions"]]
+    lines += [
+        f"index: Parte {v['parte']} {v['content_hash'][:16]} Edición {v['edicion']} Enmienda {v['enmienda']}"
+        + (" (cached PDF)" if v["from_cache"] else "")
+        for v in p["index_versions"]
+    ]
     return "\n".join(lines)
 
 

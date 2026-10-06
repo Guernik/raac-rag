@@ -155,7 +155,7 @@ def test_report_records_pipeline_models_and_index_versions(report, tmp_path):
         "name": "fake",
         "models": {"answer": "fake-model"},
         "served_answer_models": ["fake-served"],
-        "index_versions": [{"parte": "61", "content_hash": "abc123", "edicion": "VI", "enmienda": "I"}],
+        "index_versions": [{"parte": "61", "content_hash": "abc123", "edicion": "VI", "enmienda": "I", "from_cache": False}],
     }
     path = tmp_path / "out" / "report.json"
     write_report(report, path)
@@ -213,7 +213,7 @@ def test_local_pipeline_runs_through_the_harness(parte61, tmp_path):
     }
     assert report["pipeline"]["served_answer_models"] == [record["response"]["model"]]
     assert report["pipeline"]["index_versions"] == [
-        {"parte": "61", "content_hash": parte61.content_hash, "edicion": "VI", "enmienda": "I"}
+        {"parte": "61", "content_hash": parte61.content_hash, "edicion": "VI", "enmienda": "I", "from_cache": False}
     ]
     case = report["cases"][0]
     assert case["error"] is None
