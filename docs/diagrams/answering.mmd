@@ -23,7 +23,7 @@ sequenceDiagram
     R->>A: Retrieval (Secciones + Definiciones + visited nodes)
     A->>L: one document per Sección, then per Definición<br/>(one content block per PDF page), citations on
     L-->>A: text blocks with cited_text + block ranges
-    A->>A: split into sentences, map Citations,<br/>keep claims with Citations (+ Framing, planned)
-    A-->>C: each grounded sentence as soon as it is complete
-    A-->>C: Answer (sentences + Citations, refusal, gap, likely Partes)
+    A->>A: read the COBERTURA line, split into sentences,<br/>map Citations, keep cited claims and Framing
+    A-->>C: each kept sentence as soon as it is complete
+    A-->>C: Answer (sentences + Citations + layout, refusal, likely Partes)
     C-->>U: sentences with Citation chips, then the final Answer
