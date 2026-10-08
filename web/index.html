@@ -1,10 +1,25 @@
 <!doctype html>
-<html lang="es">
+<html lang="es" data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#ffffff" />
     <title>RAAC consulta</title>
+    <script>
+      // Apply the stored theme before first paint (see src/theme.ts).
+      try {
+        if (localStorage.getItem("raac-theme") === "dark") {
+          document.documentElement.dataset.theme = "dark";
+          document.querySelector('meta[name="theme-color"]').setAttribute("content", "#111318");
+        }
+      } catch {}
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Mono:wght@400;600&family=Atkinson+Hyperlegible+Next:wght@400;600;700&display=swap"
+    />
   </head>
   <body>
     <div id="root"></div>
