@@ -150,7 +150,7 @@ def map_answer(text: str, resolved: list[dict[str, Any]], docs: dict[str, CloudD
             sentences.append(Sentence(text=piece, citations=cites))
         else:
             dropped.append(piece)
-    return Answer(sentences=sentences, refused=not sentences, dropped_uncited=dropped, model=model)
+    return Answer(sentences=sentences, refused=not sentences, dropped=dropped, model=model)
 
 
 def map_citation(resolved: dict[str, Any], docs: dict[str, CloudDoc]) -> list[Citation]:

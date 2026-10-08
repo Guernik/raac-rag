@@ -8,13 +8,18 @@ ParsedParte; nothing is parsed from model prose.
 The API returns each cited span as its own text block and puts the surrounding
 prose, sentence ends included, in uncited blocks. So sentences are split by
 character position over the whole text (never inside a cited span), and each
-sentence takes the Citations of the spans it contains. Sentences without a
-Citation are dropped; an Answer with none left is a refusal.
+sentence takes the Citations of the spans it contains. A sentence without a
+Citation is Framing (ADR 0003). Framing is checked, not trusted: a sentence, cited
+or not, with a number, month or Sección reference absent from the Answer's cited
+text is dropped as an unsupported claim. An Answer with no cited sentence left is
+a refusal. Line breaks and list markers become each sentence's `starts`, so
+clients can show a lead-in followed by one list item per condition.
 
-When the Secciones do not cover (part of) the question, the model writes one
-uncited line starting with GAP_MARKER. That line is never shown: it only marks
-the Answer as incomplete, and the Partes it names are kept as likely Partes when
-a retrieved Sección has a Remisión to them, cited from that Remisión's text.
+The answer opens with a coverage line, COVERAGE_MARKER plus total, parcial or
+ninguna and what is missing. It is never shown: ninguna, or a missing or
+malformed line, makes the Answer a refusal even if cited sentences exist, and
+parcial makes it incomplete. The Partes the line names are kept as likely Partes
+when a retrieved Sección has a Remisión to them, cited from that Remisión's text.
 
 Parte 1 Definiciones attached to the Retrieval follow the Secciones as documents of
 their own, so the model can cite one when the Answer relies on the defined meaning.
@@ -27,10 +32,11 @@ it adds the refusal, gap and likely Partes, and a caller shows it in place of wh
 
 import json
 import re
+import unicodedata
 from collections.abc import Callable
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import anthropic
 
@@ -40,28 +46,68 @@ from .remisiones import Remision, find_remisiones, parte_codes
 from .retriever import Retrieval, RetrievedDefinicion, RetrievedSeccion
 from .usage import UsageMeter
 
-GAP_MARKER = "SIN RESPALDO:"
+COVERAGE_MARKER = "COBERTURA:"
+COVERAGES = ("total", "parcial", "ninguna")
 
 SYSTEM = (
     "Respondés preguntas sobre las Regulaciones Argentinas de Aviación Civil (RAAC) "
-    "usando únicamente las Secciones provistas como documentos. Escribí en español "
-    "rioplatense claro, en pocas oraciones de prosa simple, sin markdown (sin negritas, "
-    "títulos ni listas). Cada oración debe apoyarse en el texto de los documentos; si "
-    "dependen de plazos o regímenes transitorios, mencionalos. "
-    "No agregues nada de conocimiento propio. Si los documentos no alcanzan para responder "
-    "la pregunta, o una parte de ella, terminá con una línea aparte, sin citas, que empiece "
-    f"con '{GAP_MARKER}' y diga qué falta; si los documentos remiten a otra Parte de la RAAC "
-    "que probablemente lo cubra, nombrala ahí (por ejemplo 'Parte 67'). "
+    "usando únicamente las Secciones provistas como documentos. No agregues nada de "
+    "conocimiento propio.\n\n"
+    f"Empezá siempre con una línea aparte, sin citas: '{COVERAGE_MARKER} total' si los "
+    f"documentos alcanzan para responder toda la pregunta, '{COVERAGE_MARKER} parcial - <qué falta>' "
+    f"si alcanzan para una parte, o '{COVERAGE_MARKER} ninguna - <qué falta>' si no alcanzan "
+    "para nada. Una parte cuenta como cubierta solo si los documentos la responden directamente: "
+    "si la pregunta es de teoría o performance (aerodinámica, meteorología, cálculos de la aeronave) "
+    "y los documentos solo tocan el tema en reglas que no la responden, es ninguna. Si los documentos remiten a otra Parte de la RAAC que probablemente cubra lo "
+    "que falta, nombrala en esa línea (por ejemplo 'Parte 67'). Con ninguna, no escribas nada más.\n\n"
+    "Después respondé en español rioplatense, con un voseo natural (podés, tenés que), "
+    "parafraseando el texto de las Secciones en palabras simples: la cita ya le muestra al "
+    "usuario el texto literal, así que no copies marcadores de incisos ni líneas como "
+    "'(A) Reservado', y no fuerces el voseo sobre la redacción legal. Cada requisito, condición, "
+    "número, plazo, fecha o referencia a una Sección tiene que ir en una oración citada; si "
+    "dependen de plazos o regímenes transitorios, mencionalos. Sin cita solo podés escribir "
+    "encuadre: un veredicto breve al comienzo (sí, no o depende) que las oraciones citadas "
+    "respalden, frases que introducen una lista y conectores. No apliques las reglas a la "
+    "situación particular del usuario, y no hables de los documentos ni de las Secciones provistas: "
+    "lo que falta ya va en la línea de cobertura.\n\n"
+    "Si la respuesta depende de varias condiciones o requisitos, escribí una frase introductoria "
+    "que termine en dos puntos, sin contar los ítems ('estas condiciones:', no 'estas dos condiciones:'), "
+    "y después una lista con un ítem por condición, cada uno en su propia línea empezando con '- '. Separá los párrafos con una línea en blanco. No uses "
+    "títulos, negritas ni otro markdown.\n\n"
     "Algunos documentos son Definiciones de la Parte 1: usalas para entender los términos "
     "de las Secciones y citalas solo si la respuesta depende del significado definido."
 )
 # A sentence ends at terminal punctuation (optionally closing an emphasis) followed by
 # whitespace, so "61.520" does not split, or at a line break.
 _SENTENCE_END = re.compile(r"[.!?:;](?:\*\*|__)?(?=\s|$)|\n")
-# Markdown the model may still emit: emphasis markers and list bullets/numbers.
-_MARKUP = re.compile(r"\*\*|__|^\s*(?:[-*•]|\d+[.)])\s+")
+# Markdown the model may still emit: emphasis markers, headings and list bullets/numbers.
+_MARKUP = re.compile(r"\*\*|__|^\s*(?:#+|[-*•]|\d+[.)])\s+")
+_BULLET = re.compile(r"(?:[-*•]|\d+[.)])(?=\s|$)")
 _LETTER = re.compile(r"[^\W\d_]")
-_GAP = re.compile(re.escape(GAP_MARKER) + r"[^\n]*", re.I)
+_COVERAGE = re.compile(
+    r"\s*(?:\*\*|__)?" + re.escape(COVERAGE_MARKER) + r"(?:\*\*|__)?[ \t]*(\w+)[ \t]*[-–—:.,;]?[ \t]*([^\n]*)", re.I
+)
+# What makes a sentence a checkable claim: numbers (digits or words), months, Sección references.
+_NUMBER = re.compile(r"\d+(?:[.,]\d+)*")
+_INCISO = re.compile(r"\((?:[^\W\d_]{1,4}|\d{1,2})\)")  # (a), (1), (iv); "tres (3)" still counts by its word
+_WORD = re.compile(r"[^\W\d_]+")
+_NUMBER_WORDS = {
+    w: n
+    for n, words in {
+        2: "dos", 3: "tres", 4: "cuatro", 5: "cinco", 6: "seis", 7: "siete", 8: "ocho", 9: "nueve",
+        10: "diez", 11: "once", 12: "doce", 13: "trece", 14: "catorce", 15: "quince", 16: "dieciseis",
+        17: "diecisiete", 18: "dieciocho", 19: "diecinueve", 20: "veinte", 21: "veintiuno", 22: "veintidos",
+        23: "veintitres", 24: "veinticuatro", 25: "veinticinco", 26: "veintiseis", 27: "veintisiete",
+        28: "veintiocho", 29: "veintinueve", 30: "treinta", 40: "cuarenta", 50: "cincuenta", 60: "sesenta",
+        70: "setenta", 80: "ochenta", 90: "noventa", 100: "cien ciento", 200: "doscientos",
+        300: "trescientos", 400: "cuatrocientos", 500: "quinientos", 600: "seiscientos",
+        700: "setecientos", 800: "ochocientos", 900: "novecientos", 1000: "mil",
+    }.items()
+    for w in words.split()
+}
+_MONTHS = set("enero febrero marzo abril mayo junio julio agosto septiembre setiembre octubre noviembre diciembre".split())
+
+Starts = Literal["paragraph", "item"]
 
 
 @dataclass
@@ -84,7 +130,8 @@ class Citation:
 @dataclass
 class Sentence:
     text: str
-    citations: list[Citation]
+    citations: list[Citation]  # empty for Framing
+    starts: Starts | None = None  # a new paragraph or list item begins here; None continues the current one
 
 
 @dataclass
@@ -97,12 +144,13 @@ class LikelyParte:
 
 @dataclass
 class Answer:
-    sentences: list[Sentence]  # every one carries at least one Citation
-    refused: bool  # no grounded sentence: the Answer says so and cites only likely Partes' Remisiones
-    incomplete: bool = False  # grounded sentences, but the model flagged part of the question as uncovered
+    sentences: list[Sentence]  # cited sentences and Framing; at least one cited unless refused
+    refused: bool  # nothing grounded: the Answer says so and cites only likely Partes' Remisiones
+    incomplete: bool = False  # grounded sentences, but the coverage line says part of the question is uncovered
     likely_partes: list[LikelyParte] = field(default_factory=list)
-    gap: str | None = None  # the model's GAP_MARKER line, for logs only; never shown
-    dropped_uncited: list[str] = field(default_factory=list)
+    coverage: str | None = None  # total / parcial / ninguna from the coverage line; None when missing or malformed
+    gap: str | None = None  # what the coverage line says is missing, for logs only; never shown
+    dropped: list[str] = field(default_factory=list)  # unsupported claims: uncited or not backed by the cited text
     model: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
@@ -191,22 +239,39 @@ def answer(
 def _emit_complete_sentences(
     stream: Any, retrieval: Retrieval, source_urls: dict[str, str], on_sentence: Callable[[Sentence], None]
 ) -> None:
-    """Map the text so far at each finished content block; every sentence but the last is complete."""
-    sent = 0
+    """Map the text so far at each finished content block; every sentence but the last is complete.
+
+    Nothing is handed over before the coverage line allows an Answer and a cited sentence is complete,
+    so Framing never streams alone. A sentence kept only once later cited text backs it is left to the
+    final Answer.
+    """
+    emitted_end = 0
     for event in stream:
         if event.type != "content_block_stop":
             continue
         snapshot = stream.current_message_snapshot.model_dump(mode="json")
-        sentences = map_response(snapshot, retrieval, source_urls).sentences
-        for sentence in sentences[sent:-1]:
-            on_sentence(sentence)
-        sent = max(sent, len(sentences) - 1)
+        answer, ends = _map(snapshot, retrieval, source_urls)
+        if answer.coverage not in ("total", "parcial"):
+            continue
+        complete = list(zip(answer.sentences, ends))[:-1]
+        if not any(s.citations for s, _ in complete):
+            continue
+        for sentence, end in complete:
+            if end > emitted_end:
+                on_sentence(sentence)
+                emitted_end = end
 
 
 def map_response(response: dict[str, Any], retrieval: Retrieval, source_urls: dict[str, str]) -> Answer:
     """Turn a Messages API response (as JSON) into an Answer with Citations as data."""
+    return _map(response, retrieval, source_urls)[0]
+
+
+def _map(response: dict[str, Any], retrieval: Retrieval, source_urls: dict[str, str]) -> tuple[Answer, list[int]]:
+    """The Answer, and where each of its sentences ends in the response text."""
+    model = response.get("model")
     if response.get("stop_reason") == "refusal":
-        return Answer(sentences=[], refused=True, model=response.get("model"))
+        return Answer(sentences=[], refused=True, model=model), []
     full = ""
     spans: list[tuple[int, int, list[Citation]]] = []  # cited [start, end) offsets into full
     for block in response.get("content", []):
@@ -217,55 +282,96 @@ def map_response(response: dict[str, Any], retrieval: Retrieval, source_urls: di
             spans.append((len(full), len(full) + len(block["text"]), cites))
         full += block["text"]
 
+    coverage, gap, body = _coverage(full, spans)
+    if coverage is None:
+        return Answer(sentences=[], refused=True, model=model), []
+    support = {t for _, _, cites in spans for c in cites for t in _claim_tokens(f"{c.cited_text} {c.seccion} {c.parte}")}
+
     def splits_a_span(cut: int) -> bool:
         return any(start < cut < end for start, end, _ in spans)
 
-    gaps = [
-        (m.start(), m.end())
-        for m in _GAP.finditer(full)
-        if not any(m.start() < s_end and s_start < m.end() for s_start, s_end, _ in spans)
-    ]
-    cuts = sorted(
-        {m.end() for m in _SENTENCE_END.finditer(full) if not splits_a_span(m.end())}
-        | {cut for gap in gaps for cut in gap}
-    )
+    cuts = sorted({m.end() for m in _SENTENCE_END.finditer(full, body) if not splits_a_span(m.end())})
     sentences: list[Sentence] = []
+    ends: list[int] = []
     dropped: list[str] = []
-    for start, end in zip([0, *cuts], [*cuts, len(full)]):
-        if any(g_start <= start and end <= g_end for g_start, g_end in gaps):
-            continue
-        text = _MARKUP.sub("", full[start:end]).strip()
+    pending: Starts | None = None  # a break before text that was not kept carries over to the next sentence
+    content_end = body  # where the previous piece's text ended
+    for start, end in zip([body, *cuts], [*cuts, len(full)]):
+        raw = full[start:end]
+        lead = len(raw) - len(raw.lstrip())
+        before = full[content_end : start + lead]
+        if raw.strip():
+            content_end = start + len(raw.rstrip())
+        if _BULLET.match(raw, lead) and ("\n" in before or not sentences):
+            pending = "item"
+        elif "\n" in before and pending is None:
+            pending = "paragraph"
+        text = _MARKUP.sub("", raw).strip()
         if not _LETTER.search(text):
             continue  # list numbers, stray markup, blank lines
         cites = [c for s_start, s_end, span_cites in spans if start <= s_start and s_end <= end for c in span_cites]
-        if cites:
-            sentences.append(Sentence(text=_capitalize(text), citations=cites))
-        else:
+        if _claim_tokens(text) - support:
             dropped.append(text)
-    gap = " ".join(full[start:end].strip() for start, end in gaps) or None
+            continue
+        starts = None if pending == "paragraph" and not sentences else pending
+        continues = starts is None and sentences and ends[-1] == start and sentences[-1].text.endswith((":", ";"))
+        sentences.append(Sentence(text=text if continues else _capitalize(text), citations=cites, starts=starts))
+        ends.append(end)
+        pending = None
     cited = {(c.parte, c.seccion) for s in sentences for c in s.citations}
-    return Answer(
+    refused = coverage == "ninguna" or not cited
+    if refused:
+        sentences, ends = [], []
+    answer = Answer(
         sentences=sentences,
-        refused=not sentences,
-        incomplete=bool(sentences) and gap is not None,
-        likely_partes=_likely_partes(gap, retrieval, cited, source_urls),
+        refused=refused,
+        incomplete=not refused and coverage == "parcial",
+        likely_partes=_likely_partes(gap, retrieval, cited, source_urls) if coverage != "total" else [],
+        coverage=coverage,
         gap=gap,
-        dropped_uncited=dropped,
-        model=response.get("model"),
+        dropped=dropped,
+        model=model,
     )
+    return answer, ends
+
+
+def _coverage(full: str, spans: list[tuple[int, int, list[Citation]]]) -> tuple[str | None, str | None, int]:
+    """The coverage line's verdict and what it says is missing, and where the Answer after it starts.
+
+    The verdict is None when the text does not open with an uncited, well-formed coverage line.
+    """
+    m = _COVERAGE.match(full)
+    if m is None or any(start < m.end() for start, _, _ in spans) or m.group(1).lower() not in COVERAGES:
+        return None, None, 0
+    return m.group(1).lower(), m.group(2).strip() or None, m.end()
+
+
+def _claim_tokens(text: str) -> set[str]:
+    """Numbers (as values, written in digits or words), months and Sección numbers in `text`."""
+    text = _INCISO.sub(" ", text)
+    tokens = {str(int(re.sub(r"[.,]", "", n))) for n in _NUMBER.findall(text)}
+    plain = unicodedata.normalize("NFKD", text.lower()).encode("ascii", "ignore").decode()
+    for word in _WORD.findall(plain):
+        if word in _NUMBER_WORDS:
+            tokens.add(str(_NUMBER_WORDS[word]))
+        elif word in _MONTHS:
+            tokens.add(word)
+    return tokens
 
 
 def _likely_partes(
     gap: str | None, retrieval: Retrieval, cited: set[tuple[str, str]], source_urls: dict[str, str]
 ) -> list[LikelyParte]:
-    """Partes the gap line names that a retrieved Sección has a Remisión to; cited Secciones first.
+    """Partes the gap names that a retrieved Sección has a Remisión to; cited Secciones first, then those it names.
 
     A Parte the model names without a Remisión in the text is not shown: it would be an uncited claim.
     """
     if gap is None:
         return []
     named = parte_codes(gap)
-    ordered = sorted(retrieval.secciones, key=lambda r: (r.parte.code, r.seccion.id) not in cited)
+    ordered = sorted(
+        retrieval.secciones, key=lambda r: ((r.parte.code, r.seccion.id) not in cited, r.seccion.id not in gap)
+    )
     found: dict[str, LikelyParte] = {}
     for r in ordered:
         for remision in find_remisiones(r.seccion, r.parte.code):
@@ -291,7 +397,7 @@ def _remision_citation(remision: Remision, r: RetrievedSeccion, source_urls: dic
 
 
 def _capitalize(text: str) -> str:
-    """Uppercase the first letter, e.g. when a dropped uncited lead-in ("Hay un régimen transitorio:") preceded it."""
+    """Uppercase the first letter, e.g. when a dropped claim or a lead-in's colon preceded it on another line."""
     m = _LETTER.search(text)
     return text if m is None else text[: m.start()] + text[m.start()].upper() + text[m.start() + 1 :]
 

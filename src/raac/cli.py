@@ -13,7 +13,7 @@ import anthropic
 import httpx
 
 from . import casegen, cloud, corpus, evals, strings
-from .answerer import Answer, Citation
+from .answerer import Answer, Citation, Sentence
 from .config import load_env, load_judge_model, load_tool_model
 from .judge import CorrectnessJudge
 from .parser import parse
@@ -236,8 +236,6 @@ def render(result: Answer) -> str:
     keys: dict[tuple, int] = {}
 
     def marked(text: str, citations: list[Citation]) -> str:
-        if not citations:
-            raise ValueError(f"Uncited sentence must not reach the output: {text!r}")
         marks = []
         for c in citations:
             key = (c.parte, c.seccion, c.definicion, c.pdf_page_start, c.pdf_page_end)
@@ -246,19 +244,23 @@ def render(result: Answer) -> str:
                 keys[key] = len(numbered)
             if keys[key] not in marks:
                 marks.append(keys[key])
-        return text + " " + "".join(f"[{n}]" for n in marks)
+        return " ".join([text, "".join(f"[{n}]" for n in marks)]) if marks else text  # uncited: Framing
+
+    def laid_out(sentence: Sentence) -> str:
+        text = marked(sentence.text, sentence.citations)
+        return {"paragraph": "\n", "item": "\n- "}.get(sentence.starts or "", " ") + text
 
     body = []
     if result.refused:
         body.append(strings.REFUSAL)
     elif result.incomplete:
         body.append(strings.INCOMPLETE)
-    body += [marked(s.text, s.citations) for s in result.sentences]
+    body.append("".join(laid_out(s) for s in result.sentences).removeprefix(" "))
     body += [
         marked(strings.LIKELY_PARTE.format(parte=lp.parte, seccion=lp.citation.seccion), [lp.citation])
         for lp in result.likely_partes
     ]
-    lines = [strings.NOTICE, "", " ".join(body)]
+    lines = [strings.NOTICE, "", " ".join(b for b in body if b)]
     if not numbered:
         return "\n".join(lines)
     lines += ["", strings.CITATIONS_HEADER]

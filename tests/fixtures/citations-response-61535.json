@@ -3,6 +3,14 @@
   "secciones": [
     {
       "parte": "61",
+      "seccion": "61.505"
+    },
+    {
+      "parte": "61",
+      "seccion": "61.510"
+    },
+    {
+      "parte": "61",
       "seccion": "61.515"
     },
     {
@@ -34,25 +42,26 @@
       "seccion": "61.610"
     }
   ],
+  "definiciones": [],
   "response": {
-    "id": "msg_011CfcXNgDkZ71DkCyQJJRu9",
+    "id": "msg_011Cfq1dxbyRMVxR8Ce25tYw",
     "container": null,
     "content": [
       {
-        "signature": "CAQS+QkKEAgSGAI4AUIIdGhpbmtpbmcSDKRHwk3GgjCBFgGUCxoMMXwHeXDLGoYhlBN/IjDEnmqP513P46ZrrmUezzqn+NGAmPchFDSZK4TaLI1/SnGa7ikKinBL7ph8KITBEMoqlgme43H+5NVS0HuSuDmVH/9/XK9QmCVBOskApHOWlZzbjTtuoLUSmqfWwVUjemI2i5HR9yQuoP9HIjVGtd2Wkuey7jXHP3RpSao2l2ZLS2yt7TsCu1gR+A9aDaga5zY5kSrEGg8+/AQiA6sHt46VJdZZygg871xi2REeTD9sdj2hYAjZysnle5/NTmE1PlSudvxj4Dh/yNrj+Bevy8tPc+hbU5jZp7ih+OWj49cAvsqgBjJr5DtXISJUly5aCwKCYiVGCPgq8J1/cu8kOigEd9uoJzS4+x5odivdPRRRALU3tJjJZ9MZak/Ba83k0+TbmGzfYtgPBZxHxmwt1mGSDr1ZHXQEjWYOnJSmztpHi0QxAd8W6d3FDnY1VCJQirOpC4Wddy9MDlrBFeSD6MRWeZeR79m2k2IGVmjcFNFOWlyAfSjVl/eQX8fgUkOwJETSfuioglO4KUrKj5NvR4tfJu4aOhqMPzvSGCK/9Da0nHDHO/dNWcCyFyKCjyLinEFYzFkuNMbji99KlUVlCHXRlRdLdYlYH5knCKlCOy5gYU3CSPISZttFoxg37qZYUq0hH4OS3LnyPfkypWOIEcd+6yjkSGZh2CKalCTdfQn70FOpmLF4ryFOsmfCZRgIRrcxSD/L800XCtuvVan07GKCoQ395/iK+gRbUcVY/ra1wy5eeX/Za8gjE80e0qBN3X/To1cL8XHp25Rq8In98zNTeUjYsacv6tqPuSGG/hIKn8V9JPNOJfDUjUkl3d1wEtKXC5ZSsWsFSqouSvSeY9RHKcS20wakn2qjGisLHLboW4BcA9ccocRl8xmNpR4xeJE0lbJVdBUdrQIOHhdN/dIHOcsDBnTVO1iSxdLt7r7XpANabBxjG2HD9OqaYM+ya8lqrpLMQ6+HwWWBPthw/ynQ+yuTeZmBVnlXqZIAcLLeGwdFLXIdjQCiR1/JE+qoTSkjKoqF+n6p6JaA8M8HS7BGXlCKzqqWN7kNnR2i8PfE6LH5gX+wBRTQbfI72l4mSx+E6aCH2P9AZkOPLT7+JCZY9jK2TAWgd+eIas18VzBi1//cSeTg6zUpNXz4DOROjGyCTBKVg+abtH/J4nafmJPZwNNVN3xHyPRmr6IMAcUE7jgncX9Ai5O/HOPuUMm7skZ7pliX4E6n6pHI6gPvU2F8cdG4fx4H+lZKd29M8MRpekxhR+E3umFbXYkKQYfNNZMYeqdfFLRk8sYxZzgf+Y7TGkr40TiuuHLCRGt2YXLzaF0gpkv7beav/oEhgER2VfiQwTfxbEdHumzyv+foLn2ovwLCGW/iqGkaTA9B7PAkZ9YTmb0iGuU0Pe6W4WWPVhJnof/CcXr7VqFxPtUpFUlFlIweeuQhb4Xyyt5xKGTl7PthSwQORJ6F4Lu/nYbZ6Q8Fin4vse5zPVGff85+rKacRl/kny/RZpxSXe7sfwDHVnYqS2lDcmSM86SpBv1XZAOyulC1Vu7ALvTT9QTHe0HH35VH66GCK7VfAdil8Ko++D99WwFAEjyZ9SW6F7AEHMH6+QQmeYITDuQMpA87VJKFV7QiGO4r3AkIGAE=",
+        "signature": "CAQS9hgKEAgSGAI4AUIIdGhpbmtpbmcSDNMNAXcT2Q3GXTCpCRoMluOQetjvjcId+4heIjAJz2t0IXKdKnko5q4toPIXgJf5jPH2gcI38XscPZTn1ymE2FDNp1BH9n9ocNiC1RQqkxh3R97GZuo3FQPLhTUslH0rHV9hAL70jo3Dr6Qk2l/awD11O5CqDGGl+DdQFTOIic7eK0KTbRiovFSe6AjuR7t4aieyWZ9nbxZetypT3DtqaV3yuAWIHCFb3v/ab64m+S17tcdQ3PbhKkBCFCzTrUf8eeuui9qHdFfvv/Kn00pS8sOq6xwaMDILOBq72Bsa0MQyJ9QTFqIFZBHuljsYX9d7/hvPYx+8ngcntdPZva9LCeqcOGv5TYx7FKNJhCrNy3mJxC3zK4P95HTdciaN86ip7fzmWK5ei4uEv1UxhVYfPFeP+Fjl4rt40b7/SKtUzVUR/TAqlsiTGoRdN2a4THpG7M9vxbRwJAw5W7tCzjrTuOrTISj0FTyaSaRwAKUfFwPB5LDDOiJvwAVtXcEbXDQQGsNrygBY9//eqFi9LoOG8TwsdDjfaw7TtebWdTBeTEaYFKt7UjMSwxVJ6/GbwXY89ux+cTXw4cXj8r0S9XBodHHw2cptbCIhCoPRpBjVWMYWAFHmYelmhR4/a3DiZKRpBnmwXpTYHY7959Xiry2FXNqc6jSQN7ObYCB/llcCnpi+pzY2rvBj8cVNWIIh78oRR6qBA67fungNGKAO4aGookMgIjdY+qw4i1oHhX7s+/cwl/IhNONWoHFDjnTxytbZGyZyLAWwWTLQTH9rAIIn1kPhYYrCVXls4xfCUL7KFTHr3UsJUXUTljosPBK49FuGwOlpPlCe5FqeM1lZMpa+65RngGyqARlm5otwMMnH0KH2sRnY+BuiqjJ38d8hRvEgj3m7ThcRLqBdKNfhiPkQehc27wbQuKfDDPVUIxyegJ+RV0vLC1ZL8ja8XE2q8UcoXywfjmKFfFdYQizbt+oYs0yflY/CLPnf4kxr/XHmMMQ6X1Sd+GO+KNK88Vlk2uJ5rFrK8/E3QculcM2lHs5j3yLgtTcqTJEDjyoSZjaZVL/c95CwLhwFLbL0DCZwmTwBdOxwBUIjbTy56VHx01mnUM1FsN4WhFWjuO0TO5kXlxrD0AuKPM9dqi3bEBr+RfrrCsuJS/GKK9KynX8efJYjy59jpamfGdLlJ9sON1K/FI0Zp6oV+P5pr29H5WoWeu5JV5P+ONbRFAF+x9t7KXrLdunmgPOVqsGyy/3G54aXX+seyNJLNle55wXGZVyfwzTJqluDpDTeYxRSznVQgVdlvohsTVV+G9uzK709dEijJXVM5D5g3SVlyeOz6mugVfJBQQB1IGTGmL26d36WVUS1ysVFXup5Ja1/HuUwMnOHKuSSAML7JR+fqCf1cC0McwlSLyctAtiBzVQ1gzVi6P2zSnkAqKMwqoiIpB3ZvioCHfcbTQUByzduMbeHNmwePcT6XRmlI7xGfiAjBWZVOVaCuJgCYJJ3dDmLpWBy1biFqa+huW7zFOAVuv8K14gk/2asTr1yiYk+UzdMMsjrnb2om3B6+vbVTHGnTlKF9TNi5x6F2orz7sBy1TuvtJmhYMTeRiIQp+LTinWzddGhRZaNxNAAeCChF7IrVSyQqGSama980G7g3tJwixk3RUJwzyxP00kh95eRMfP00U6FGQEjL+TCeJtbSIxNylvqBSWtlFRHMKd+HSuZF7udIijLHxK5aANAl3eE9nfJ2ire8h6OMJcEpFffx27RVuDS2Tk4hA8A+Hz7isoZC4HC1Qwgh24ZG+lzydzDpumWmE1OW3Ipr+U3XzliY08sh8r7Rfl2QABLSStDLoi0rN1zbbErrJ0Nvdgm1r6Q+T49cmqVhyjBQttgjRrkmAaUQMnxx4Iw/VNrrHA67zzK0MqiV4jeyOmBy9vNrc1p9pcit+cfuFJKV00VeZRqYShUTZkuTFNCceZF6/vSwiSdageTX1aZ4HR4tH0LnWmiNBtLUESwuyGBsrt65Yvq5NVu0aAf+8aQg4km/2N/hy/pwZf7EaD3VbaWTiHMpWNRrND6L9cAf3haWU+LEiJnpx5F+Tkq9SZxj5MpKZDcKOs6Y/JAYmNDSPGmII87j4ogQ3k1UzrKdagezBa/KV5JD9oPib6v6wg8LGikrOdyH0fgqSCZgYq440OErTIf5m0wopvzoW2TAewepAeuioKrC1Y3Y+E9fu9vx1k1xFsB1o0OdsuhqsXGCChQcQ6bMqt4APChB4VDMg8VlMiIFJao23exbKS63YXbSWNHoEY0T61aKFSXLUF6JiADxvnRz29sh613qFkRO483fxk+8WqnWT9zwIW+muL9N2j/dO9FlMveGHhfXxMunQuECa5SY3qwYKyA+ephPWndRVBt40W8FV334X3aNN3fZBL9TqXrZ2Ha2vpU495PuWC4xqGeznvqxBy2O1SxOHt5378ZhuOPtBVYtv05ba+WudFtb8Ys0mVZe6R4wwY8DpzuG9DlNhDVemGpuMOPwxbDapbl2IxD8cd32hC49PmRJdxuYFa/lA0hAem7HriqFoZnpv2zeCkX/7qUDEcKDw5mdRQosmB1gGZdY9MRYdGVk7ichPje/zaai5I6SOu5RKiaupur9DnumKC9MHrvDO9ZCMUfK+M3gn7PZkgcxP35gX/KDrnKhvSrmiiqg1FuuIiwg08fXhtVr84XMGCJqO0kzHiWVn09yh+QsZjnxmZbK51X9+q1DG2OQCR6onwcjAFwH3s6TOL2oGuGuKMYKfidKPSGZAdcnS8IXM8qobx1vy8u8AyToEvjx0vNXbvcVHOUomyP+aaw7Tu79T+AGEw2KhcdV8KcUQfHVsDQResps07vNNZ7OAVzrb4kXNyf+g34GZTN534ah8UdehUypdd3msx3tFdbtSGKvoZ4Qe2YNs6IGSMs3rEligQ65S9eyan1kMTCrQ0hvkN8/uukt34jG7nM7arbxASWSskznRAOeBAjxiGY3MJAIqjne4iab4lTyDDQA/D9usjx7nseQnka+WkaqiZYz/2+vB4swcF1NYkv8sqqlLwBbkITRlQidruBNd9qotg7gNno4ocU2zNKCqeCsinIDGsWvvhYN/OybU5BWAdH3r6/Ki3hyjoWpwgQev0eNsfX4xBd1+Yop/d1QeD/LeMgg6FmvPFZ4ipi7Djq+fKkpRgTBrG11HSakmlPwDCDJO0MQodvdWxB5VWbk/t+wV+Yf1iy5gnLwVF2iIhh/V2Y6lgjL7fHjST+7pNPNpggjR9w40qGWIQVtWOpRXiChJzdXMTRqvEm6Z5/rNjwmKyp77z2mWigjThqXHmWGah2QsGewFckyIWctUkiGhP0Hpt+QAj+9kHi81rj3xAI/lgHR7byjFO4OwUMwcBoPBT4hOVDm6B6GdM6D9fdocaKW7l/UVN1CtqqIzqqMY7dD7X+JfkoUhOlhHVMoXXLwd4Hs9osjl79ytY2wWODQPvVKc5KF0+SGTxCdgycOe/ZgRDcYQqE2ktyNz4RPbZ3lpiWHy7o54ShOzfdCDdpVdbiYRbC6pL5bFkHrx0ljt+T2QCaCx6zFq5IC/AQ1DexeZvS3BbU8EyRWwp7da/SIPkayzK9uYz8ag9wDOJ9rrihgBnHDtmyybp/UctvR44sfwQuDS0jnjSOg+G13OrSVCEU/luUJXedvCkgyhqPD4nUk5QM8nsrXvXTOd0SqkEqGx+K8W3pKsTBFvG7ygVH1STHn2NRJBpzU/AQl35uLp0I5GJJDr/UudwmmikDmeBIxshEIL1KvbxTiao1i1oCut0oF38mbeREMYrWD5VtZB1Gevvnmp4jOlyQd1jCDNkzPL05BWDF9ShG/9TZXZlSxFeSsS+gy3EjOW+iVCSn75ACp2jT9gflVI/knPiN/gzKtqDrkg/e3XIqNmtS4I5473RNAwUgsV1pZmKwndQxZhrsvFssVeOZWNDBBaVW37Jkh1RgFZ3GB5FltncWQlu2JznW2yS5fsrqFsXpnb728hEHLFZ1BPyO5C7vmY02Co1Ol7kQj2h6ugsS+7NMAaYUzf+OFlMh3/HAIPTtMid3KnXKdXk3um3q+M2qhcy6BlvSXGnMTNQU0bcoICF3zGclrwJ5xalmEN/EXkoC1mydppVQoOHVCRNFhTwga9E/WYFhrKvyiVLXxJrnibCFOje1HIyKEMKD3KDkDMRTonqsusHrI0x+MRfDz+E68tSR1EQ45+QFGAE=",
         "thinking": "",
         "type": "thinking"
       },
       {
         "citations": null,
-        "text": "Depende de tu formación previa. ",
+        "text": "COBERTURA: total\n\nDepende de si recibiste instrucción en vuelo nocturno o tenés la habilitación correspondiente.\n\n",
         "type": "text"
       },
       {
         "citations": [
           {
             "cited_text": "61.535\nOperaciones VFR nocturnas - Régimen transitorio\n(a)\nEl titular de una licencia de Piloto Privado de Avión que no haya recibido instrucción en vuelo\nVFR nocturno, o carezca de habilitación de vuelo nocturno (o vuelo nocturno local), no podrá\nejercer las atribuciones como piloto al mando en operaciones en operaciones VFR nocturno sal-\nvo que:\n(1)\nacredite la experiencia prevista en la Sección 61.520 (a)(1)(v) o 61.520 (b)(1) (v) según co-\nrresponda; y\n(2)\nun instructor de vuelo habilitado deje constancia en el libro de vuelo del cumplimiento de lo\nanterior y de la aptitud para operar VFR nocturno.\n(b)\nHasta tanto no se cumpla lo dispuesto en (a), se consignará en la licencia la limitación: “Carece\nde atribuciones para operaciones VFR nocturnas”.\n(c)\nHasta el 31 de diciembre de 2027, los postulantes a la Licencia de Piloto Privado que no deseen\nobtener las atribuciones para operaciones VFR nocturnas, podrán reemplazar las tres (3) horas\ncorrespondientes a dicha atribución por tres (3) horas de instrucción doble comando. En este ca-\nso, la licencia poseerá la leyenda dispuesta en el inciso (b) de la presente sección, pudiendo el ti-\ntular cumplir con lo dispuesto en el inciso (a) de la presente sección.",
-            "document_index": 4,
+            "document_index": 6,
             "document_title": "RAAC Parte 61 - Sección 61.535 Operaciones VFR nocturnas - Régimen transitorio",
             "end_block_index": 1,
             "file_id": null,
@@ -65,14 +74,14 @@
       },
       {
         "citations": null,
-        "text": ", salvo que ",
+        "text": ", salvo que se cumplan estas condiciones:\n\n- ",
         "type": "text"
       },
       {
         "citations": [
           {
             "cited_text": "61.535\nOperaciones VFR nocturnas - Régimen transitorio\n(a)\nEl titular de una licencia de Piloto Privado de Avión que no haya recibido instrucción en vuelo\nVFR nocturno, o carezca de habilitación de vuelo nocturno (o vuelo nocturno local), no podrá\nejercer las atribuciones como piloto al mando en operaciones en operaciones VFR nocturno sal-\nvo que:\n(1)\nacredite la experiencia prevista en la Sección 61.520 (a)(1)(v) o 61.520 (b)(1) (v) según co-\nrresponda; y\n(2)\nun instructor de vuelo habilitado deje constancia en el libro de vuelo del cumplimiento de lo\nanterior y de la aptitud para operar VFR nocturno.\n(b)\nHasta tanto no se cumpla lo dispuesto en (a), se consignará en la licencia la limitación: “Carece\nde atribuciones para operaciones VFR nocturnas”.\n(c)\nHasta el 31 de diciembre de 2027, los postulantes a la Licencia de Piloto Privado que no deseen\nobtener las atribuciones para operaciones VFR nocturnas, podrán reemplazar las tres (3) horas\ncorrespondientes a dicha atribución por tres (3) horas de instrucción doble comando. En este ca-\nso, la licencia poseerá la leyenda dispuesta en el inciso (b) de la presente sección, pudiendo el ti-\ntular cumplir con lo dispuesto en el inciso (a) de la presente sección.",
-            "document_index": 4,
+            "document_index": 6,
             "document_title": "RAAC Parte 61 - Sección 61.535 Operaciones VFR nocturnas - Régimen transitorio",
             "end_block_index": 1,
             "file_id": null,
@@ -80,19 +89,19 @@
             "type": "content_block_location"
           }
         ],
-        "text": "acredite la experiencia prevista en la Sección 61.520 (a)(1)(v) o 61.520 (b)(1) (v) según corresponda",
+        "text": "que se acredite la experiencia prevista en la Sección 61.520 (a)(1)(v) o 61.520 (b)(1)(v), según corresponda",
         "type": "text"
       },
       {
         "citations": null,
-        "text": " y que ",
+        "text": "\n- ",
         "type": "text"
       },
       {
         "citations": [
           {
             "cited_text": "61.535\nOperaciones VFR nocturnas - Régimen transitorio\n(a)\nEl titular de una licencia de Piloto Privado de Avión que no haya recibido instrucción en vuelo\nVFR nocturno, o carezca de habilitación de vuelo nocturno (o vuelo nocturno local), no podrá\nejercer las atribuciones como piloto al mando en operaciones en operaciones VFR nocturno sal-\nvo que:\n(1)\nacredite la experiencia prevista en la Sección 61.520 (a)(1)(v) o 61.520 (b)(1) (v) según co-\nrresponda; y\n(2)\nun instructor de vuelo habilitado deje constancia en el libro de vuelo del cumplimiento de lo\nanterior y de la aptitud para operar VFR nocturno.\n(b)\nHasta tanto no se cumpla lo dispuesto en (a), se consignará en la licencia la limitación: “Carece\nde atribuciones para operaciones VFR nocturnas”.\n(c)\nHasta el 31 de diciembre de 2027, los postulantes a la Licencia de Piloto Privado que no deseen\nobtener las atribuciones para operaciones VFR nocturnas, podrán reemplazar las tres (3) horas\ncorrespondientes a dicha atribución por tres (3) horas de instrucción doble comando. En este ca-\nso, la licencia poseerá la leyenda dispuesta en el inciso (b) de la presente sección, pudiendo el ti-\ntular cumplir con lo dispuesto en el inciso (a) de la presente sección.",
-            "document_index": 4,
+            "document_index": 6,
             "document_title": "RAAC Parte 61 - Sección 61.535 Operaciones VFR nocturnas - Régimen transitorio",
             "end_block_index": 1,
             "file_id": null,
@@ -100,19 +109,19 @@
             "type": "content_block_location"
           }
         ],
-        "text": "un instructor de vuelo habilitado deje constancia en el libro de vuelo del cumplimiento de lo anterior y de la aptitud para operar VFR nocturno.",
+        "text": "que un instructor de vuelo habilitado deje constancia en el libro de vuelo de que se cumplió lo anterior y de la aptitud para operar VFR nocturno",
         "type": "text"
       },
       {
         "citations": null,
-        "text": "\n\nEsa experiencia consiste en ",
+        "text": "\n\nLa experiencia que se pide es la misma para avión y para helicóptero: ",
         "type": "text"
       },
       {
         "citations": [
           {
             "cited_text": "61.520\nExperiencia de vuelo\nEl solicitante de una licencia de piloto privado debe tener como mínimo la siguiente experiencia aero-\nnáutica en la categoría de aeronave solicitada:\n(a)\nPara piloto de avión:\n(1)\nUn total de cuarenta (40) horas de instrucción y de vuelo solo si realizó el curso en un\nCIAC, o treinta y cinco (35) horas de instrucción y de vuelo si completó íntegramente un\ncurso de instrucción reconocido en un CIAC Tipo III, que deben incluir por lo menos:\n(i)\nVeinte (20) horas de instrucción en doble mando;\n(ii)\ndiez (10) horas de vuelo solo diurno en el avión apropiado para la habilitación de\nclase que se desea obtener, incluyendo cinco (5) horas de vuelo de travesía;\n(iii)\nun (1) vuelo de travesía de un mínimo de ciento cincuenta (150) millas náuticas\n[doscientos setenta (270) km] durante el cual se habrán realizado dos (2) aterrizajes\ncompletos en dos (2) aeródromos diferentes;\n(iv)\nla instrucción de vuelo recibida en un dispositivo de instrucción para simulación de\nvuelo, aprobado por la ANAC, es aceptable hasta un máximo de cinco (5) horas.\n(v)\nTres (3) horas de instrucción en vuelo nocturno, que incluya:\n(A)\nReservado\n(B)\ndiez (10) despegues y diez (10) aterrizajes, cada aterrizaje involucrará un vue-\nlo de patrón de tráfico en un aeródromo.\n(2)\nCuando el solicitante registre experiencia de vuelo en otras categorías de aeronaves, la\nANAC aplicará la siguiente escala de créditos para completar exclusivamente el total gene-\nral de horas de vuelo requeridas:\n(i)\nCinco (5) horas si el piloto tiene al menos cien (100) horas de vuelo o más en heli-\ncóptero;\n(ii)\nDiez (10) horas si el piloto tiene al menos quinientas (500) horas de vuelo o más en\nhelicóptero;\n(iii)\nDiez (10) horas si el piloto tiene al menos cien (100) horas de vuelo o más en pla-\nneador;\n(iv)\nLa disminución máxima por acumulación de créditos aplicables en ningún caso pue-\nde exceder de diez (10) horas.\n(v)\nCon excepción de lo indicado en el párrafo (iv), se reconocerán hasta veinticinco\n(25) horas de vuelo si es poseedor de una licencia de piloto de aeronave deportiva\nliviana.",
-            "document_index": 1,
+            "document_index": 3,
             "document_title": "RAAC Parte 61 - Sección 61.520 Experiencia de vuelo",
             "end_block_index": 1,
             "file_id": null,
@@ -120,27 +129,67 @@
             "type": "content_block_location"
           }
         ],
-        "text": "tres (3) horas de instrucción en vuelo nocturno",
+        "text": "tres horas de instrucción en vuelo nocturno, con diez despegues y diez aterrizajes, y cada aterrizaje tiene que incluir un vuelo de patrón de tráfico en un aeródromo",
         "type": "text"
       },
       {
         "citations": null,
-        "text": " que incluyan ",
+        "text": ". ",
         "type": "text"
       },
       {
         "citations": [
           {
-            "cited_text": "61.520\nExperiencia de vuelo\nEl solicitante de una licencia de piloto privado debe tener como mínimo la siguiente experiencia aero-\nnáutica en la categoría de aeronave solicitada:\n(a)\nPara piloto de avión:\n(1)\nUn total de cuarenta (40) horas de instrucción y de vuelo solo si realizó el curso en un\nCIAC, o treinta y cinco (35) horas de instrucción y de vuelo si completó íntegramente un\ncurso de instrucción reconocido en un CIAC Tipo III, que deben incluir por lo menos:\n(i)\nVeinte (20) horas de instrucción en doble mando;\n(ii)\ndiez (10) horas de vuelo solo diurno en el avión apropiado para la habilitación de\nclase que se desea obtener, incluyendo cinco (5) horas de vuelo de travesía;\n(iii)\nun (1) vuelo de travesía de un mínimo de ciento cincuenta (150) millas náuticas\n[doscientos setenta (270) km] durante el cual se habrán realizado dos (2) aterrizajes\ncompletos en dos (2) aeródromos diferentes;\n(iv)\nla instrucción de vuelo recibida en un dispositivo de instrucción para simulación de\nvuelo, aprobado por la ANAC, es aceptable hasta un máximo de cinco (5) horas.\n(v)\nTres (3) horas de instrucción en vuelo nocturno, que incluya:\n(A)\nReservado\n(B)\ndiez (10) despegues y diez (10) aterrizajes, cada aterrizaje involucrará un vue-\nlo de patrón de tráfico en un aeródromo.\n(2)\nCuando el solicitante registre experiencia de vuelo en otras categorías de aeronaves, la\nANAC aplicará la siguiente escala de créditos para completar exclusivamente el total gene-\nral de horas de vuelo requeridas:\n(i)\nCinco (5) horas si el piloto tiene al menos cien (100) horas de vuelo o más en heli-\ncóptero;\n(ii)\nDiez (10) horas si el piloto tiene al menos quinientas (500) horas de vuelo o más en\nhelicóptero;\n(iii)\nDiez (10) horas si el piloto tiene al menos cien (100) horas de vuelo o más en pla-\nneador;\n(iv)\nLa disminución máxima por acumulación de créditos aplicables en ningún caso pue-\nde exceder de diez (10) horas.\n(v)\nCon excepción de lo indicado en el párrafo (iv), se reconocerán hasta veinticinco\n(25) horas de vuelo si es poseedor de una licencia de piloto de aeronave deportiva\nliviana.",
-            "document_index": 1,
+            "cited_text": "Nota: Para que se reconozca los créditos indicados en el sub-párrafo (v) el CIAC deberá presentar\nun informe de riesgo que evalúe la equivalencia de las aeronaves LSA con los aviones convenciona-\nles en términos de seguridad operacional.\n(b)\nPara piloto de helicóptero:\n(1)\nUn total de cuarenta (40) horas de instrucción y de vuelo solo si realizo el curso en un\nCIAC, o treinta y cinco (35) horas de instrucción y de vuelo solo si completó íntegramente\nun curso de instrucción reconocida un CIAC Tipo III, que deben incluir por lo menos:\n(i)\nVeinte (20) horas de instrucción en doble mando;\n(ii)\ndiez (10) horas de vuelo solo diurno en helicóptero, que incluyan cinco (5) horas de\nvuelo de travesía;\n(iii)\nun (1) vuelo de travesía de un mínimo de cien (100) millas náuticas [ciento ochenta\n(180) km] durante el cual se habrán realizado dos (2) aterrizajes completos en dos\n(2) aeródromos diferentes;\n(iv)\nla instrucción de vuelo recibida en un dispositivo de instrucción para simulación de\nvuelo, aprobado por la ANAC, es aceptable hasta un máximo de cinco (5) horas.\n(v)\nTres horas de instrucción en vuelo nocturno, que incluya:\n(A)\nReservado.\n(B)\ndiez (10) despegues y diez (10) aterrizajes, cada aterrizaje involucrará un vue-\nlo de patrón de tráfico en un aeródromo.\n(2)\nCuando el solicitante registre experiencia de vuelo como piloto en aeronaves de otras ca-\ntegorías, la ANAC aplicará la siguiente escala de créditos para completar exclusivamente\nel total general de horas de vuelo requeridas:\n(i)\nCinco (5) horas si el piloto tiene al menos cien (100) horas de vuelo o más en avión;\n(ii)\nDiez (10) horas si el piloto tiene al menos quinientas (500) horas de vuelo o más en\navión; y\n(iii)\nLa disminución máxima por acumulación de créditos aplicables en ningún caso pue-\nde exceder de diez (10) horas.\n(c)\nAeronave de despegue vertical:\n(1)\nUn total de cuarenta (40) de tiempo de vuelo de instrucción y de vuelo solo, que deben in-\ncluir por lo menos:\n(i)\nVeinte (20) horas de instrucción con doble mando;\n(ii)\ndiez (10) horas de vuelo solo en una aeronave de despegue vertical, incluyendo cin-\nco (5) horas de vuelo de travesía;\n(iii)\nun vuelo de travesía de un mínimo de ciento cincuenta (150) millas náuticas [dos-\ncientos setenta (270) km] durante el cual habrá efectuado aterrizajes en dos aeró-\ndromos diferentes.",
+            "document_index": 3,
             "document_title": "RAAC Parte 61 - Sección 61.520 Experiencia de vuelo",
+            "end_block_index": 2,
+            "file_id": null,
+            "start_block_index": 1,
+            "type": "content_block_location"
+          }
+        ],
+        "text": "Lo mismo rige para piloto de helicóptero.",
+        "type": "text"
+      },
+      {
+        "citations": null,
+        "text": "\n\nMientras no se cumplan esas condiciones, ",
+        "type": "text"
+      },
+      {
+        "citations": [
+          {
+            "cited_text": "61.535\nOperaciones VFR nocturnas - Régimen transitorio\n(a)\nEl titular de una licencia de Piloto Privado de Avión que no haya recibido instrucción en vuelo\nVFR nocturno, o carezca de habilitación de vuelo nocturno (o vuelo nocturno local), no podrá\nejercer las atribuciones como piloto al mando en operaciones en operaciones VFR nocturno sal-\nvo que:\n(1)\nacredite la experiencia prevista en la Sección 61.520 (a)(1)(v) o 61.520 (b)(1) (v) según co-\nrresponda; y\n(2)\nun instructor de vuelo habilitado deje constancia en el libro de vuelo del cumplimiento de lo\nanterior y de la aptitud para operar VFR nocturno.\n(b)\nHasta tanto no se cumpla lo dispuesto en (a), se consignará en la licencia la limitación: “Carece\nde atribuciones para operaciones VFR nocturnas”.\n(c)\nHasta el 31 de diciembre de 2027, los postulantes a la Licencia de Piloto Privado que no deseen\nobtener las atribuciones para operaciones VFR nocturnas, podrán reemplazar las tres (3) horas\ncorrespondientes a dicha atribución por tres (3) horas de instrucción doble comando. En este ca-\nso, la licencia poseerá la leyenda dispuesta en el inciso (b) de la presente sección, pudiendo el ti-\ntular cumplir con lo dispuesto en el inciso (a) de la presente sección.",
+            "document_index": 6,
+            "document_title": "RAAC Parte 61 - Sección 61.535 Operaciones VFR nocturnas - Régimen transitorio",
             "end_block_index": 1,
             "file_id": null,
             "start_block_index": 0,
             "type": "content_block_location"
           }
         ],
-        "text": "diez (10) despegues y diez (10) aterrizajes, cada aterrizaje involucrará un vuelo de patrón de tráfico en un aeródromo.",
+        "text": "en la licencia figura la limitación \"Carece de atribuciones para operaciones VFR nocturnas\"",
+        "type": "text"
+      },
+      {
+        "citations": null,
+        "text": ".\n\nTambién hay un régimen transitorio para quienes todavía están sacando la licencia. ",
+        "type": "text"
+      },
+      {
+        "citations": [
+          {
+            "cited_text": "61.535\nOperaciones VFR nocturnas - Régimen transitorio\n(a)\nEl titular de una licencia de Piloto Privado de Avión que no haya recibido instrucción en vuelo\nVFR nocturno, o carezca de habilitación de vuelo nocturno (o vuelo nocturno local), no podrá\nejercer las atribuciones como piloto al mando en operaciones en operaciones VFR nocturno sal-\nvo que:\n(1)\nacredite la experiencia prevista en la Sección 61.520 (a)(1)(v) o 61.520 (b)(1) (v) según co-\nrresponda; y\n(2)\nun instructor de vuelo habilitado deje constancia en el libro de vuelo del cumplimiento de lo\nanterior y de la aptitud para operar VFR nocturno.\n(b)\nHasta tanto no se cumpla lo dispuesto en (a), se consignará en la licencia la limitación: “Carece\nde atribuciones para operaciones VFR nocturnas”.\n(c)\nHasta el 31 de diciembre de 2027, los postulantes a la Licencia de Piloto Privado que no deseen\nobtener las atribuciones para operaciones VFR nocturnas, podrán reemplazar las tres (3) horas\ncorrespondientes a dicha atribución por tres (3) horas de instrucción doble comando. En este ca-\nso, la licencia poseerá la leyenda dispuesta en el inciso (b) de la presente sección, pudiendo el ti-\ntular cumplir con lo dispuesto en el inciso (a) de la presente sección.",
+            "document_index": 6,
+            "document_title": "RAAC Parte 61 - Sección 61.535 Operaciones VFR nocturnas - Régimen transitorio",
+            "end_block_index": 1,
+            "file_id": null,
+            "start_block_index": 0,
+            "type": "content_block_location"
+          }
+        ],
+        "text": "Hasta el 31 de diciembre de 2027, los postulantes a la Licencia de Piloto Privado que no quieran las atribuciones para operaciones VFR nocturnas pueden reemplazar esas tres horas por tres horas de instrucción en doble comando.",
         "type": "text"
       },
       {
@@ -152,7 +201,7 @@
         "citations": [
           {
             "cited_text": "61.535\nOperaciones VFR nocturnas - Régimen transitorio\n(a)\nEl titular de una licencia de Piloto Privado de Avión que no haya recibido instrucción en vuelo\nVFR nocturno, o carezca de habilitación de vuelo nocturno (o vuelo nocturno local), no podrá\nejercer las atribuciones como piloto al mando en operaciones en operaciones VFR nocturno sal-\nvo que:\n(1)\nacredite la experiencia prevista en la Sección 61.520 (a)(1)(v) o 61.520 (b)(1) (v) según co-\nrresponda; y\n(2)\nun instructor de vuelo habilitado deje constancia en el libro de vuelo del cumplimiento de lo\nanterior y de la aptitud para operar VFR nocturno.\n(b)\nHasta tanto no se cumpla lo dispuesto en (a), se consignará en la licencia la limitación: “Carece\nde atribuciones para operaciones VFR nocturnas”.\n(c)\nHasta el 31 de diciembre de 2027, los postulantes a la Licencia de Piloto Privado que no deseen\nobtener las atribuciones para operaciones VFR nocturnas, podrán reemplazar las tres (3) horas\ncorrespondientes a dicha atribución por tres (3) horas de instrucción doble comando. En este ca-\nso, la licencia poseerá la leyenda dispuesta en el inciso (b) de la presente sección, pudiendo el ti-\ntular cumplir con lo dispuesto en el inciso (a) de la presente sección.",
-            "document_index": 4,
+            "document_index": 6,
             "document_title": "RAAC Parte 61 - Sección 61.535 Operaciones VFR nocturnas - Régimen transitorio",
             "end_block_index": 1,
             "file_id": null,
@@ -160,59 +209,19 @@
             "type": "content_block_location"
           }
         ],
-        "text": "Hasta tanto no se cumpla lo dispuesto en (a), se consignará en la licencia la limitación: \"Carece de atribuciones para operaciones VFR nocturnas\".",
+        "text": "En ese caso, la licencia lleva la limitación mencionada, y el titular puede cumplir después con las condiciones de arriba.",
         "type": "text"
       },
       {
         "citations": null,
-        "text": "\n\nHay un régimen transitorio: ",
-        "type": "text"
-      },
-      {
-        "citations": [
-          {
-            "cited_text": "61.535\nOperaciones VFR nocturnas - Régimen transitorio\n(a)\nEl titular de una licencia de Piloto Privado de Avión que no haya recibido instrucción en vuelo\nVFR nocturno, o carezca de habilitación de vuelo nocturno (o vuelo nocturno local), no podrá\nejercer las atribuciones como piloto al mando en operaciones en operaciones VFR nocturno sal-\nvo que:\n(1)\nacredite la experiencia prevista en la Sección 61.520 (a)(1)(v) o 61.520 (b)(1) (v) según co-\nrresponda; y\n(2)\nun instructor de vuelo habilitado deje constancia en el libro de vuelo del cumplimiento de lo\nanterior y de la aptitud para operar VFR nocturno.\n(b)\nHasta tanto no se cumpla lo dispuesto en (a), se consignará en la licencia la limitación: “Carece\nde atribuciones para operaciones VFR nocturnas”.\n(c)\nHasta el 31 de diciembre de 2027, los postulantes a la Licencia de Piloto Privado que no deseen\nobtener las atribuciones para operaciones VFR nocturnas, podrán reemplazar las tres (3) horas\ncorrespondientes a dicha atribución por tres (3) horas de instrucción doble comando. En este ca-\nso, la licencia poseerá la leyenda dispuesta en el inciso (b) de la presente sección, pudiendo el ti-\ntular cumplir con lo dispuesto en el inciso (a) de la presente sección.",
-            "document_index": 4,
-            "document_title": "RAAC Parte 61 - Sección 61.535 Operaciones VFR nocturnas - Régimen transitorio",
-            "end_block_index": 1,
-            "file_id": null,
-            "start_block_index": 0,
-            "type": "content_block_location"
-          }
-        ],
-        "text": "hasta el 31 de diciembre de 2027, los postulantes a la Licencia de Piloto Privado que no deseen obtener las atribuciones para operaciones VFR nocturnas, podrán reemplazar las tres (3) horas correspondientes a dicha atribución por tres (3) horas de instrucción doble comando.",
-        "type": "text"
-      },
-      {
-        "citations": null,
-        "text": " En ese caso la licencia lleva la misma leyenda de limitación, ",
-        "type": "text"
-      },
-      {
-        "citations": [
-          {
-            "cited_text": "61.535\nOperaciones VFR nocturnas - Régimen transitorio\n(a)\nEl titular de una licencia de Piloto Privado de Avión que no haya recibido instrucción en vuelo\nVFR nocturno, o carezca de habilitación de vuelo nocturno (o vuelo nocturno local), no podrá\nejercer las atribuciones como piloto al mando en operaciones en operaciones VFR nocturno sal-\nvo que:\n(1)\nacredite la experiencia prevista en la Sección 61.520 (a)(1)(v) o 61.520 (b)(1) (v) según co-\nrresponda; y\n(2)\nun instructor de vuelo habilitado deje constancia en el libro de vuelo del cumplimiento de lo\nanterior y de la aptitud para operar VFR nocturno.\n(b)\nHasta tanto no se cumpla lo dispuesto en (a), se consignará en la licencia la limitación: “Carece\nde atribuciones para operaciones VFR nocturnas”.\n(c)\nHasta el 31 de diciembre de 2027, los postulantes a la Licencia de Piloto Privado que no deseen\nobtener las atribuciones para operaciones VFR nocturnas, podrán reemplazar las tres (3) horas\ncorrespondientes a dicha atribución por tres (3) horas de instrucción doble comando. En este ca-\nso, la licencia poseerá la leyenda dispuesta en el inciso (b) de la presente sección, pudiendo el ti-\ntular cumplir con lo dispuesto en el inciso (a) de la presente sección.",
-            "document_index": 4,
-            "document_title": "RAAC Parte 61 - Sección 61.535 Operaciones VFR nocturnas - Régimen transitorio",
-            "end_block_index": 1,
-            "file_id": null,
-            "start_block_index": 0,
-            "type": "content_block_location"
-          }
-        ],
-        "text": "pudiendo el titular cumplir con lo dispuesto en el inciso (a)",
-        "type": "text"
-      },
-      {
-        "citations": null,
-        "text": " más adelante para levantarla.\n\nTené en cuenta que ",
+        "text": "\n\nPor último, tené en cuenta que ",
         "type": "text"
       },
       {
         "citations": [
           {
             "cited_text": "lo, que lo habilite a operar el avión en forma segura. Dicha instrucción de vuelo deberá estar re-\ngistrada en el libro de vuelo personal del piloto.\n(h)\nLa instrucción de vuelo por instrumentos especificada en la Sección 61.515 y en vuelo nocturno\nindicada en la Sección 61.520, no habilitan al titular de una licencia de piloto privado para pilotar\naeronaves en vuelos IFR.\n(i)\nRemolcador de planeador\nEl piloto que desea remolcar planeador deberá cumplir con los siguientes requisitos:\n(1)\nConocimientos teóricos. Demostrar, como mínimo, conocimientos teóricos correspondiente\na los siguientes temas:\n(i)\nLas técnicas y procedimientos esenciales para el remolque seguro de planeadores;\n(ii)\nLos procedimientos de emergencia aplicables al remolque;\n(iii)\nLas señales utilizadas entre el avión remolcador y el planeador; y\n(iv)\nLos ángulos máximos de inclinación durante el remolque, incluyendo las limitaciones\nde velocidad.\n(2)\nPericia: Haber registrado, desde la fecha de obtención de su licencia de piloto de avión, no\nmenos de cien (100) horas de vuelo como piloto al mando en aeronaves de la misma cate-\ngoría y clase que la utilizada como remolcador; y haber realizado al menos tres (3) vuelos\nde remolque o de simulación de remolque de planeador, actuando como piloto al mando.\n(3)\nConstancia: Cumplido lo dispuesto en los incisos 1) y 2), el Instructor de Vuelo dejará\nconstancia de dicho cumplimiento en el libro de vuelo personal del postulante.",
-            "document_index": 3,
+            "document_index": 5,
             "document_title": "RAAC Parte 61 - Sección 61.530 Atribuciones y limitaciones del piloto privado",
             "end_block_index": 2,
             "file_id": null,
@@ -220,7 +229,12 @@
             "type": "content_block_location"
           }
         ],
-        "text": "la instrucción de vuelo por instrumentos especificada en la Sección 61.515 y en vuelo nocturno indicada en la Sección 61.520, no habilitan al titular de una licencia de piloto privado para pilotar aeronaves en vuelos IFR.",
+        "text": "la instrucción en vuelo nocturno de la Sección 61.520 no habilita al titular de una licencia de piloto privado para volar IFR",
+        "type": "text"
+      },
+      {
+        "citations": null,
+        "text": ".",
         "type": "text"
       }
     ],
@@ -241,7 +255,7 @@
       "cache_read_input_tokens": 0,
       "fallback_credit": null,
       "inference_geo": "global",
-      "input_tokens": 12447,
+      "input_tokens": 15327,
       "iterations": [
         {
           "cache_creation": {
@@ -250,15 +264,15 @@
           },
           "cache_creation_input_tokens": 0,
           "cache_read_input_tokens": 0,
-          "input_tokens": 12447,
+          "input_tokens": 15327,
           "model": null,
-          "output_tokens": 1085,
+          "output_tokens": 1925,
           "type": "message"
         }
       ],
-      "output_tokens": 1085,
+      "output_tokens": 1925,
       "output_tokens_details": {
-        "thinking_tokens": 239
+        "thinking_tokens": 1072
       },
       "server_tool_use": null,
       "service_tier": "standard",

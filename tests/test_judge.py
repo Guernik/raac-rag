@@ -54,7 +54,7 @@ def answers(parte61):
         [
             Sentence(
                 "Sí, la licencia de piloto privado incluye siempre las atribuciones VFR nocturnas, sin ningún requisito adicional.",
-                real.sentences[0].citations,
+                next(s for s in real.sentences if s.citations).citations,
             )
         ],
         refused=False,
@@ -77,8 +77,9 @@ def test_request_has_question_reference_and_answer_but_no_citations(answers, cas
     case = cases["61-vfr-nocturno-ppl"]
     content = build_request(MODEL, case.question, case.reference_answer, answers["correcta"])["messages"][0]["content"]
     assert case.question in content and case.reference_answer in content
-    assert answers["correcta"].sentences[0].text in content
-    assert answers["correcta"].sentences[0].citations[0].cited_text not in content
+    cited = next(s for s in answers["correcta"].sentences if s.citations)
+    assert cited.text in content
+    assert cited.citations[0].cited_text not in content
 
 
 @pytest.mark.parametrize(("name", "score", "verdict"), [("correcta", 1.0, "correcta"), ("incorrecta", 0.0, "incorrecta"), ("rechazo", 1.0, "correcta")])

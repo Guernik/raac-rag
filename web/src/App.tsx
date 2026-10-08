@@ -93,6 +93,27 @@ export function App() {
   );
 }
 
+type Block = { type: "paragraph"; sentences: Sentence[] } | { type: "list"; items: Sentence[][] };
+
+/** Group sentences into paragraphs and lists by where each one starts. */
+function layout(sentences: Sentence[]): Block[] {
+  const blocks: Block[] = [];
+  for (const s of sentences) {
+    const last = blocks.at(-1);
+    if (s.starts === "item") {
+      if (last?.type === "list") last.items.push([s]);
+      else blocks.push({ type: "list", items: [[s]] });
+    } else if (s.starts === "paragraph" || !last) {
+      blocks.push({ type: "paragraph", sentences: [s] });
+    } else if (last.type === "list") {
+      last.items[last.items.length - 1].push(s);
+    } else {
+      last.sentences.push(s);
+    }
+  }
+  return blocks;
+}
+
 function citationKey(c: Citation) {
   return `${c.parte}|${c.seccion}|${c.pdf_page_start}|${c.pdf_page_end}|${c.cited_text}`;
 }
@@ -114,27 +135,39 @@ function ExchangeView({ exchange }: { exchange: Exchange }) {
       {answer?.incomplete && <p className="caveat">{strings.incomplete}</p>}
       {answer?.refused && <p className="caveat">{strings.refusal}</p>}
       {exchange.sentences.length > 0 && (
-        <p className="answer">
-          {exchange.sentences.map((s, i) => (
-            <span key={i}>
-              {s.text}
-              {s.citations.map((c) => {
-                const key = citationKey(c);
-                return (
-                  <button
-                    key={key}
-                    type="button"
-                    className={`chip${open === key ? " chip-open" : ""}`}
-                    aria-expanded={open === key}
-                    onClick={() => setOpen(open === key ? null : key)}
-                  >
-                    {c.seccion}
-                  </button>
-                );
-              })}{" "}
-            </span>
-          ))}
-        </p>
+        <div className="answer">
+          {layout(exchange.sentences).map((block, i) => {
+            const run = (sentences: Sentence[]) =>
+              sentences.map((s, j) => (
+                <span key={j}>
+                  {s.text}
+                  {s.citations.map((c) => {
+                    const key = citationKey(c);
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        className={`chip${open === key ? " chip-open" : ""}`}
+                        aria-expanded={open === key}
+                        onClick={() => setOpen(open === key ? null : key)}
+                      >
+                        {c.seccion}
+                      </button>
+                    );
+                  })}{" "}
+                </span>
+              ));
+            return block.type === "paragraph" ? (
+              <p key={i}>{run(block.sentences)}</p>
+            ) : (
+              <ul key={i}>
+                {block.items.map((item, j) => (
+                  <li key={j}>{run(item)}</li>
+                ))}
+              </ul>
+            );
+          })}
+        </div>
       )}
       {opened && <CitationView citation={opened} onClose={() => setOpen(null)} />}
       {answer?.likely_partes.map((lp) => (

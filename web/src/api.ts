@@ -18,7 +18,8 @@ export interface Citation {
 
 export interface Sentence {
   text: string;
-  citations: Citation[];
+  citations: Citation[]; // empty for Framing
+  starts: "paragraph" | "item" | null; // a new paragraph or list item begins here; null continues the current one
 }
 
 export interface LikelyParte {

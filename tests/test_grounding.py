@@ -1,4 +1,4 @@
-"""Grounded or silent: uncited sentences never reach the output, out-of-scope questions are refused,
+"""Grounded or silent: unsupported claims never reach the output, the coverage line decides refusals,
 and a refusal names the likely Parte when a retrieved Sección has a Remisión to it.
 
 Responses are built in the Citations API's shape (no live LLM call); see test_answerer.py for the
@@ -55,9 +55,9 @@ def _body(out: str) -> str:
 def test_partial_answer_is_marked_incomplete_and_names_the_likely_parte(medical, parte61):
     answer = map_response(
         _response(
-            ("Para renovarla tenés que ", []),
+            ("COBERTURA: parcial - cuánto dura el certificado médico; lo regula la Parte 67.\n\nPara renovarla tenés que ", []),
             ("tener la certificación médica aeronáutica vigente", [_cite(1)]),
-            (".\n\nSIN RESPALDO: cuánto dura el certificado médico; lo regula la Parte 67.", []),
+            (".", []),
         ),
         medical,
         {"61": URL},
@@ -65,8 +65,8 @@ def test_partial_answer_is_marked_incomplete_and_names_the_likely_parte(medical,
     assert not answer.refused
     assert answer.incomplete
     assert [s.text for s in answer.sentences] == ["Para renovarla tenés que tener la certificación médica aeronáutica vigente."]
-    assert answer.gap == "SIN RESPALDO: cuánto dura el certificado médico; lo regula la Parte 67."
-    assert answer.dropped_uncited == []
+    assert (answer.coverage, answer.gap) == ("parcial", "cuánto dura el certificado médico; lo regula la Parte 67.")
+    assert answer.dropped == []
     [likely] = answer.likely_partes
     assert likely.parte == "67"
     # Cited Secciones come first; the Remisión text is verbatim from the parsed page.
@@ -79,19 +79,16 @@ def test_partial_answer_is_marked_incomplete_and_names_the_likely_parte(medical,
     body = _body(out)
     assert body.startswith(strings.INCOMPLETE)
     assert "Lo que falta probablemente lo regula la Parte 67: la Sección 61.060 remite a ella. [1]" in body
-    assert "SIN RESPALDO" not in out
+    assert "COBERTURA" not in out
     assert "cuánto dura" not in out
 
 
 def test_out_of_scope_refusal_names_the_parte_a_retrieved_seccion_refers_to(medical, parte61):
     answer = map_response(
-        _response(("Los documentos no dicen cuánto dura.\nSIN RESPALDO: la validez está en la RAAC Parte 67.", [])),
-        medical,
-        {"61": URL},
+        _response(("COBERTURA: ninguna - la validez está en la RAAC Parte 67.", [])), medical, {"61": URL}
     )
     assert answer.refused and not answer.incomplete
     assert answer.sentences == []
-    assert answer.dropped_uncited == ["Los documentos no dicen cuánto dura."]
     [likely] = answer.likely_partes
     # Nothing was cited, so retrieval order decides: 61.065 is the first retrieved Sección.
     assert (likely.parte, likely.citation.seccion, likely.citation.pdf_page_start) == ("67", "61.065", 26)
@@ -104,22 +101,48 @@ def test_out_of_scope_refusal_names_the_parte_a_retrieved_seccion_refers_to(medi
     assert "[1] Parte 61, Sección 61.065 (Validez del certificado médico aeronáutico), página PDF 26" in out
 
 
+def test_a_seccion_the_gap_names_is_preferred_for_the_likely_parte(medical):
+    answer = map_response(
+        _response(("COBERTURA: ninguna - la Sección 61.060 remite a la Parte 67.", [])), medical, {"61": URL}
+    )
+    [likely] = answer.likely_partes
+    assert (likely.parte, likely.citation.seccion) == ("67", "61.060")
+
+
+def test_cited_sentences_are_withheld_when_coverage_is_ninguna(medical):
+    answer = map_response(
+        _response(
+            ("COBERTURA: ninguna - la Parte 67.\n\n", []),
+            ("tener la certificación médica aeronáutica vigente", [_cite(1)]),
+            (".", []),
+        ),
+        medical,
+        {"61": URL},
+    )
+    assert answer.refused and answer.sentences == []
+    assert [lp.parte for lp in answer.likely_partes] == ["67"]
+
+
 def test_parte_named_by_the_model_without_a_remision_in_the_text_is_not_shown(medical):
     answer = map_response(
-        _response(("SIN RESPALDO: los mínimos meteorológicos están en la Parte 91.", [])), medical, {"61": URL}
+        _response(("COBERTURA: ninguna - los mínimos meteorológicos están en la Parte 91.", [])), medical, {"61": URL}
     )
     assert answer.refused
     assert answer.likely_partes == []
     assert _body(render(answer)) == strings.REFUSAL
 
 
-def test_out_of_scope_without_gap_line_is_a_plain_refusal(medical):
+def test_out_of_scope_answer_without_a_coverage_line_is_a_plain_refusal(medical):
     answer = map_response(
-        _response(("La altitud de densidad aumenta con la temperatura, así que la carrera de despegue se alarga.", [])),
+        _response(
+            ("La altitud de densidad aumenta con la temperatura, así que ", []),
+            ("la carrera de despegue se alarga", [_cite(1)]),
+            (".", []),
+        ),
         medical,
         {"61": URL},
     )
-    assert answer.refused
+    assert answer.refused and answer.coverage is None
     assert answer.likely_partes == []
     out = render(answer)
     assert out == strings.NOTICE + "\n\n" + strings.REFUSAL
@@ -132,35 +155,33 @@ def test_api_refusal_and_empty_retrieval_are_refusals(medical):
     assert empty.refused and empty.sentences == [] and empty.likely_partes == []
 
 
-def test_gap_marker_inside_a_cited_span_is_not_a_gap(medical):
-    answer = map_response(
-        _response(("Dice ", []), ("SIN RESPALDO: texto citado", [_cite(0)]), (".", [])), medical, {"61": URL}
-    )
-    assert not answer.incomplete and answer.gap is None
-    assert [s.text for s in answer.sentences] == ["Dice SIN RESPALDO: texto citado."]
-
-
-def test_no_uncited_sentence_reaches_the_output(medical):
+def test_no_unsupported_claim_reaches_the_output(medical):
     answer = map_response(
         _response(
-            ("Inventado al principio. ", []),
-            ("tener la certificación médica aeronáutica vigente", [_cite(1)]),
-            (". Inventado al final.\nSIN RESPALDO: Parte 67.", []),
+            ("COBERTURA: total\n\nSí. Inventado en 2019. ", []),
+            ("tener la certificación médica aeronáutica vigente", [_cite(1, text="certificación médica vigente")]),
+            (". Vale por 24 meses. Lo dice la Sección 61.140. ", []),
+            ("tenerla vigente", [_cite(1, text="certificación médica vigente")]),
+            (" durante 12 meses.", []),
         ),
         medical,
         {"61": URL},
     )
-    body = _body(render(answer))
-    fixed = (strings.REFUSAL, strings.INCOMPLETE)
-    for sentence in re.split(r"(?<=\]) ", body.removeprefix(strings.INCOMPLETE).strip()):
-        assert re.search(r"(\[\d+\])+$", sentence), sentence
-    assert "Inventado" not in body
-    assert body.startswith(fixed)
+    assert answer.dropped == [
+        "Inventado en 2019.",
+        "Vale por 24 meses.",
+        "Lo dice la Sección 61.140.",
+        "tenerla vigente durante 12 meses.",  # cited, but the number is not in the cited text
+    ]
+    out = render(answer)
+    assert _body(out) == "Sí. Tener la certificación médica aeronáutica vigente. [1]"
+    for claim in answer.dropped:
+        assert claim not in out
 
 
-def test_render_rejects_an_uncited_sentence():
-    with pytest.raises(ValueError, match="Uncited"):
-        render(Answer(sentences=[Sentence(text="Sin cita.", citations=[])], refused=False))
+def test_render_shows_framing_without_citation_marks():
+    out = render(Answer(sentences=[Sentence("Depende.", []), Sentence("Condiciones:", [], "paragraph")], refused=False))
+    assert _body(out) == "Depende.\nCondiciones:"
 
 
 @pytest.mark.parametrize(
@@ -205,25 +226,22 @@ def test_refusal_eval_cases_are_out_of_scope_in_the_eval_case_format():
         assert case["question"].strip() and case["reference_answer"].strip()
 
 
-def test_live_recording_partial_answer_names_parte_67(parte61):
+def test_live_recording_refusal_names_parte_67(parte61):
     """Replays `raac ask "¿Cuánto dura el certificado médico clase 2 de un piloto privado?" --record ...`
-    against Parte 61 (recorded 2026-10-02 with the fixture PDF, byte-identical to the live one)."""
+    against Parte 61 alone (recorded 2026-10-08 with the fixture PDF, byte-identical to the live one)."""
     record = json.loads((Path(__file__).parent / "fixtures" / "citations-response-medico-67.json").read_text())
     retrieval = Retrieval(
         routed_partes=["61"],
         secciones=[RetrievedSeccion(parte61, parte61.seccion(s["seccion"])) for s in record["secciones"]],
     )
     answer = map_response(record["response"], retrieval, {"61": URL})
-    assert not answer.refused and answer.incomplete
-    assert answer.gap.startswith("SIN RESPALDO:") and "Parte 67" in answer.gap
-    assert all(s.citations for s in answer.sentences)
-    assert {c.seccion for s in answer.sentences for c in s.citations} == {"61.065", "61.505", "61.060"}
+    assert answer.refused and answer.coverage == "ninguna" and answer.sentences == []
+    assert "Parte 67" in answer.gap
     [likely] = answer.likely_partes
-    assert likely.parte == "67" and likely.citation.seccion in {"61.065", "61.505", "61.060"}
+    # The gap names 61.065, whose Remisión points to Parte 67.
+    assert (likely.parte, likely.citation.seccion) == ("67", "61.065")
     assert "RAAC 67" in likely.citation.cited_text
 
     out = render(answer)
-    assert _body(out).startswith(strings.INCOMPLETE)
-    assert "SIN RESPALDO" not in out
-    for dropped in answer.dropped_uncited:
-        assert dropped not in out
+    assert _body(out).startswith(strings.REFUSAL)
+    assert "COBERTURA" not in out

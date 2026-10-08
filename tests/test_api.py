@@ -28,7 +28,7 @@ class FakePipeline:
             [first, Sentence("Hasta 2027.", [CITATION])],
             refused=False,
             gap="SIN RESPALDO: nada",
-            dropped_uncited=["Sin cita."],
+            dropped=["Sin cita."],
         )
         return PipelineResult(["61"], [SeccionRef("61", "61.535")], answer)
 
