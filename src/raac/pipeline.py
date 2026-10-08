@@ -15,7 +15,7 @@ from typing import Protocol
 import anthropic
 
 from . import corpus, indexer, strings
-from .answerer import Answer
+from .answerer import Answer, Sentence
 from .answerer import answer as write_answer
 from .config import Models, load_models
 from .parser import ParsedParte, parse
@@ -139,11 +139,16 @@ class LocalPipeline:
             for p in self._partes
         ]
 
-    def run(self, standalone_question: str, record_path: Path | None = None) -> PipelineResult:
+    def run(
+        self,
+        standalone_question: str,
+        record_path: Path | None = None,
+        on_sentence: Callable[[Sentence], None] | None = None,
+    ) -> PipelineResult:
         self._meter.take()  # drop anything recorded outside a run, e.g. by `raac route`
         try:
             retrieval = self._retrieve(standalone_question)
-            result = self._answer(standalone_question, retrieval, record_path)
+            result = self._answer(standalone_question, retrieval, record_path, on_sentence)
         except Exception as e:
             e.usage = self._meter.take()  # what the failed exchange already cost
             raise
@@ -193,7 +198,13 @@ class LocalPipeline:
             raise AnswerOnlyError("this pipeline was built for the answer stage only; it has no Retriever")
         return self._retriever.retrieve(standalone_question)
 
-    def _answer(self, standalone_question: str, retrieval: Retrieval, record_path: Path | None = None) -> Answer:
+    def _answer(
+        self,
+        standalone_question: str,
+        retrieval: Retrieval,
+        record_path: Path | None = None,
+        on_sentence: Callable[[Sentence], None] | None = None,
+    ) -> Answer:
         self._progress(strings.PROGRESS_ANSWERING)
         return write_answer(
             self._client,
@@ -203,6 +214,7 @@ class LocalPipeline:
             source_urls=self._source_urls,
             record_path=record_path,
             meter=self._meter,
+            on_sentence=on_sentence,
         )
 
 

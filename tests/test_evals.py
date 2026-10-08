@@ -160,12 +160,12 @@ def fake(cases):
                 ["61:0007"],
                 [DefinicionRef("1", "1.11", "Noche")],
             ),
-            "q-miss": PipelineResult(["61"], [SeccionRef("61", "61.140")], Answer([], refused=True, dropped_uncited=["No hay respaldo."])),
+            "q-miss": PipelineResult(["61"], [SeccionRef("61", "61.140")], Answer([], refused=True, dropped=["No hay respaldo."])),
             "q-fuera-ok": PipelineResult(["61"], [], Answer([], refused=True)),
             "q-fuera-mal": PipelineResult(
                 ["61"],
                 [SeccionRef("61", "61.140")],
-                Answer([Sentence("Algo.", [_citation("61.140")])], refused=False, dropped_uncited=["Sin cita."]),
+                Answer([Sentence("Algo.", [_citation("61.140")])], refused=False, dropped=["Sin cita."]),
             ),
             "q-roto": RuntimeError("boom"),
         }
@@ -198,7 +198,7 @@ def test_aggregate_scores_count_errors_as_failures(report):
     assert agg["retrieval_hit_rate"] == pytest.approx(1 / 3)
     assert agg["retrieval_recall_mean"] == pytest.approx(0.5 / 3)
     assert agg["grounded_rate"] == pytest.approx(1 / 3)  # hit grounded, fuera-mal not, roto errored
-    assert agg["uncited_sentences"] == 2
+    assert agg["dropped_claims"] == 2
     assert agg["refusal_rate_out_of_scope"] == 0.5
     assert agg["false_refusal_rate_in_scope"] == pytest.approx(1 / 3)
 
@@ -233,7 +233,7 @@ def test_retrieval_stage_makes_no_answer_call(fake, cases):
     assert hit["visited_nodes"] == ["61:0007"]
     agg = report["aggregate"]
     assert agg["retrieval_hit_rate"] == pytest.approx(1 / 3)
-    for key in ("grounded_rate", "uncited_sentences", "refusal_rate_out_of_scope", "false_refusal_rate_in_scope"):
+    for key in ("grounded_rate", "dropped_claims", "refusal_rate_out_of_scope", "false_refusal_rate_in_scope"):
         assert agg[key] is None
 
 

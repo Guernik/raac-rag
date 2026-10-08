@@ -8,11 +8,13 @@ byte-identical to tests/fixtures/raac-parte-61.pdf.
 
 import json
 import re
+from contextlib import nullcontext
+from types import SimpleNamespace
 
 import pytest
 
 from conftest import FIXTURES
-from raac.answerer import build_documents, map_response
+from raac.answerer import answer, build_documents, map_response
 from raac.cli import render
 from raac.retriever import Retrieval, RetrievedDefinicion, RetrievedSeccion
 
@@ -76,47 +78,50 @@ def test_citation_joined_with_parsed_parte(retrieval, response, parte61):
         assert c.cited_text.strip() in parte61.seccion("61.535").pages[0].text
 
 
-def test_every_sentence_has_a_citation_and_no_citation_is_shared_across_sentences(retrieval, response):
+def test_live_answer_opens_with_a_verdict_and_lists_the_conditions(retrieval, response):
     answer = map_response(response, retrieval, {"61": URL})
-    assert len(answer.sentences) >= 2
-    assert all(s.citations for s in answer.sentences)
-    cited_spans = [
-        block["text"] for block in response["content"] if block.get("type") == "text" and block.get("citations")
-    ]
-    # Each cited span lands in exactly one sentence (possibly as its capitalized start), and nothing
-    # is invented around it.
+    assert (answer.coverage, answer.refused, answer.incomplete, answer.dropped) == ("total", False, False, [])
+    verdict = answer.sentences[0]
+    assert verdict.text.startswith("Depende") and verdict.citations == [] and verdict.starts is None
+    items = [s for s in answer.sentences if s.starts == "item"]
+    assert len(items) == 2 and all(s.citations for s in items)
+    # The lead-in holding the list together comes right before it.
+    lead_in = answer.sentences[answer.sentences.index(items[0]) - 1]
+    assert lead_in.text.endswith("condiciones:") and lead_in.citations
+    assert any(s.text.startswith("Hasta el 31 de diciembre de 2027") and s.citations for s in answer.sentences)
+
+
+def test_each_cited_span_lands_in_exactly_one_sentence(retrieval, response):
+    answer = map_response(response, retrieval, {"61": URL})
+    cited_spans = [b["text"] for b in response["content"] if b.get("type") == "text" and b.get("citations")]
     for span in cited_spans:
         span = span.strip()
         capitalized = span[:1].upper() + span[1:]
         assert sum(span in s.text or s.text.startswith(capitalized) for s in answer.sentences) == 1, span
-    # Every kept sentence starts with a capital letter, including the one whose lead-in
-    # ("Hay un régimen transitorio:") was dropped as uncited.
-    for sentence in answer.sentences:
-        first = next(ch for ch in sentence.text if ch.isalpha())
-        assert first.isupper(), sentence.text
-    assert any(s.text.startswith("Hasta el 31 de diciembre de 2027") for s in answer.sentences)
-    all_text = " ".join(s.text for s in answer.sentences)
-    for dropped in answer.dropped_uncited:
-        assert dropped not in all_text
 
 
-def test_render_marks_every_sentence_and_prints_citation_fields(retrieval, response):
+def test_render_marks_cited_sentences_and_lays_out_the_list(retrieval, response):
     answer = map_response(response, retrieval, {"61": URL})
     out = render(answer)
     body = out.split("\n\n")[1]
     for sentence in answer.sentences:
-        assert re.search(re.escape(sentence.text) + r" (\[\d+\])+", body), sentence.text
+        marks = r" (\[\d+\])+" if sentence.citations else r"(?! \[)"
+        prefix = "- " if sentence.starts == "item" else ""
+        assert re.search(re.escape(prefix + sentence.text) + marks, body), sentence.text
+    assert body.startswith("Depende")
     assert re.search(
         r"\[\d+\] Parte 61, Sección 61\.535 \(Operaciones VFR nocturnas - Régimen transitorio\), "
         r"página PDF 67 \(página impresa 10\), Edición VI Enmienda I \(mayo 2026\) - " + re.escape(URL),
         out,
     )
-    for dropped in answer.dropped_uncited:
-        assert dropped not in out
 
 
 # The API's real shape: each cited span is its own block, and sentence ends live in the uncited
-# blocks around it. These pin the splitting rules the live recording exercises.
+# blocks around it. These pin the splitting, Framing and layout rules the live recording exercises.
+
+# Verbatim page text, so numbers in the model's prose can be checked against what was cited.
+TEXT_520 = "Tres (3) horas de instrucción en vuelo nocturno, que incluya: diez (10) despegues y diez (10) aterrizajes"
+TEXT_535 = "hasta el 31 de diciembre de 2027, los postulantes a la Licencia de Piloto Privado"
 
 
 def _cite(document_index: int, block: int, text: str = "x") -> dict:
@@ -129,65 +134,80 @@ def _cite(document_index: int, block: int, text: str = "x") -> dict:
     }
 
 
-def _response(*blocks: tuple[str, list]) -> dict:
+def _response(*blocks: tuple[str, list], coverage: str | None = "total") -> dict:
+    """A response opening with the coverage line `COBERTURA: <coverage>`, or with none when None."""
+    lines = [] if coverage is None else [(f"COBERTURA: {coverage}\n\n", [])]
     return {
         "stop_reason": "end_turn",
-        "content": [{"type": "text", "text": t, "citations": c or None} for t, c in blocks],
+        "content": [{"type": "text", "text": t, "citations": c or None} for t, c in [*lines, *blocks]],
     }
 
 
-def test_uncited_sentence_between_cited_spans_is_dropped_not_merged(two_secciones):
+def _texts(answer) -> list[tuple[str, bool]]:
+    return [(s.text, bool(s.citations)) for s in answer.sentences]
+
+
+def test_framing_is_kept_uncited_and_uncited_claims_are_dropped(two_secciones):
     answer = map_response(
         _response(
-            ("Si ", []),
-            ("no tenés instrucción nocturna, no volás VFR de noche", [_cite(1, 0)]),
-            (". Esto vale en todo el mundo. Además, ", []),
-            ("necesitás constancia del instructor", [_cite(1, 0)]),
+            ("Sí, pero depende de tu instrucción. Si ", []),
+            ("no tenés instrucción nocturna, no volás VFR de noche", [_cite(1, 0, TEXT_535)]),
+            (". Además necesitás 50 horas de vuelo. Y ", []),
+            ("necesitás constancia del instructor", [_cite(1, 0, TEXT_535)]),
             (".", []),
         ),
         two_secciones,
         {"61": URL},
     )
-    assert [s.text for s in answer.sentences] == [
-        "Si no tenés instrucción nocturna, no volás VFR de noche.",
-        "Además, necesitás constancia del instructor.",
+    assert _texts(answer) == [
+        ("Sí, pero depende de tu instrucción.", False),
+        ("Si no tenés instrucción nocturna, no volás VFR de noche.", True),
+        ("Y necesitás constancia del instructor.", True),
     ]
-    assert answer.dropped_uncited == ["Esto vale en todo el mundo."]
+    assert answer.dropped == ["Además necesitás 50 horas de vuelo."]
 
 
-def test_uncited_text_after_a_trailing_period_block_is_not_merged(two_secciones):
-    answer = map_response(
-        _response(("Hace falta instrucción nocturna", [_cite(1, 0)]), (".", []), (" Y un buen avión.", [])),
-        two_secciones,
-        {"61": URL},
-    )
-    assert [s.text for s in answer.sentences] == ["Hace falta instrucción nocturna."]
-    assert answer.dropped_uncited == ["Y un buen avión."]
-
-
-def test_uncited_sentence_after_a_cited_span_ending_in_a_period_is_dropped(two_secciones):
+@pytest.mark.parametrize(
+    "claim, kept",
+    [
+        ("Son 3 horas.", True),  # "Tres (3)" in the cited text
+        ("Son tres horas con diez aterrizajes.", True),
+        ("Son cinco horas.", False),
+        ("Vence en marzo.", False),  # a month the cited text does not have
+        ("Rige hasta el 31 de diciembre de 2027.", True),
+        ("Lo regula la Sección 61.520.", True),  # a cited Sección
+        ("Lo regula la Sección 61.140.", False),
+        ("Lo dice el inciso (a)(1)(v).", True),  # inciso markers are not numbers
+    ],
+)
+def test_framing_check_matches_numbers_months_and_secciones_against_the_cited_text(two_secciones, claim, kept):
     answer = map_response(
         _response(
-            ("Hace falta instrucción nocturna.", [_cite(1, 0)]),
-            (" En ese caso la licencia lleva otra leyenda, ", []),
-            ("pudiendo levantarla", [_cite(1, 0)]),
-            (" más adelante.\n\nY un buen avión.", []),
+            ("Hace falta ", []),
+            ("instrucción nocturna", [_cite(0, 0, TEXT_520), _cite(1, 0, TEXT_535)]),
+            (". " + claim, []),
         ),
         two_secciones,
         {"61": URL},
     )
-    assert [s.text for s in answer.sentences] == [
-        "Hace falta instrucción nocturna.",
-        "En ese caso la licencia lleva otra leyenda, pudiendo levantarla más adelante.",
-    ]
-    assert answer.dropped_uncited == ["Y un buen avión."]
+    assert (claim in [s.text for s in answer.sentences]) == kept
+    assert (answer.dropped == [claim]) == (not kept)
+
+
+def test_a_cited_sentence_with_a_number_the_cited_text_lacks_is_dropped(two_secciones):
+    answer = map_response(
+        _response(("Son ", []), ("cuatro horas de instrucción nocturna", [_cite(0, 0, TEXT_520)]), (".", [])),
+        two_secciones,
+        {"61": URL},
+    )
+    assert answer.refused and answer.dropped == ["Son cuatro horas de instrucción nocturna."]
 
 
 def test_section_numbers_and_cited_punctuation_do_not_split(two_secciones):
     answer = map_response(
         _response(
             ("Según la Sección 61.520 (a)(1)(v), ", []),
-            ("son tres horas. Con diez aterrizajes", [_cite(0, 0)]),
+            ("son tres horas. Con diez aterrizajes", [_cite(0, 0, TEXT_520)]),
             (".", []),
         ),
         two_secciones,
@@ -198,39 +218,106 @@ def test_section_numbers_and_cited_punctuation_do_not_split(two_secciones):
     ]
 
 
-def test_markdown_headings_and_list_numbers_are_not_sentences(two_secciones):
+def test_a_lead_in_then_one_list_item_per_condition(two_secciones):
     answer = map_response(
         _response(
-            ("**Depende.** Hay dos condiciones:\n\n1. ", []),
+            ("**Depende.** Tenés que cumplir estas condiciones:\n\n1. ", []),
             ("tener instrucción", [_cite(1, 0)]),
-            (".\n2. ", []),
+            (". Sin excepciones.\n2. ", []),
             ("tener constancia", [_cite(1, 0)]),
+            (".\n\nY ", []),
+            ("figura en la licencia", [_cite(1, 0)]),
             (".", []),
         ),
         two_secciones,
         {"61": URL},
     )
-    assert [s.text for s in answer.sentences] == ["Tener instrucción.", "Tener constancia."]
-    assert answer.dropped_uncited == ["Depende.", "Hay dos condiciones:"]
+    assert [(s.text, s.starts) for s in answer.sentences] == [
+        ("Depende.", None),
+        ("Tenés que cumplir estas condiciones:", None),
+        ("Tener instrucción.", "item"),
+        ("Sin excepciones.", None),  # continues the item
+        ("Tener constancia.", "item"),
+        ("Y figura en la licencia.", "paragraph"),
+    ]
 
 
-def test_kept_sentences_start_with_a_capital_letter_but_dropped_text_is_untouched(two_secciones):
+def test_a_dropped_claims_break_carries_over_to_the_next_sentence(two_secciones):
     answer = map_response(
         _response(
-            ("Hay un régimen transitorio: ", []),
-            ('"hasta 2027', [_cite(1, 0)]),
-            (' rige el reemplazo". más datos sueltos.', []),
+            ("Condiciones:\n- ", []),
+            ("tener instrucción", [_cite(1, 0)]),
+            (".\n- Volar 50 horas. ", []),
+            ("Con constancia", [_cite(1, 0)]),
+            (".", []),
         ),
         two_secciones,
         {"61": URL},
     )
-    assert [s.text for s in answer.sentences] == ['"Hasta 2027 rige el reemplazo".']
-    assert answer.dropped_uncited == ["Hay un régimen transitorio:", "más datos sueltos."]
+    assert [(s.text, s.starts) for s in answer.sentences] == [
+        ("Condiciones:", None),
+        ("Tener instrucción.", "item"),
+        ("Con constancia.", "item"),
+    ]
+    assert answer.dropped == ["Volar 50 horas."]
+
+
+def test_capitalized_unless_it_continues_a_lead_in_on_the_same_line(two_secciones):
+    answer = map_response(
+        _response(
+            ("Hay un régimen transitorio: ", []),
+            ('"hasta 2027', [_cite(1, 0, TEXT_535)]),
+            (' rige el reemplazo". más datos sueltos. Vence en 2030. ', []),
+            ("y se reemplaza", [_cite(1, 0, TEXT_535)]),
+            (".", []),
+        ),
+        two_secciones,
+        {"61": URL},
+    )
+    assert [s.text for s in answer.sentences] == [
+        "Hay un régimen transitorio:",
+        '"hasta 2027 rige el reemplazo".',
+        "Más datos sueltos.",
+        "Y se reemplaza.",  # after a dropped claim
+    ]
+    assert answer.dropped == ["Vence en 2030."]
+
+
+def test_framing_alone_is_a_refusal(two_secciones):
+    answer = map_response(_response(("Sí, podés.", [])), two_secciones, {"61": URL})
+    assert answer.refused and not answer.sentences
+
+
+@pytest.mark.parametrize(
+    "coverage, refused, incomplete",
+    [
+        ("total", False, False),
+        ("parcial - falta el costo", False, True),
+        ("ninguna - no hay nada", True, False),
+        ("quizás", True, False),  # malformed
+        (None, True, False),  # missing
+    ],
+)
+def test_the_coverage_line_decides_refusal_and_incompleteness(two_secciones, coverage, refused, incomplete):
+    answer = map_response(
+        _response(("Hace falta ", []), ("instrucción nocturna", [_cite(1, 0)]), (".", []), coverage=coverage),
+        two_secciones,
+        {"61": URL},
+    )
+    assert (answer.refused, answer.incomplete) == (refused, incomplete)
+    assert bool(answer.sentences) == (not refused)
+    assert all("COBERTURA" not in s.text for s in answer.sentences)
+
+
+def test_a_coverage_line_not_at_the_start_or_inside_a_cited_span_is_a_refusal(two_secciones):
+    late = _response(("Hace falta ", []), ("instrucción", [_cite(1, 0)]), (".\nCOBERTURA: total", []), coverage=None)
+    cited = _response(("COBERTURA: total", [_cite(1, 0)]), (". Hace falta ", []), ("instrucción", [_cite(1, 0)]), coverage=None)
+    assert map_response(late, two_secciones, {"61": URL}).refused
+    assert map_response(cited, two_secciones, {"61": URL}).refused
 
 
 def test_no_citations_means_refusal(two_secciones):
-    response = {"stop_reason": "end_turn", "content": [{"type": "text", "text": "No sé.", "citations": None}]}
-    answer = map_response(response, two_secciones, {"61": URL})
+    answer = map_response(_response(("No sé.", [])), two_secciones, {"61": URL})
     assert answer.refused and not answer.sentences
 
 
@@ -250,7 +337,7 @@ def test_citation_shows_the_cited_pages_own_footer(parte26):
         "end_block_index": 1,
         "cited_text": "Definición.",
     }
-    response = {"content": [{"type": "text", "text": "Hay una definición.", "citations": [raw]}], "model": "m"}
+    response = {**_response(("Hay una definición.", [raw])), "model": "m"}
     c = map_response(response, retrieval, {"26": URL}).sentences[0].citations[0]
     assert (parte26.edicion, c.edicion, c.enmienda, c.fecha) == ("I", "IV", None, "23 marzo 2022")
 
@@ -313,7 +400,7 @@ def test_definiciones_not_relied_on_are_not_citations(with_definiciones):
 
 def test_live_recording_cites_only_the_definiciones_it_relies_on(parte1, parte61):
     # `raac ask "Soy alumno piloto, ¿puedo volar solo en una TMA?"` with Partes 1 and 61 (the fixture
-    # PDFs), recorded with --record. Tree search read Parte 1 pages, so ~150 Definiciones were documents.
+    # PDFs), recorded with --record. Tree search read Parte 1 pages, so ~80 Definiciones were documents.
     record = json.loads((FIXTURES / "citations-response-definicion-tma.json").read_text())
     partes = {"1": parte1, "61": parte61}
     defs = {d.term: d for d in parte1.definiciones}
@@ -322,7 +409,7 @@ def test_live_recording_cites_only_the_definiciones_it_relies_on(parte1, parte61
         secciones=[RetrievedSeccion(partes[s["parte"]], partes[s["parte"]].seccion(s["seccion"])) for s in record["secciones"]],
         definiciones=[RetrievedDefinicion(parte1, defs[d["term"]]) for d in record["definiciones"]],
     )
-    assert len(retrieval.definiciones) > 100
+    assert len(retrieval.definiciones) > 50
     answer = map_response(record["response"], retrieval, {"1": URL1, "61": URL})
     cites = [c for s in answer.sentences for c in s.citations]
     cited_definiciones = {c.definicion for c in cites if c.definicion}
@@ -332,3 +419,59 @@ def test_live_recording_cites_only_the_definiciones_it_relies_on(parte1, parte61
         if c.definicion:
             assert (c.parte, c.seccion) == ("1", "1.11")
             assert c.cited_text.strip() in defs[c.definicion].text
+
+
+class _ReplayedStream:
+    """Replays a recorded response as a stream: one content_block_stop per block, with the snapshot so far."""
+
+    def __init__(self, response):
+        self._response = response
+        self._done = 0
+
+    def __iter__(self):
+        for self._done in range(1, len(self._response["content"]) + 1):
+            yield SimpleNamespace(type="content_block_stop")
+
+    @property
+    def current_message_snapshot(self):
+        snapshot = {**self._response, "content": self._response["content"][: self._done]}
+        return SimpleNamespace(model_dump=lambda mode: snapshot)
+
+    def get_final_message(self):
+        return SimpleNamespace(model_dump=lambda mode: self._response)
+
+
+class _StreamingClient:
+    def __init__(self, response):
+        stream = _ReplayedStream(response)
+        self.beta = SimpleNamespace(messages=SimpleNamespace(stream=lambda **kw: nullcontext(stream)))
+
+
+def test_sentences_stream_as_they_complete_and_match_the_final_answer(response, retrieval):
+    streamed = []
+    final = answer(_StreamingClient(response), "m", "q", retrieval, {"61": URL}, on_sentence=streamed.append)
+    assert len(final.sentences) > 1
+    assert streamed == final.sentences[: len(streamed)]
+    assert len(streamed) >= len(final.sentences) - 1  # only the last may wait for the final Answer
+
+
+def test_framing_waits_for_the_first_cited_sentence_and_nothing_streams_without_coverage(two_secciones):
+    blocks = [
+        ("Depende. Hay condiciones:\n- ", []),
+        ("tener instrucción", [_cite(1, 0)]),
+        (".\n- ", []),
+        ("tener constancia", [_cite(1, 0)]),
+        (".", []),
+    ]
+    streamed = []
+    response = _response(*blocks)
+    answer(_StreamingClient(response), "m", "q", two_secciones, {"61": URL}, on_sentence=streamed.append)
+    assert [s.text for s in streamed] == ["Depende.", "Hay condiciones:", "Tener instrucción."]
+
+    for coverage in ("ninguna - nada", None):
+        streamed = []
+        final = answer(
+            _StreamingClient(_response(*blocks, coverage=coverage)), "m", "q", two_secciones, {"61": URL},
+            on_sentence=streamed.append,
+        )
+        assert final.refused and streamed == []

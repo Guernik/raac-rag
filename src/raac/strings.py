@@ -29,6 +29,7 @@ FETCH_LINE = "Parte {parte}: {estado} ({sha256}) - {titulo}"
 FETCH_SUMMARY = "{total} Partes descargadas: {new} nuevas, {changed} cambiadas, {unchanged} sin cambios."
 PROGRESS_ROUTING = "Eligiendo en qué Partes buscar..."
 PROGRESS_ROUTED = "Buscando en: {partes}"
+API_ERROR = "No pude responder esta pregunta por un error interno. Probá de nuevo en un rato."
 
 
 def version(edicion: str | None, enmienda: str | None, fecha: str | None) -> str | None:

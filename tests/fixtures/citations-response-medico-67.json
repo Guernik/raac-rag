@@ -55,15 +55,15 @@
     },
     {
       "parte": "61",
-      "seccion": "61.110"
-    },
-    {
-      "parte": "61",
-      "seccion": "61.115"
-    },
-    {
-      "parte": "61",
       "seccion": "61.120"
+    },
+    {
+      "parte": "61",
+      "seccion": "61.125"
+    },
+    {
+      "parte": "61",
+      "seccion": "61.130"
     },
     {
       "parte": "61",
@@ -72,6 +72,10 @@
     {
       "parte": "61",
       "seccion": "61.510"
+    },
+    {
+      "parte": "61",
+      "seccion": "61.515"
     },
     {
       "parte": "61",
@@ -102,78 +106,19 @@
       "seccion": "61.610"
     }
   ],
+  "definiciones": [],
   "response": {
-    "id": "msg_011CfdR4gZuVp2Uof58cxqcu",
+    "id": "msg_011Cfq1eQ8sqaCx7os8zFhaC",
     "container": null,
     "content": [
       {
-        "signature": "CAQSlAYKEAgSGAI4AUIIdGhpbmtpbmcSDNUdoyK6C5w7/8BXPRoMlG2ZVRCCygV5uloAIjAt3+az8s0bwS+6LLPcSvQqX8AAlSoBtuu94uhvEkwPiCiqDdMGS4gnqI+UT0FAsH8qsQXHBKPgPW2lViOiIZjU7jjIVWOLLyb82Yo/4Q9tOXAEYsHFtp5TS8IwfBzPulPRWQi/IrsNkEbWv5AVXEefr8ueTXGUKu2aVc+6CtBhTLXp+de0UrL90d//Bjung4EciYF9Tghbl2FYObY7/xFh6SK9SwwlubP2miRo95Atu3Mt/rsR3TX5TR23aXCC943/JKn9IcYzvCYOJBQhCO61kW5gz1W9Pc8SvmjfgotkI30zEi2dsEKKGwA3fXkVEeuqLhMhgEIDpN1ADhVQo5rMz2CX3STBOaoNokjQMWemRoL/YGfpLcI4gVhvmsGEmTRXB5VppjtrVBelG0ni5zdKO4PfEiHHyiF4+3akm9wm2gaGGo8jAnNB7XsT5DlKbSvgJKfQW3hBIHD7wxR72DZ4nGxgV+sTjpaCqplhOZk9nycpnpyQtY6pxyTS1Q+3iJtUtqFWZFRcJtBNygXyMtZ/4FxtWXdnBz38MlTeZzVynjnk7URoT73TNRenbKarp3RAKVXPbk8OaUk/I44FZjUPd17WhFHhhLImtbG1zwZtPwAdRByn2c30Ph1f2j2b/+Z0TGEx3/DuVzxyA48qmayvPatiw5HyLT7pXO3jdjOHhESPjQNNvNBNCtNHlmWrZijcAn5jLq2fegD8tXD48dxUzMGw5dm9h2xGciRvazc8GLqkwMp1u8y/MpDekEQacQy25yMK0HP99xvTU5zjNLonU0SJXqTISUitM0YpPnEImx09G4sOp0Zeuvu2Um3af6h36NvqOKy2BSxwJIyozqi9MXXWCto00aRuKraOC0bZli8xtOEJo+1+ndAPTEL2vYfwKSqlsZbCmY5Ye+a+bzuosJGdcbIuTsxf9e8GGUhDwnE65Y7a7JDe3EHGB9uZcjbTBJvELrASsDG5VM416KlTGVguxxgB",
+        "signature": "CAQSnQkKEAgSGAI4AUIIdGhpbmtpbmcSDBXlK0NLQY52cYFZMBoMyAy0ZuELDmex27T3IjAEhMCynVWzp/2GBiHrOy8hXAlfXv5GquJWBo18vUSWkh6sPRE8bp+cIM2teIUrglEqugiozilmVFNJC1mSmofKSCBDytoNPgByUbAqX9FFEdyUv4KQCtS3fLonpQFRbUm4gTzVXOGSEEZ5ns4/Y+6AcyeUwyZp1Te6jJS33kv6Fu9V0KfdZDUPxnZSTIdngoaOuR6xxUovXsNAi79IpsNav6zTum1xv3AUmXj8gVLw5DGzREflNoCFNcW2rAH4mBs0BFk6cY37i7bU9CowoY4e2g9aOi2mN17u6VLMT6/QipOwwepDc8n6LGcAaeDKcBYRpQUTEj93Y8F3jtTAncgVIcyycmIUxTkBCQQ3JKFn3wbCDaIOUA5NYODLONAlNRXApD/qY01wdWh8fHHzd8JEY/K82NlT1lwspq7u+E5/sokM6QLECfy5DmyJ/SgAMXHEJHf/c03Tg+rVrSGWAO8ZTMJoYl1YziA849J36Ab2hu//5Yh3UstOinPoa6Ee7BC3n16tGm4p99vm4THOLqB89WyRKqQM4UMM0lqLI7iB/T1SA5PcQ9TWRW0VghsjTTTMLB0ISnxxXKy+qkx7CwflERSG3kAL4IUkfmugRJr1rAi+1FbCsDIEeDtaSE7t34BKpcPQz5GYqatdvns7Ie8giHvNvQe8GXaq2mymyli8ISYeWodaConVSwh9xEdkV+9rF8YqCHGY0rKbOtVtgwMrzpijlJvM7lNNXH+xJx+I7AhoLblQqU4/sTkcSvmOeRo7zAtQWkp4E17ug6MfEPWiF9g7j4BJhz5YN3F8P7YO2/ITTfyl/E66PWh5XFRiNmLWmCrYJ0YyvJ+iNPKMMWelxOHbXJnxsZT46QSzu2SOEoq30PZtk6QradaiVAptrwlD9J9FXiN3QV7ClssNXsJEzvIHkW92HinibsHLlfwEH/ZQGrzDwAqYpNKsFinGtNLh6Fe6QdZ1O+FOj6DNHWBHkNawOBhxqILcdEvKsF0YyOTLhaxDx99Y8bGjpb/8enp3ZRQ3Ct/WGkIiHb8bRSgDHPAiVAlF4k0r0Sg3cIMiPVcFPBFcqR18Gojzz9udBw/qYLkhaMrqn0BZ8/OU658htXaYgbrIuv1/oKasJc5ZE7J65YMdVhlUxuidXbfyjB39p3ID/eD6aTfe1VnmATzcXgvEtaM1VcpM9n025hIYIu60eeJVeldf3kKRv8vDZPHdqi8ZQfyv7AF7qqsIL+iO269b9gOk8eRt/6zVGiimSHjScJwNjB5jUP5drwV/FF5TiQkk/cpwZBZ7mhRkk1EkJHQygPPyaROrgYDNOp/effUUrxT7GrR5Sag+uFU6BWGYbAVPvOnn6Ca765g7e5Xbfgdlry21pqYPKoH0IPult9EVpzCpV2Z3kY/RI5auL5VoGbv4qE1WNeYQXslYUVfdGCGxRrA5Vwv6dwUu9N0qisKDXtm3EonpRUl8fB/SEsNpqLH7L4ft4T5jt2KILOgy9O98yIk8bSVVt4TeyRgB",
         "thinking": "",
         "type": "thinking"
       },
       {
         "citations": null,
-        "text": "Las secciones provistas no fijan la duración del certificado médico, sino que remiten a otra norma: ",
-        "type": "text"
-      },
-      {
-        "citations": [
-          {
-            "cited_text": "61.065\nValidez del certificado médico aeronáutico\nLa validez de los certificados médicos aeronáuticos se establece en la Sección 67.015 del RAAC 67.",
-            "document_index": 4,
-            "document_title": "RAAC Parte 61 - Sección 61.065 Validez del certificado médico aeronáutico",
-            "end_block_index": 1,
-            "file_id": null,
-            "start_block_index": 0,
-            "type": "content_block_location"
-          }
-        ],
-        "text": "la validez de los certificados médicos aeronáuticos se establece en la Sección 67.015 del RAAC 67.",
-        "type": "text"
-      },
-      {
-        "citations": null,
-        "text": " Lo que sí dicen es que, para obtener la licencia de piloto privado, hay que ",
-        "type": "text"
-      },
-      {
-        "citations": [
-          {
-            "cited_text": "61.505\nRequisitos de idoneidad: Generalidades\nPara obtener una licencia de piloto privado se deberá:\n(a)\nHaber cumplido dieciséis (16) años de edad en el caso de pilotos de avión;\n(b)\nleer, hablar y comprender el idioma español.\n(c)\ndemostrar competencia en hablar y comprender el idioma inglés, si éste es utilizado en las co-\nmunicaciones radiotelefónicas, de lo contrario tendrá una limitación en la licencia. La evaluación\nde este requisito se ajusta a lo previsto en la Sección 61.165 y el Apéndice B de esta regulación.\n(d)\nhaber aprobado el primario completo o equivalente reconocido por autoridad competente;\n(e)\nestar en posesión de una certificación médica aeronáutica otorgado conforme a la RAAC 67;\n(f)\naprobar un examen de conocimientos teóricos ante la ANAC o ante un examinador en las mate-\nrias contempladas en la Sección 61.510;\n(g)\naprobar una prueba de pericia en vuelo, que debe incluir un examen oral, sobre los procedimien-\ntos y maniobras contenidas en la Secciones 61.515 y 61.520 de este capítulo, seleccionados por\nun inspector de la ANAC o un examinador designado para determinar la competencia del solici-\ntante en las operaciones de vuelo; y\n(h)\ncumplir con aquellas secciones de las RAAC que se aplican a las habilitaciones que solicita.",
-            "document_index": 16,
-            "document_title": "RAAC Parte 61 - Sección 61.505 Requisitos de idoneidad: Generalidades",
-            "end_block_index": 1,
-            "file_id": null,
-            "start_block_index": 0,
-            "type": "content_block_location"
-          }
-        ],
-        "text": "estar en posesión de una certificación médica aeronáutica otorgado conforme a la RAAC 67",
-        "type": "text"
-      },
-      {
-        "citations": null,
-        "text": ". Además, las atribuciones de la licencia sólo pueden ejercerse cuando ",
-        "type": "text"
-      },
-      {
-        "citations": [
-          {
-            "cited_text": "61.060\nVigencia de las licencias y habilitaciones\n(a)\nGeneralidades\nA excepción de una autorización de alumno piloto, piloto de planeador o piloto de globo libre, una\nlicencia de piloto será permanente e indefinida en el tiempo, sin perjuicio de lo cual:\n(1)\nLas atribuciones que la licencia confiere a su titular sólo podrá ejercerse cuando se cum-\nplan los siguientes requisitos:\n(i)\nSe encuentre vigente la certificación médica aeronáutica correspondiente y otorgado\nbajo la RAAC 67;\n(ii)\nSe encuentren válidas las habilitaciones correspondientes;\n(iii)\nSe acredite la experiencia reciente que se establece en la Sección 61.140 para el pi-\nloto al mando y en la Sección 61.130 para el copiloto, según corresponda.\n(iv)\nSe cumpla con el repaso de vuelo establecido en la Sección 61.135 de esta regula-\nción o el programa de instrucción y entrenamiento del explotador de servicios aéreos\nRAAC 121 o 135 aprobado por la ANAC, según corresponda.\n(2)\nTodo piloto que ha dejado de ejercer actividad de vuelo por un periodo mayor a veinticua-\ntro (24) meses pierde las atribuciones de su licencia y/o habilitaciones. Para restablecer su\nvigencia deberá cumplir con lo siguiente:\n(i)\nTener la certificación médica aeronáutica vigente conforme a la RAAC 67;\n(ii)\nReservado.\n(iii)\nrealizar un reentrenamiento con un instructor de vuelo autorizado que posea una li-\ncencia y habilitación similar o superior; y\n(iv)\naprobar un examen de pericia ante la ANAC o ante un examinador designado.\n(3)\nLas atribuciones de la licencia no podrán ser ejercidas:",
-            "document_index": 3,
-            "document_title": "RAAC Parte 61 - Sección 61.060 Vigencia de las licencias y habilitaciones",
-            "end_block_index": 1,
-            "file_id": null,
-            "start_block_index": 0,
-            "type": "content_block_location"
-          }
-        ],
-        "text": "se encuentre vigente la certificación médica aeronáutica correspondiente y otorgado bajo la RAAC 67",
-        "type": "text"
-      },
-      {
-        "citations": null,
-        "text": ".\n\nSIN RESPALDO: los documentos no indican qué clase de certificado corresponde al piloto privado ni cuánto dura un certificado clase 2. Eso probablemente esté en la Sección 67.015 de la Parte 67.",
+        "text": "COBERTURA: ninguna. Las Secciones provistas no indican cuánto dura el certificado médico clase 2; la Sección 61.065 remite a la Sección 67.015 de la Parte 67.",
         "type": "text"
       }
     ],
@@ -194,7 +139,7 @@
       "cache_read_input_tokens": 0,
       "fallback_credit": null,
       "inference_geo": "global",
-      "input_tokens": 23570,
+      "input_tokens": 28528,
       "iterations": [
         {
           "cache_creation": {
@@ -203,15 +148,15 @@
           },
           "cache_creation_input_tokens": 0,
           "cache_read_input_tokens": 0,
-          "input_tokens": 23570,
+          "input_tokens": 28528,
           "model": null,
-          "output_tokens": 403,
+          "output_tokens": 258,
           "type": "message"
         }
       ],
-      "output_tokens": 403,
+      "output_tokens": 258,
       "output_tokens_details": {
-        "thinking_tokens": 57
+        "thinking_tokens": 186
       },
       "server_tool_use": null,
       "service_tier": "standard",

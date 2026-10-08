@@ -3,8 +3,9 @@
 Scores per case:
 - retrieval: which expected Secciones are among the retrieved ones (in-scope cases); the
   Sección holding an attached Parte 1 Definición counts as retrieved;
-- grounding: share of the Answer's sentences that carried a Citation, counting the
-  uncited sentences the Answerer dropped (answered cases; a refusal cites nothing);
+- grounding: share of the Answer's claims that carried a Citation: its cited sentences over
+  those plus the unsupported claims the Answerer dropped; uncited Framing is not a claim
+  (ADR 0003) (answered cases; a refusal cites nothing);
 - refusal: whether the pipeline refused exactly when the case is out of scope;
 - correctness: an LLM judge's verdict on the Answer against the case's reference Answer
   (judge.py), with its rationale kept in the report; only when a judge is given.
@@ -30,7 +31,8 @@ from .pipeline import DefinicionRef, IndexVersion, Pipeline, PipelineRetrieval, 
 from .usage import STAGES as USAGE_STAGES
 from .usage import StageUsage, merge, total_cost
 
-REPORT_SCHEMA_VERSION = 4  # 4: tokens and cost per stage
+REPORT_SCHEMA_VERSION = 5  # 4: tokens and cost per stage; 5: Framing, coverage and dropped claims in the Answer
+_REPLAYABLE_SCHEMAS = {4, 5}  # same Retrieval fields
 RETRIEVAL, ANSWER = "retrieval", "answer"
 STAGES = {"full": (RETRIEVAL, ANSWER), RETRIEVAL: (RETRIEVAL,), ANSWER: (ANSWER,)}
 _CASE_KEYS = {"id", "question", "expected_secciones", "reference_answer", "out_of_scope", "source"}
@@ -112,7 +114,7 @@ def select_cases(cases: list[EvalCase], ids: list[str] | None) -> list[EvalCase]
 class CaseScores:
     retrieval_hit: bool | None  # any expected Sección retrieved; None when out of scope
     retrieval_recall: float | None  # share of expected Secciones retrieved
-    grounding: float | None  # cited sentences / all sentences written; None when refused
+    grounding: float | None  # cited sentences / (cited sentences + dropped claims); None when refused
     refusal_correct: bool | None  # None when the answer stage did not run
     correctness: float | None = None  # judge score (1 / 0.5 / 0); None when not judged or the judge failed
 
@@ -128,8 +130,8 @@ def score(case: EvalCase, retrieval: PipelineRetrieval | None, answer: Answer | 
     if answer is not None:
         if not answer.refused:
             cited = sum(1 for s in answer.sentences if s.citations)
-            written = len(answer.sentences) + len(answer.dropped_uncited)
-            grounding = cited / written
+            claims = cited + len(answer.dropped)
+            grounding = cited / claims if claims else 0.0
         refusal = answer.refused == case.out_of_scope
     return CaseScores(retrieval_hit=hit, retrieval_recall=recall, grounding=grounding, refusal_correct=refusal)
 
@@ -262,7 +264,7 @@ def aggregate(results: list[CaseResult], stages: tuple[str, ...] = STAGES["full"
         "retrieval_hit_rate": rate(in_scope, lambda s: s.retrieval_hit) if retrieval else None,
         "retrieval_recall_mean": mean([r.scores.retrieval_recall if r.scores else 0.0 for r in in_scope]) if retrieval else None,
         "grounded_rate": rate(answered, lambda s: s.grounding == 1.0) if answer else None,
-        "uncited_sentences": sum(len(r.answer["dropped_uncited"]) for r in results if r.answer) if answer else None,
+        "dropped_claims": sum(len(r.answer["dropped"]) for r in results if r.answer) if answer else None,
         "refusal_rate_out_of_scope": rate(out_scope, lambda s: s.refusal_correct) if answer else None,
         "false_refusal_rate_in_scope": rate(in_scope, lambda s: s.refusal_correct is False) if answer else None,
         **(correctness or {}),
@@ -413,8 +415,8 @@ def load_retrievals(path: Path) -> RecordedRetrievals:
         report = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as e:
         raise ReplayError(f"{path}: cannot read report ({e})") from e
-    if report.get("schema_version") != REPORT_SCHEMA_VERSION:
-        raise ReplayError(f"{path}: report schema {report.get('schema_version')}, expected {REPORT_SCHEMA_VERSION}")
+    if report.get("schema_version") not in _REPLAYABLE_SCHEMAS:
+        raise ReplayError(f"{path}: report schema {report.get('schema_version')}, expected one of {sorted(_REPLAYABLE_SCHEMAS)}")
     if RETRIEVAL not in report["stages"]:
         raise ReplayError(f"{path}: this report did not run the retrieval stage, so it holds no Retrieval to replay")
     by_case = {}

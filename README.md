@@ -11,7 +11,7 @@ Not an official source. It does not replace AIP, NOTAMs or ANAC.
 
 ## Status
 
-Today the pipeline runs end to end from the command line (`raac fetch`, `raac ask`, `raac route`, `raac eval`, `raac generate-cases`, `raac review`) over Partes 1, 61, 67 and 91, caching PDFs and PageIndex trees under `.raac/`. The web API, object storage, frontend, Postgres registry and automatic promotion of new Enmiendas are planned. The diagrams below mark planned pieces with dashed borders. Their Mermaid sources are in [`docs/diagrams/`](docs/diagrams/); after editing one, re-render the images with `just diagrams`.
+Today the pipeline runs end to end from the command line (`raac fetch`, `raac ask`, `raac route`, `raac eval`, `raac generate-cases`, `raac review`) over Partes 1, 61, 67 and 91, caching PDFs and PageIndex trees under `.raac/`. `raac serve` runs the streaming API behind a minimal Spanish chat UI (`web/`). Object storage, Postgres registry and automatic promotion of new Enmiendas are planned. The diagrams below mark planned pieces with dashed borders. Their Mermaid sources are in [`docs/diagrams/`](docs/diagrams/); after editing one, re-render the images with `just diagrams`.
 
 ## High-level architecture
 
@@ -51,7 +51,7 @@ The RAAC is a shelf of rulebooks, one per Parte. Searching a whole Parte is expe
 
 ## Grounded or silent
 
-Every claim shown carries a Citation; only Framing (a lead-in, a connective, a sí/no/depende verdict) may go uncited ([ADR 0003](docs/adr/0003-uncited-framing-in-answers.md)). This is how the Answerer decides what to show; the dashed steps are planned in #38, and until then every uncited sentence is dropped:
+Every claim shown carries a Citation; only Framing (a lead-in, a connective, a sí/no/depende verdict) may go uncited ([ADR 0003](docs/adr/0003-uncited-framing-in-answers.md)). This is how the Answerer decides what to show:
 
 <p align="center"><img src="docs/diagrams/grounding.png" alt="Grounded or silent: what the Answerer shows" width="480"></p>
 
