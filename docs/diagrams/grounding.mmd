@@ -3,23 +3,20 @@ flowchart TD
     E -- no --> R1["Refusal<br/>(cites nothing)"]
     E -- yes --> M["Citations API answer"]
     M --> CV{"COBERTURA line"}
-    CV -- "ninguna / missing" --> R2["Refusal"]
+    CV -- "ninguna / missing / malformed" --> R2["Refusal"]
     CV -- "total / parcial" --> SP["split text into sentences<br/>(never inside a cited span)"]
-    SP --> Q{"sentence has a Citation?"}
+    SP --> NC{"every number, month and Sección ref<br/>in the cited text?"}
+    NC -- no --> D["dropped<br/>(logged, never shown)"]
+    NC -- yes --> Q{"sentence has a Citation?"}
     Q -- yes --> K["kept as a claim"]
-    Q -- no --> FR{"Framing? lead-in, connective,<br/>sí/no/depende verdict; no number,<br/>date or Sección ref absent from cited text"}
-    FR -- yes --> KF["kept as Framing"]
-    FR -- no --> D["dropped<br/>(logged, never shown)"]
+    Q -- no --> KF["kept as Framing<br/>(lead-in, connective,<br/>sí/no/depende verdict)"]
     K --> N{"any cited claim?"}
     KF --> N
     N -- no --> R2
     N -- yes --> G{"COBERTURA parcial?"}
     G -- no --> OK["Answer"]
     G -- yes --> INC["Answer marked incomplete"]
-    R2 --> LP{"gap names a Parte that a retrieved<br/>Sección has a Remisión to?"}
+    R2 --> LP{"COBERTURA line names a Parte that a<br/>retrieved Sección has a Remisión to?"}
     INC --> LP
     LP -- yes --> LPY["also show the likely Parte,<br/>cited from the Remisión's text"]
     LP -- no --> END["show as is"]
-
-    classDef planned stroke-dasharray: 5 5
-    class CV,FR,KF planned

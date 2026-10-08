@@ -51,7 +51,7 @@ The RAAC is a shelf of rulebooks, one per Parte. Searching a whole Parte is expe
 
 ## Grounded or silent
 
-Every claim shown carries a Citation; only Framing (a lead-in, a connective, a sí/no/depende verdict) may go uncited ([ADR 0003](docs/adr/0003-uncited-framing-in-answers.md)). This is how the Answerer decides what to show; the dashed steps are planned in #38, and until then every uncited sentence is dropped:
+Every claim shown carries a Citation; only Framing (a lead-in, a connective, a sí/no/depende verdict) may go uncited ([ADR 0003](docs/adr/0003-uncited-framing-in-answers.md)). This is how the Answerer decides what to show:
 
 <p align="center"><img src="docs/diagrams/grounding.png" alt="Grounded or silent: what the Answerer shows" width="480"></p>
 
