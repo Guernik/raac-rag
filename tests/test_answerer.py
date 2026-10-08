@@ -8,11 +8,13 @@ byte-identical to tests/fixtures/raac-parte-61.pdf.
 
 import json
 import re
+from contextlib import nullcontext
+from types import SimpleNamespace
 
 import pytest
 
 from conftest import FIXTURES
-from raac.answerer import build_documents, map_response
+from raac.answerer import answer, build_documents, map_response
 from raac.cli import render
 from raac.retriever import Retrieval, RetrievedDefinicion, RetrievedSeccion
 
@@ -332,3 +334,37 @@ def test_live_recording_cites_only_the_definiciones_it_relies_on(parte1, parte61
         if c.definicion:
             assert (c.parte, c.seccion) == ("1", "1.11")
             assert c.cited_text.strip() in defs[c.definicion].text
+
+
+class _ReplayedStream:
+    """Replays a recorded response as a stream: one content_block_stop per block, with the snapshot so far."""
+
+    def __init__(self, response):
+        self._response = response
+        self._done = 0
+
+    def __iter__(self):
+        for self._done in range(1, len(self._response["content"]) + 1):
+            yield SimpleNamespace(type="content_block_stop")
+
+    @property
+    def current_message_snapshot(self):
+        snapshot = {**self._response, "content": self._response["content"][: self._done]}
+        return SimpleNamespace(model_dump=lambda mode: snapshot)
+
+    def get_final_message(self):
+        return SimpleNamespace(model_dump=lambda mode: self._response)
+
+
+class _StreamingClient:
+    def __init__(self, response):
+        stream = _ReplayedStream(response)
+        self.beta = SimpleNamespace(messages=SimpleNamespace(stream=lambda **kw: nullcontext(stream)))
+
+
+def test_sentences_stream_as_they_complete_and_match_the_final_answer(response, retrieval):
+    streamed = []
+    final = answer(_StreamingClient(response), "m", "q", retrieval, {"61": URL}, on_sentence=streamed.append)
+    assert len(final.sentences) > 1
+    assert streamed == final.sentences[: len(streamed)]
+    assert len(streamed) >= len(final.sentences) - 1  # only the last may wait for the final Answer

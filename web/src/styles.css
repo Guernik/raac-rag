@@ -1,0 +1,266 @@
+/* Briefing-sheet look: paper and ink, with VFR-chart magenta as the one accent, reserved for Citations. */
+:root {
+  --paper: #ffffff;
+  --ink: #16181d;
+  --muted: #5b6070;
+  --rule: #d9dbe1;
+  --wash: #f4f5f7;
+  --cite: #a3166f;
+  --cite-wash: #fbeef6;
+  --warn: #8a5a00;
+  --error: #b42318;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #121317;
+    --ink: #e8e9ed;
+    --muted: #9a9fae;
+    --rule: #2c2f37;
+    --wash: #1b1d23;
+    --cite: #f07cc4;
+    --cite-wash: #2a1724;
+    --warn: #e0b04f;
+    --error: #ff8a80;
+    color-scheme: dark;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 16px/1.5 var(--font);
+  -webkit-text-size-adjust: 100%;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  max-width: 44rem;
+  margin: 0 auto;
+}
+
+.top {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--paper);
+  border-bottom: 1px solid var(--rule);
+  padding: max(0.75rem, env(safe-area-inset-top)) 1rem 0.6rem;
+}
+
+.top h1 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.notice {
+  margin: 0.2rem 0 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.thread {
+  flex: 1;
+  padding: 1rem;
+}
+
+.empty {
+  color: var(--muted);
+  padding-top: 2rem;
+}
+
+.empty-title {
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.exchange {
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.exchange:last-child {
+  border-bottom: 0;
+}
+
+.question {
+  margin: 0 0 0.75rem;
+  font-weight: 600;
+}
+
+.progress {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.progress::before {
+  content: "";
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-right: 0.5rem;
+  border-radius: 50%;
+  background: var(--cite);
+  animation: pulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes pulse {
+  to {
+    opacity: 0.2;
+  }
+}
+
+.answer {
+  margin: 0;
+}
+
+.caveat {
+  margin: 0 0 0.5rem;
+  color: var(--warn);
+  font-size: 0.95rem;
+}
+
+.error {
+  color: var(--error);
+}
+
+.chip {
+  display: inline-block;
+  margin: 0 0 0 0.3rem;
+  padding: 0.05rem 0.4rem;
+  min-height: 1.6rem;
+  border: 1px solid var(--cite);
+  border-radius: 0.3rem;
+  background: transparent;
+  color: var(--cite);
+  font: 600 0.75rem/1.4 var(--mono);
+  vertical-align: 0.1em;
+  cursor: pointer;
+}
+
+.chip-open {
+  background: var(--cite);
+  color: var(--paper);
+}
+
+.citation {
+  margin: 0.75rem 0 0;
+  padding: 0.75rem;
+  border-left: 3px solid var(--cite);
+  background: var(--cite-wash);
+  border-radius: 0 0.4rem 0.4rem 0;
+}
+
+.citation-head {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+}
+
+.citation-head > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.citation-title,
+.citation-sub {
+  margin: 0;
+}
+
+.citation-title {
+  font-weight: 600;
+}
+
+.citation-sub {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.close {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1.4rem;
+  line-height: 1;
+  min-width: 2rem;
+  min-height: 2rem;
+  cursor: pointer;
+}
+
+.citation blockquote {
+  margin: 0.6rem 0;
+  max-height: 14rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  font-size: 0.9rem;
+}
+
+.citation-meta {
+  margin: 0 0 0.4rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.citation a {
+  color: var(--cite);
+  font-weight: 600;
+}
+
+.ask {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-end;
+  padding: 0.6rem 1rem max(0.6rem, env(safe-area-inset-bottom));
+  background: var(--paper);
+  border-top: 1px solid var(--rule);
+}
+
+.ask textarea {
+  flex: 1;
+  min-width: 0;
+  resize: none;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.4rem;
+  background: var(--wash);
+  color: var(--ink);
+  font: 16px/1.4 var(--font); /* 16px keeps iOS from zooming on focus */
+}
+
+.ask textarea:focus {
+  outline: 2px solid var(--ink);
+  outline-offset: -1px;
+}
+
+.ask button {
+  min-height: 2.75rem;
+  padding: 0 1rem;
+  border: 0;
+  border-radius: 0.4rem;
+  background: var(--ink);
+  color: var(--paper);
+  font: 600 0.95rem var(--font);
+  cursor: pointer;
+}
+
+.ask button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}

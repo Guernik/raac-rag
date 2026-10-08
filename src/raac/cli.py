@@ -1,7 +1,7 @@
 """CLI: `raac ask "<pregunta>"` answers from Partes 1, 61, 67 and 91 with Citations; `raac route` shows or
 scores Parte routing; `raac fetch` downloads the RAAC vigente; `raac eval` runs the eval set against the local pipeline
 (end to end or one stage) or PageIndex Cloud; `raac generate-cases` writes candidate eval cases and `raac review`
-accepts, edits or rejects them."""
+accepts, edits or rejects them; `raac serve` runs the HTTP API."""
 
 import argparse
 import json
@@ -33,6 +33,10 @@ def main(argv: list[str] | None = None) -> int:
     ask.add_argument("--record", type=Path, help="Write the question, document Secciones and raw Citations API response to this file")
     ask.add_argument("--record-routing", type=Path, help="Write the question and raw Parte routing response to this file")
     ask.add_argument("--json", action="store_true", help="Print the Retrieval and the Answer as JSON")
+    serve = sub.add_parser("serve", help="Run the HTTP API (POST /api/ask streams an Answer with Citations)")
+    _add_corpus_args(serve)
+    serve.add_argument("--host", default="127.0.0.1")
+    serve.add_argument("--port", type=int, default=8000)
     route = sub.add_parser("route", help="Show which Partes a question is routed to, or score routing on eval cases")
     route.add_argument("question", nargs="?")
     route.add_argument("--cases", type=Path, help="JSONL eval cases; expected Partes come from expected_secciones")
@@ -83,6 +87,8 @@ def main(argv: list[str] | None = None) -> int:
         if args.stage != "full" and args.pipeline == "cloud":
             ap.error("--pipeline cloud runs end to end only; drop --stage")
     load_env()
+    if args.command == "serve":
+        return serve_api(args)
     if args.command == "fetch":
         return fetch_corpus(args.dir, args.parte)
     if args.command == "review":
@@ -150,6 +156,23 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(out, ensure_ascii=False, indent=2))
     else:
         print(render(run.answer))
+    return 0
+
+
+def serve_api(args: argparse.Namespace) -> int:
+    import logging
+
+    import uvicorn
+
+    from .api import create_app
+
+    logging.basicConfig(level=logging.INFO)
+    app = create_app(
+        lambda on_progress: build_local_pipeline(
+            args.parte or DEFAULT_PARTES, args.cache_dir, on_progress, offline=args.offline
+        )
+    )
+    uvicorn.run(app, host=args.host, port=args.port)
     return 0
 
 
