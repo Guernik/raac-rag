@@ -2,9 +2,15 @@ classDiagram
     direction LR
     class ParsedParte {
         code
+        content_hash
+        page_count
+        printed_pages
+        edicion / enmienda (logs only)
+    }
+    class PageVersion {
         edicion
         enmienda
-        content_hash
+        fecha
     }
     class Seccion {
         id
@@ -51,6 +57,7 @@ classDiagram
         printed_page_start / end
         edicion
         enmienda
+        fecha
         source_url
         cited_text
         definicion
@@ -59,6 +66,7 @@ classDiagram
         parte
     }
     ParsedParte "1" *-- "many" Seccion
+    ParsedParte "1" *-- "many" PageVersion : footer per PDF page
     Seccion "1" *-- "many" SeccionPage
     Seccion "1" *-- "0..*" Remision
     ParsedParte "1" *-- "0..*" Definicion : Parte 1 only
@@ -69,4 +77,5 @@ classDiagram
     Answer "1" *-- "0..*" LikelyParte
     LikelyParte --> Citation : cited Remisión
     Citation ..> Seccion : points to
+    Citation ..> PageVersion : of the first cited page
     Citation ..> Definicion : or to one, when relied on
