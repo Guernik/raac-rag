@@ -550,8 +550,25 @@ svg {
 
 .panel-actions {
   flex: none;
+  display: flex;
+  gap: var(--space-2);
   padding: var(--space-3) var(--space-4);
   border-top: 1px solid var(--rule);
+}
+
+.panel-actions .primary {
+  flex: 1;
+}
+
+.panel-actions .secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.panel-actions svg {
+  width: 17px;
+  height: 17px;
 }
 
 .primary {
@@ -566,11 +583,6 @@ svg {
   color: var(--on-cite);
   font-weight: var(--weight-semi);
   text-decoration: none;
-}
-
-.primary svg {
-  width: 17px;
-  height: 17px;
 }
 
 .index {
@@ -861,7 +873,21 @@ svg {
     padding: var(--space-5);
   }
 
+  /* Actions right under the title, where the eye lands, instead of below a long cited text. */
   .panel-actions {
-    padding: var(--space-3) var(--space-5) var(--space-4);
+    order: 1;
+    padding: var(--space-3) var(--space-5);
+    border-top: 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .panel-body {
+    order: 2;
+  }
+
+  .panel-actions a,
+  .panel-actions button {
+    padding: 0 var(--space-3);
+    font-size: var(--text-sm);
   }
 }

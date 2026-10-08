@@ -443,12 +443,49 @@ function CitationPanel(props: { opened: Opened | null; desktop: boolean; onClose
                 </svg>
                 {strings.openSource}
               </a>
+              <CopyButton text={() => citationText(shown)} />
             </div>
           </>
         )}
       </aside>
     </>
   );
+}
+
+function CopyButton({ text }: { text: () => string }) {
+  const [copied, setCopied] = useState(false);
+  useEffect(() => {
+    if (!copied) return;
+    const t = setTimeout(() => setCopied(false), 1500);
+    return () => clearTimeout(t);
+  }, [copied]);
+  const copy = () =>
+    navigator.clipboard.writeText(text()).then(
+      () => setCopied(true),
+      () => {}, // clipboard refused: nothing to undo
+    );
+  return (
+    <button type="button" className="secondary" onClick={copy} aria-live="polite">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        {copied ? <path d="M5 12l5 5L20 7" /> : <path d="M9 9h10v12H9zM5 15H4V3h11v1" />}
+      </svg>
+      {copied ? strings.copied : strings.copy}
+    </button>
+  );
+}
+
+/** The opened Citation as plain text, for pasting into a briefing or a message. */
+function citationText(opened: Opened) {
+  const c0 = opened.citations[0];
+  const spans = opened.citations.map((c) => {
+    const pages = [`${strings.pdfPage} ${strings.range(c.pdf_page_start, c.pdf_page_end)}`];
+    if (c.printed_page_start)
+      pages.push(`${strings.printedPage} ${strings.range(c.printed_page_start, c.printed_page_end ?? c.printed_page_start)}`);
+    const version = strings.version(c.edicion, c.enmienda, c.fecha);
+    return `«${reflow(c.cited_text)}»\n${[...pages, ...(version ? [version] : [])].join(" · ")}`;
+  });
+  const title = c0.definicion ? strings.definicion(c0.definicion) : c0.seccion_title;
+  return [`${strings.citationLabel(c0)}: ${title}`, ...spans, c0.source_url].join("\n\n");
 }
 
 function CitedSpan({ citation: c }: { citation: Citation }) {

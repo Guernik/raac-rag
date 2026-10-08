@@ -43,6 +43,8 @@ export const strings = {
     return fecha ? `${base} (${fecha})` : base;
   },
   openSource: "Abrir el PDF de la Parte",
+  copy: "Copiar",
+  copied: "Copiado",
   close: "Cerrar",
 
   // Beta gate (#26)
