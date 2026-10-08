@@ -19,10 +19,15 @@ a retrieved Sección has a Remisión to them, cited from that Remisión's text.
 Parte 1 Definiciones attached to the Retrieval follow the Secciones as documents of
 their own, so the model can cite one when the Answer relies on the defined meaning.
 A Definición the model does not cite never becomes a Citation.
+
+With `on_sentence`, each grounded sentence is also handed over as soon as the text after it
+shows it is complete, while the answer still streams. The returned Answer is authoritative:
+it adds the refusal, gap and likely Partes, and a caller shows it in place of what streamed.
 """
 
 import json
 import re
+from collections.abc import Callable
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
@@ -143,6 +148,7 @@ def answer(
     source_urls: dict[str, str],
     record_path: Path | None = None,
     meter: UsageMeter | None = None,
+    on_sentence: Callable[[Sentence], None] | None = None,
 ) -> Answer:
     if not retrieval.secciones:
         return Answer(sentences=[], refused=True)
@@ -161,6 +167,8 @@ def answer(
             }
         ],
     ) as stream:
+        if on_sentence is not None:
+            _emit_complete_sentences(stream, retrieval, source_urls, on_sentence)
         message = stream.get_final_message()
     response = message.model_dump(mode="json")
     if meter is not None:
@@ -178,6 +186,21 @@ def answer(
         }
         record_path.write_text(json.dumps(record, ensure_ascii=False, indent=2))
     return map_response(response, retrieval, source_urls)
+
+
+def _emit_complete_sentences(
+    stream: Any, retrieval: Retrieval, source_urls: dict[str, str], on_sentence: Callable[[Sentence], None]
+) -> None:
+    """Map the text so far at each finished content block; every sentence but the last is complete."""
+    sent = 0
+    for event in stream:
+        if event.type != "content_block_stop":
+            continue
+        snapshot = stream.current_message_snapshot.model_dump(mode="json")
+        sentences = map_response(snapshot, retrieval, source_urls).sentences
+        for sentence in sentences[sent:-1]:
+            on_sentence(sentence)
+        sent = max(sent, len(sentences) - 1)
 
 
 def map_response(response: dict[str, Any], retrieval: Retrieval, source_urls: dict[str, str]) -> Answer:
