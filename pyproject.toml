@@ -11,7 +11,7 @@
 #             raac eval --stage answer --retrievals evals/reports/<that report>.json (no routing or search)
 #             uv run raac eval --pipeline cloud   (PageIndex Cloud baseline, same cases; needs PAGEINDEX_API_KEY)
 #   api:      uv run raac serve   (POST /api/ask streams AskEvents; schema at /openapi.json; same corpus flags as ask)
-#   web:      cd web; pnpm install; pnpm dev   (phone-first chat UI on :5173, proxies /api to :8000 or $RAAC_API)
+#   web:      cd web; pnpm install; pnpm dev   (chat UI on :5173, proxies /api to :8000 or $RAAC_API)
 #   routing:  uv run raac route --cases evals/routing-cases.jsonl
 #   cases:    uv run raac generate-cases --parte 61 -n 5   (or --pdf path/to/parte.pdf; writes evals/candidates.jsonl)
 #             uv run raac review   (accept/edit/reject each pending candidate; accepted ones join evals/cases.jsonl)
