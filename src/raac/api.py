@@ -2,7 +2,7 @@
 
 `POST /api/ask` takes a question and answers as a Server-Sent Events stream of JSON
 events (`AskEvent`): `progress` while routing and searching, one `sentence` per grounded
-sentence as soon as it is complete, then a final `answer` that is authoritative (the
+sentence or Framing as soon as it is complete, then a final `answer` that is authoritative (the
 client shows it in place of the streamed sentences) or an `error`. The event schema is
 published in the OpenAPI document under `components.schemas.AskEvent`.
 
@@ -40,7 +40,7 @@ class AskRequest(BaseModel):
 
 
 class AnswerOut(BaseModel):
-    """What a client shows. The gap line and dropped uncited sentences stay in logs."""
+    """What a client shows. The coverage line and dropped claims stay in logs."""
 
     sentences: list[Sentence]
     refused: bool  # nothing grounded: show the refusal and only likely Partes

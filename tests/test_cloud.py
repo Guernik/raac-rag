@@ -73,7 +73,7 @@ def test_uncited_sentences_are_dropped_and_tags_attach_to_the_sentence_they_end(
     )
     answer = map_answer(text, [BLOCK_61535], docs)
     assert [s.text for s in answer.sentences] == ["Necesitás instrucción en vuelo nocturno."]
-    assert answer.dropped_uncited == ["Te cuento lo que dice la RAAC.", "Consultá también la Sección 61.520."]
+    assert answer.dropped == ["Te cuento lo que dice la RAAC.", "Consultá también la Sección 61.520."]
 
 
 def test_cite_tags_both_forms(docs):
@@ -90,7 +90,7 @@ def test_no_tags_or_unknown_documents_is_a_refusal(docs):
     out_of_range = {"document": "raac-61.pdf", "doc_id": DOC, "page": 999}
     answer = map_answer("Algo. <doc=otro.pdf;page=3> Otra cosa. <doc=raac-61.pdf;page=999>", [unknown, out_of_range], docs)
     assert answer.refused
-    assert answer.dropped_uncited == ["Algo.", "Otra cosa."]
+    assert answer.dropped == ["Algo.", "Otra cosa."]
 
 
 def test_eval_runner_targets_cloud_with_the_same_cases_and_report_shape(docs, parte61):
