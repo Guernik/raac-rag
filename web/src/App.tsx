@@ -435,15 +435,15 @@ function CitationPanel(props: { opened: Opened | null; desktop: boolean; onClose
               {shown.citations.map((c) => (
                 <CitedSpan key={`${c.pdf_page_start}|${c.cited_text}`} citation={c} />
               ))}
-            </div>
-            <div className="panel-actions">
-              <a className="primary" href={c0.source_url} target="_blank" rel="noreferrer">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M14 3h7v7M21 3l-9 9M19 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5" />
-                </svg>
-                {strings.openSource}
-              </a>
-              <CopyButton text={() => citationText(shown)} />
+              <div className="panel-actions">
+                <a className="primary" href={c0.source_url} target="_blank" rel="noreferrer">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M14 3h7v7M21 3l-9 9M19 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5" />
+                  </svg>
+                  {strings.openSource}
+                </a>
+                <CopyButton text={() => citationText(shown)} />
+              </div>
             </div>
           </>
         )}
