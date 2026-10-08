@@ -22,7 +22,8 @@ Python backend (FastAPI, streaming answers; ingestion and retrieval in Python be
 
 ## UI
 
-- Phone first. Tapping a Citation opens a sheet with the cited text in context and a "Ver en PDF" action that opens the PDF page (PDF.js) with the span highlighted; on desktop the same component is a side panel.
+- Phone and desktop are equal targets: both must look sleek, modern, and polished, each with a layout designed for its device rather than one stretched or squeezed into the other. Check every UI change at both phone and desktop widths.
+- Tapping a Citation shows the cited text in context and a "Ver en PDF" action that opens the PDF page (PDF.js) with the span highlighted. On phone it is a bottom sheet; on desktop the same component is a side panel beside the chat.
 - Spanish only. All user-facing strings go through a strings file.
 - A fixed notice states the app is not an official source and does not replace AIP, NOTAMs, or ANAC.
 - Invite-only for now, with a global daily spend cap that switches the app to a "volvé mañana" state.
