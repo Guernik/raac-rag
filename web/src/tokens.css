@@ -1,0 +1,90 @@
+/* Design tokens. Every color, size, radius and duration in the UI comes from here.
+   Ficha: a printed briefing sheet. Paper and ink, with VFR-chart magenta as the one accent, reserved for Citations.
+   Light is the default; dark is opt-in from the header and stored per browser (see theme.ts).
+   The desktop breakpoint is 960px; CSS can't read it from a custom property, so styles.css repeats it. */
+
+:root {
+  /* Color */
+  --paper: #ffffff;
+  --sheet: #f4f5f7; /* side panel, inputs */
+  --ink: #15171c;
+  --muted: #596073;
+  --rule: #dcdfe5;
+  --cite: #a3166f;
+  --cite-wash: #fbeef6;
+  --on-cite: #ffffff;
+  --warn: #8a5a00;
+  --error: #b42318;
+  --scrim: rgb(10 12 16 / 0.4);
+  --shadow-sheet: 0 -8px 30px rgb(10 12 16 / 0.18);
+
+  /* Type */
+  --font: "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "Atkinson Hyperlegible Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --text-2xs: 0.7rem; /* uppercase labels */
+  --text-xs: 0.78rem;
+  --text-sm: 0.9rem;
+  --text-base: 1rem;
+  --text-lg: 1.12rem;
+  --text-xl: 1.3rem;
+  --text-2xl: 1.7rem;
+  --text-3xl: 2rem;
+  --leading-tight: 1.25;
+  --leading: 1.55;
+  --tracking-label: 0.08em;
+  --weight-bold: 700;
+  --weight-semi: 600;
+
+  /* Space */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.75rem;
+  --space-7: 2.25rem;
+  --space-8: 3rem;
+
+  /* Size */
+  --touch: 44px; /* minimum touch target */
+  --measure: 42rem; /* reading column */
+  --panel: 24rem; /* desktop Citation panel */
+  --bar: 4.25rem; /* desktop header height, shared by the panel head */
+
+  /* Radius */
+  --radius-sm: 3px;
+  --radius-md: 6px;
+  --radius-lg: 14px;
+
+  /* Motion */
+  --dur-fast: 120ms;
+  --dur: 200ms;
+  --dur-sheet: 280ms;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --paper: #111318;
+  --sheet: #1a1d23;
+  --ink: #e7e9ee;
+  --muted: #9aa0ae;
+  --rule: #2b2f38;
+  --cite: #f07cc4;
+  --cite-wash: #2c1727;
+  --on-cite: #1a0b14;
+  --warn: #e9b95b;
+  --error: #ff8a80;
+  --scrim: rgb(0 0 0 / 0.55);
+  --shadow-sheet: 0 -8px 30px rgb(0 0 0 / 0.5);
+  color-scheme: dark;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0ms;
+    --dur: 0ms;
+    --dur-sheet: 0ms;
+  }
+}
